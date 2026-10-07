@@ -269,9 +269,12 @@ export const InwardCreate = () => {
         </div>
       )}
 
-      {/* HEADER SECTION (Top Labels above inputs - 4 inputs per row) */}
-      <div className="bg-slate-100/90 rounded-xl border border-slate-300 p-3.5 shadow-2xs">
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3.5 items-end">
+      {/* HEADER SECTION FIELDSET: Inward Header Details */}
+      <fieldset className="bg-slate-100/90 rounded-xl border border-slate-300 p-3.5 pt-2 shadow-2xs">
+        <legend className="px-2.5 py-0.5 text-[11px] font-black uppercase tracking-wider text-sky-900 bg-white border border-slate-300 rounded-md shadow-2xs">
+          Inward Header Details
+        </legend>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3.5 items-end mt-1">
           <div>
             <label className="block text-[11px] font-black text-slate-700 uppercase mb-1">
               NO. (INWARD NO)
@@ -424,10 +427,13 @@ export const InwardCreate = () => {
             </div>
           </div>
         </div>
-      </div>
+      </fieldset>
 
-      {/* ITEM DETAILS FORM (LIMRA Middle Input Block) */}
-      <div className="bg-slate-50 rounded-xl border border-slate-300 p-3.5 space-y-3 shadow-2xs">
+      {/* ITEM DETAILS FORM FIELDSET: LR Entry Details */}
+      <fieldset className="bg-slate-50 rounded-xl border border-slate-300 p-3.5 pt-2 space-y-3 shadow-2xs">
+        <legend className="px-2.5 py-0.5 text-[11px] font-black uppercase tracking-wider text-sky-900 bg-white border border-slate-300 rounded-md shadow-2xs">
+          LR Entry Details
+        </legend>
         {/* Row 1: SRNO, LR NO, DATE, INVOICE NO */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 items-end">
           <div>
@@ -638,7 +644,7 @@ export const InwardCreate = () => {
             )}
           </div>
         </div>
-      </div>
+      </fieldset>
 
       {/* STAGED ITEMS TABLE (LIMRA Grid View) */}
       <div className="bg-white border border-slate-300 rounded-xl overflow-hidden shadow-2xs">
