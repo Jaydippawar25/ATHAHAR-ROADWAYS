@@ -611,6 +611,7 @@ export const OutwardCreate = () => {
             <input
               type="number"
               min="1"
+              step="1"
               name="pkg"
               value={itemForm.pkg}
               onChange={handleItemChange}
@@ -624,6 +625,7 @@ export const OutwardCreate = () => {
             <input
               type="number"
               min="0"
+              step="any"
               name="toPayAmount"
               value={itemForm.toPayAmount}
               onChange={handleItemChange}
@@ -637,6 +639,7 @@ export const OutwardCreate = () => {
             <input
               type="number"
               min="0"
+              step="any"
               name="tbbAmount"
               value={itemForm.tbbAmount}
               onChange={handleItemChange}
@@ -650,6 +653,7 @@ export const OutwardCreate = () => {
             <input
               type="number"
               min="0"
+              step="any"
               name="paidAmount"
               value={itemForm.paidAmount || ''}
               onChange={handleItemChange}

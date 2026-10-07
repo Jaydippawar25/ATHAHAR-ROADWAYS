@@ -566,6 +566,7 @@ export const InwardCreate = () => {
             <input
               type="number"
               min="1"
+              step="1"
               name="pkg"
               value={itemForm.pkg}
               onChange={handleItemChange}
@@ -579,11 +580,12 @@ export const InwardCreate = () => {
             <input
               type="number"
               min="0"
+              step="any"
               name="toPayAmount"
               value={itemForm.toPayAmount}
               onChange={handleItemChange}
               placeholder="0.00"
-              className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded text-xs font-black text-amber-900 placeholder-slate-400"
+              className="w-full px-2 py-1.5 bg-white border border-slate-300 rounded text-xs font-black text-amber-900 placeholder-slate-400"
             />
           </div>
 
@@ -592,11 +594,12 @@ export const InwardCreate = () => {
             <input
               type="number"
               min="0"
+              step="any"
               name="tbbAmount"
               value={itemForm.tbbAmount}
               onChange={handleItemChange}
               placeholder="0.00"
-              className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded text-xs font-black text-sky-900 placeholder-slate-400"
+              className="w-full px-2 py-1.5 bg-white border border-slate-300 rounded text-xs font-black text-sky-900 placeholder-slate-400"
             />
           </div>
 
@@ -605,11 +608,12 @@ export const InwardCreate = () => {
             <input
               type="number"
               min="0"
+              step="any"
               name="paidAmount"
               value={itemForm.paidAmount}
               onChange={handleItemChange}
               placeholder="0.00"
-              className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded text-xs font-black text-emerald-900 placeholder-slate-400"
+              className="w-full px-2 py-1.5 bg-white border border-slate-300 rounded text-xs font-black text-emerald-900 placeholder-slate-400"
             />
           </div>
 

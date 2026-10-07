@@ -81,4 +81,12 @@ input, textarea, select, [contenteditable="true"] {
   caret-color: auto !important;
 }
 
+/* Ensure number inputs show clean, visible up/down stepper arrows */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  opacity: 1 !important;
+  display: block !important;
+  cursor: pointer;
+}
+
 
