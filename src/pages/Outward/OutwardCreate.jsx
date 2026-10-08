@@ -616,8 +616,8 @@ export const OutwardCreate = () => {
           </div>
         </div>
 
-        {/* Row 3: PKG, TO PAY, TBB, PAID, ADD LR (5 inputs in 1 row) */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 items-end">
+        {/* Row 3: PKG, TO PAY, TBB, PAID, TOTAL, ADD LR (6 inputs in 1 row) */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-6 gap-2.5 items-end">
           <div>
             <label className="block text-[11px] font-black text-slate-700 uppercase mb-1">PKG:</label>
             <input
@@ -675,6 +675,16 @@ export const OutwardCreate = () => {
               onKeyDown={(e) => (e.key === 'ArrowUp' || e.key === 'ArrowDown') && e.preventDefault()}
               placeholder="0.00"
               className="w-full px-2 py-1.5 bg-white border border-slate-300 rounded text-xs font-black text-emerald-900 placeholder-slate-400"
+            />
+          </div>
+
+          <div>
+            <label className="block text-[11px] font-black text-slate-700 uppercase mb-1">TOTAL:</label>
+            <input
+              type="text"
+              readOnly
+              value={formatCurrency((Number(itemForm.toPayAmount) || 0) + (Number(itemForm.tbbAmount) || 0) + (Number(itemForm.paidAmount) || 0))}
+              className="w-full px-2 py-1.5 bg-slate-200/80 border border-slate-300 rounded text-xs font-black text-[#1e295b] text-right"
             />
           </div>
 
