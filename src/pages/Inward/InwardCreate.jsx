@@ -12,13 +12,14 @@ export const InwardCreate = () => {
   const { masters, handleCreateInward, handleAddMaster } = useApp();
   const { user } = useAuth();
 
-  // HEADER DETAILS (Transporter, Vehicle, Driver, Memo, From Station)
+  // HEADER DETAILS (Transporter, Vehicle, Driver, Memo, From Station, Owner)
   const [headerData, setHeaderData] = useState({
     inwardNo: `INW-${Math.floor(1000 + Math.random() * 9000)}`,
     date: getTodayDateString(),
     transporterName: masters.transporters[0]?.name || '',
     fromStation: masters.stations[1]?.name || masters.stations[0]?.name || '',
     vehicleNo: masters.vehicles[0]?.vehicleNo || '',
+    ownerName: masters.vehicles[0]?.ownerName || masters.owners?.[0]?.name || '',
     memoNo: '',
     driverName: masters.drivers[0]?.name || '',
   });
@@ -57,7 +58,16 @@ export const InwardCreate = () => {
 
   const handleHeaderChange = (e) => {
     const { name, value } = e.target;
-    setHeaderData((prev) => ({ ...prev, [name]: value }));
+    if (name === 'vehicleNo') {
+      const selectedVehicle = masters.vehicles?.find((v) => v.vehicleNo === value);
+      setHeaderData((prev) => ({
+        ...prev,
+        vehicleNo: value,
+        ownerName: selectedVehicle?.ownerName || prev.ownerName,
+      }));
+    } else {
+      setHeaderData((prev) => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleItemChange = (e) => {
@@ -92,6 +102,8 @@ export const InwardCreate = () => {
     let newItem = { name: val };
     if (quickAddModal.category === 'vehicles') {
       newItem = { vehicleNo: val, type: 'Own', capacity: '10 Ton' };
+    } else if (quickAddModal.category === 'owners') {
+      newItem = { name: val, phone: '9800000000' };
     } else if (quickAddModal.category === 'stations') {
       newItem = { name: val, state: 'MH' };
     } else if (quickAddModal.category === 'drivers') {
@@ -432,6 +444,40 @@ export const InwardCreate = () => {
               </button>
             </div>
           </div>
+
+          <div>
+            <label className="block text-[11px] font-black text-slate-700 uppercase mb-1">
+              VEHICLE OWNER NAME
+            </label>
+            <div className="flex items-center space-x-1 min-w-0">
+              <select
+                name="ownerName"
+                value={headerData.ownerName}
+                onChange={handleHeaderChange}
+                className="flex-1 px-2.5 py-1.5 border border-slate-300 bg-white rounded text-xs font-bold text-slate-800 focus:ring-1 focus:ring-sky-500 min-w-0 truncate"
+              >
+                {Array.from(
+                  new Set([
+                    ...(masters.owners || []).map((o) => o.name),
+                    ...(masters.vehicles || []).map((v) => v.ownerName).filter(Boolean),
+                    headerData.ownerName,
+                  ].filter(Boolean))
+                ).map((ownerName) => (
+                  <option key={ownerName} value={ownerName}>
+                    {ownerName}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                onClick={() => handleOpenQuickAdd('owners', 'Vehicle Owner', 'ownerName', true)}
+                className="px-2 py-1.5 bg-slate-200 hover:bg-slate-300 border border-slate-300 rounded font-black text-xs text-slate-700 transition-colors shadow-2xs flex-shrink-0 cursor-pointer"
+                title="Quick Add Vehicle Owner"
+              >
+                ...
+              </button>
+            </div>
+          </div>
         </div>
       </fieldset>
 
@@ -488,34 +534,8 @@ export const InwardCreate = () => {
           </div>
         </div>
 
-        {/* Row 2: CT TO, CONSIGNER, CONSIGNEE */}
+        {/* Row 2: CONSIGNER, CONSIGNEE, CT TO */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 items-end">
-          <div>
-            <label className="block text-[11px] font-black text-slate-700 uppercase mb-1">CT TO:</label>
-            <div className="flex items-center space-x-1 min-w-0">
-              <select
-                name="ctTo"
-                value={itemForm.ctTo}
-                onChange={handleItemChange}
-                className="w-full px-2 py-1.5 bg-white border border-slate-300 rounded text-xs font-bold text-[#1e295b] truncate min-w-0"
-              >
-                {masters.stations.map((st) => (
-                  <option key={st.id} value={st.name}>
-                    {st.name}
-                  </option>
-                ))}
-              </select>
-              <button
-                type="button"
-                onClick={() => handleOpenQuickAdd('stations', 'Destination Station', 'ctTo', false)}
-                className="px-1.5 py-1.5 bg-slate-200 hover:bg-slate-300 border border-slate-300 rounded font-black text-xs text-slate-700 transition-colors shadow-2xs flex-shrink-0 cursor-pointer"
-                title="Quick Add Station"
-              >
-                ...
-              </button>
-            </div>
-          </div>
-
           <div>
             <label className="block text-[11px] font-black text-slate-700 uppercase mb-1">CONSIGNER:</label>
             <div className="flex items-center space-x-1 min-w-0">
@@ -569,10 +589,36 @@ export const InwardCreate = () => {
               </button>
             </div>
           </div>
+
+          <div>
+            <label className="block text-[11px] font-black text-slate-700 uppercase mb-1">CT TO:</label>
+            <div className="flex items-center space-x-1 min-w-0">
+              <select
+                name="ctTo"
+                value={itemForm.ctTo}
+                onChange={handleItemChange}
+                className="w-full px-2 py-1.5 bg-white border border-slate-300 rounded text-xs font-bold text-[#1e295b] truncate min-w-0"
+              >
+                {masters.stations.map((st) => (
+                  <option key={st.id} value={st.name}>
+                    {st.name}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                onClick={() => handleOpenQuickAdd('stations', 'Destination Station', 'ctTo', false)}
+                className="px-1.5 py-1.5 bg-slate-200 hover:bg-slate-300 border border-slate-300 rounded font-black text-xs text-slate-700 transition-colors shadow-2xs flex-shrink-0 cursor-pointer"
+                title="Quick Add Station"
+              >
+                ...
+              </button>
+            </div>
+          </div>
         </div>
 
-        {/* Row 3: PKG, TO PAY, TBB, PAID, TOTAL, ADD LR (6 inputs in 1 row) */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-6 gap-2.5 items-end">
+        {/* Row 3: PKG, TO PAY, TBB, PAID, TOTAL (5 inputs in 1 row) */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-5 gap-2.5 items-end">
           <div>
             <label className="block text-[11px] font-black text-slate-700 uppercase mb-1">PKG:</label>
             <input
@@ -641,27 +687,6 @@ export const InwardCreate = () => {
               value={formatCurrency((Number(itemForm.toPayAmount) || 0) + (Number(itemForm.tbbAmount) || 0) + (Number(itemForm.paidAmount) || 0))}
               className="w-full px-2 py-1.5 bg-slate-200/80 border border-slate-300 rounded text-xs font-black text-[#1e295b] text-right"
             />
-          </div>
-
-          <div className="flex space-x-1.5">
-            <button
-              type="button"
-              onClick={handleAddOrUpdateLR}
-              className="w-full inline-flex items-center justify-center space-x-1 bg-sky-600 hover:bg-sky-700 text-white font-black py-1.5 px-3 rounded text-xs shadow-xs transition-colors uppercase tracking-wider cursor-pointer"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>{editingIndex !== null ? 'Update LR' : 'Add LR'}</span>
-            </button>
-            {editingIndex !== null && (
-              <button
-                type="button"
-                onClick={resetForm}
-                className="p-1.5 bg-slate-200 text-slate-700 rounded hover:bg-slate-300 cursor-pointer"
-                title="Cancel Edit"
-              >
-                <RotateCcw className="w-3.5 h-3.5" />
-              </button>
-            )}
           </div>
         </div>
       </fieldset>

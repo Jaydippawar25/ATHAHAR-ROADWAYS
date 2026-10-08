@@ -507,7 +507,7 @@ export const OutwardCreate = () => {
           </div>
         </div>
 
-        {/* Row 2: DELIVERY PERSON, CT TO, CONSIGNER, CONSIGNEE */}
+        {/* Row 2: DELIVERY PERSON, CONSIGNER, CONSIGNEE, CT TO */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 items-end">
           <div>
             <label className="block text-[11px] font-black text-emerald-800 uppercase mb-1">DELIVERY PERSON:</label>
@@ -529,32 +529,6 @@ export const OutwardCreate = () => {
                 onClick={() => handleOpenQuickAdd('deliveryPersons', 'Delivery Person', 'deliveryPersonName', false)}
                 className="px-1.5 py-1.5 bg-emerald-200 hover:bg-emerald-300 border border-emerald-300 rounded font-black text-xs text-emerald-900 transition-colors shadow-2xs flex-shrink-0 cursor-pointer"
                 title="Quick Add Delivery Person"
-              >
-                ...
-              </button>
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-[11px] font-black text-slate-700 uppercase mb-1">CT TO:</label>
-            <div className="flex items-center space-x-1 min-w-0">
-              <select
-                name="ctTo"
-                value={itemForm.ctTo}
-                onChange={handleItemChange}
-                className="w-full px-2 py-1.5 bg-white border border-slate-300 rounded text-xs font-bold text-[#1e295b] truncate min-w-0"
-              >
-                {masters.stations.map((st) => (
-                  <option key={st.id} value={st.name}>
-                    {st.name}
-                  </option>
-                ))}
-              </select>
-              <button
-                type="button"
-                onClick={() => handleOpenQuickAdd('stations', 'Destination Station', 'ctTo', false)}
-                className="px-1.5 py-1.5 bg-slate-200 hover:bg-slate-300 border border-slate-300 rounded font-black text-xs text-slate-700 transition-colors shadow-2xs flex-shrink-0 cursor-pointer"
-                title="Quick Add Station"
               >
                 ...
               </button>
@@ -614,10 +588,36 @@ export const OutwardCreate = () => {
               </button>
             </div>
           </div>
+
+          <div>
+            <label className="block text-[11px] font-black text-slate-700 uppercase mb-1">CT TO:</label>
+            <div className="flex items-center space-x-1 min-w-0">
+              <select
+                name="ctTo"
+                value={itemForm.ctTo}
+                onChange={handleItemChange}
+                className="w-full px-2 py-1.5 bg-white border border-slate-300 rounded text-xs font-bold text-[#1e295b] truncate min-w-0"
+              >
+                {masters.stations.map((st) => (
+                  <option key={st.id} value={st.name}>
+                    {st.name}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                onClick={() => handleOpenQuickAdd('stations', 'Destination Station', 'ctTo', false)}
+                className="px-1.5 py-1.5 bg-slate-200 hover:bg-slate-300 border border-slate-300 rounded font-black text-xs text-slate-700 transition-colors shadow-2xs flex-shrink-0 cursor-pointer"
+                title="Quick Add Station"
+              >
+                ...
+              </button>
+            </div>
+          </div>
         </div>
 
-        {/* Row 3: PKG, TO PAY, TBB, PAID, TOTAL, ADD LR (6 inputs in 1 row) */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-6 gap-2.5 items-end">
+        {/* Row 3: PKG, TO PAY, TBB, PAID, TOTAL (5 inputs in 1 row) */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-5 gap-2.5 items-end">
           <div>
             <label className="block text-[11px] font-black text-slate-700 uppercase mb-1">PKG:</label>
             <input
@@ -686,27 +686,6 @@ export const OutwardCreate = () => {
               value={formatCurrency((Number(itemForm.toPayAmount) || 0) + (Number(itemForm.tbbAmount) || 0) + (Number(itemForm.paidAmount) || 0))}
               className="w-full px-2 py-1.5 bg-slate-200/80 border border-slate-300 rounded text-xs font-black text-[#1e295b] text-right"
             />
-          </div>
-
-          <div className="flex space-x-1.5">
-            <button
-              type="button"
-              onClick={handleAddOrUpdateLR}
-              className="w-full inline-flex items-center justify-center space-x-1 bg-sky-600 hover:bg-sky-700 text-white font-black py-1.5 px-3 rounded text-xs shadow-xs transition-colors uppercase tracking-wider cursor-pointer"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>{editingIndex !== null ? 'Update LR' : 'Add LR'}</span>
-            </button>
-            {editingIndex !== null && (
-              <button
-                type="button"
-                onClick={resetForm}
-                className="p-1.5 bg-slate-200 text-slate-700 rounded hover:bg-slate-300 cursor-pointer"
-                title="Cancel Edit"
-              >
-                <RotateCcw className="w-3.5 h-3.5" />
-              </button>
-            )}
           </div>
         </div>
       </fieldset>

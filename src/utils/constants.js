@@ -33,5 +33,10 @@ export const INITIAL_MASTERS = {
   deliveryPersons: [
     { id: 'dp-1', name: 'SURESH PATIL', phone: '9811223344', active: true },
     { id: 'dp-2', name: 'MOHAMMED RAFI', phone: '9811223355', active: true },
-  ]
+  ],
+  owners: [
+    { id: 'ow-1', name: 'AHMED KHAN', phone: '9876543220', active: true },
+    { id: 'ow-2', name: 'SULTAN ENTERPRISES', phone: '9876543221', active: true },
+    { id: 'ow-3', name: 'RAJESH PATEL', phone: '9876543222', active: true },
+  ],
 };

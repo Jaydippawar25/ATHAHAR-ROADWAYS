@@ -62,6 +62,7 @@ export const InwardList = () => {
     { label: 'Inward No.', key: 'inwardNo' },
     { label: 'Date', key: 'date', type: 'date' },
     { label: 'Vehicle No.', key: 'vehicleNo' },
+    { label: 'Vehicle Owner', key: 'ownerName' },
     { label: 'From', key: 'from' },
     { label: 'Memo No.', key: 'memoNo' },
     { label: 'Total PKG', key: 'totalQty' },
@@ -227,6 +228,15 @@ export const InwardList = () => {
                   type="text"
                   value={editFormData.vehicleNo || ''}
                   onChange={(e) => setEditFormData({ ...editFormData, vehicleNo: e.target.value })}
+                  className="w-full px-3 py-2 border rounded-lg text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Vehicle Owner</label>
+                <input
+                  type="text"
+                  value={editFormData.ownerName || ''}
+                  onChange={(e) => setEditFormData({ ...editFormData, ownerName: e.target.value })}
                   className="w-full px-3 py-2 border rounded-lg text-sm"
                 />
               </div>
