@@ -885,14 +885,6 @@ export const OutwardCreate = () => {
 
           <button
             type="button"
-            onClick={resetForm}
-            className="px-3.5 py-2 bg-slate-300 hover:bg-slate-400 text-slate-800 font-extrabold rounded text-xs transition-colors"
-          >
-            Modify
-          </button>
-
-          <button
-            type="button"
             onClick={() => navigate('/outward')}
             className="px-3.5 py-2 bg-rose-100 hover:bg-rose-200 text-rose-800 font-extrabold rounded text-xs transition-colors cursor-pointer"
           >
