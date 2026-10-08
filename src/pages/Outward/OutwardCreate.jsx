@@ -76,6 +76,12 @@ export const OutwardCreate = () => {
 
   const handleItemChange = (e) => {
     const { name, value } = e.target;
+    if (name === 'pkg') {
+      if (value !== '' && !/^\d*$/.test(value)) return;
+    }
+    if (['toPayAmount', 'tbbAmount', 'paidAmount'].includes(name)) {
+      if (value !== '' && !/^\d*\.?\d*$/.test(value)) return;
+    }
     setItemForm((prev) => ({ ...prev, [name]: value }));
   };
 
@@ -615,12 +621,13 @@ export const OutwardCreate = () => {
           <div>
             <label className="block text-[11px] font-black text-slate-700 uppercase mb-1">PKG:</label>
             <input
-              type="number"
-              min="1"
-              step="1"
+              type="text"
+              inputMode="numeric"
               name="pkg"
               value={itemForm.pkg}
               onChange={handleItemChange}
+              onWheel={(e) => e.target.blur()}
+              onKeyDown={(e) => (e.key === 'ArrowUp' || e.key === 'ArrowDown') && e.preventDefault()}
               placeholder="Qty"
               className="w-full px-2 py-1.5 bg-white border border-slate-300 rounded text-xs font-bold text-center placeholder-slate-400"
             />
@@ -629,12 +636,13 @@ export const OutwardCreate = () => {
           <div>
             <label className="block text-[11px] font-black text-slate-700 uppercase mb-1">TO PAY:</label>
             <input
-              type="number"
-              min="0"
-              step="any"
+              type="text"
+              inputMode="decimal"
               name="toPayAmount"
               value={itemForm.toPayAmount}
               onChange={handleItemChange}
+              onWheel={(e) => e.target.blur()}
+              onKeyDown={(e) => (e.key === 'ArrowUp' || e.key === 'ArrowDown') && e.preventDefault()}
               placeholder="0.00"
               className="w-full px-2 py-1.5 bg-white border border-slate-300 rounded text-xs font-black text-amber-900 placeholder-slate-400"
             />
@@ -643,12 +651,13 @@ export const OutwardCreate = () => {
           <div>
             <label className="block text-[11px] font-black text-slate-700 uppercase mb-1">TBB:</label>
             <input
-              type="number"
-              min="0"
-              step="any"
+              type="text"
+              inputMode="decimal"
               name="tbbAmount"
               value={itemForm.tbbAmount}
               onChange={handleItemChange}
+              onWheel={(e) => e.target.blur()}
+              onKeyDown={(e) => (e.key === 'ArrowUp' || e.key === 'ArrowDown') && e.preventDefault()}
               placeholder="0.00"
               className="w-full px-2 py-1.5 bg-white border border-slate-300 rounded text-xs font-black text-sky-900 placeholder-slate-400"
             />
@@ -657,12 +666,13 @@ export const OutwardCreate = () => {
           <div>
             <label className="block text-[11px] font-black text-slate-700 uppercase mb-1">PAID:</label>
             <input
-              type="number"
-              min="0"
-              step="any"
+              type="text"
+              inputMode="decimal"
               name="paidAmount"
               value={itemForm.paidAmount || ''}
               onChange={handleItemChange}
+              onWheel={(e) => e.target.blur()}
+              onKeyDown={(e) => (e.key === 'ArrowUp' || e.key === 'ArrowDown') && e.preventDefault()}
               placeholder="0.00"
               className="w-full px-2 py-1.5 bg-white border border-slate-300 rounded text-xs font-black text-emerald-900 placeholder-slate-400"
             />
