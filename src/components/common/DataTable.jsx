@@ -20,6 +20,8 @@ export const DataTable = ({
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [dateFilter, setDateFilter] = useState('ALL');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
   const [stationFilter, setStationFilter] = useState('ALL');
   const [statusFilter, setStatusFilter] = useState('ALL');
 
@@ -61,6 +63,9 @@ export const DataTable = ({
           const todayObj = new Date();
           const isSameMonth = rowDateObj.getMonth() === todayObj.getMonth() && rowDateObj.getFullYear() === todayObj.getFullYear();
           if (!isSameMonth) return false;
+        } else if (dateFilter === 'CUSTOM') {
+          if (startDate && rowDateStrClean < startDate) return false;
+          if (endDate && rowDateStrClean > endDate) return false;
         }
       }
     }
@@ -115,7 +120,7 @@ export const DataTable = ({
       {/* Table Filter Controls Header Bar (Matching media_1791444487889.png) */}
       <div className="px-4 py-3 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center gap-4 text-xs font-bold text-slate-700">
         {/* Date Filter */}
-        <div className="flex items-center space-x-2">
+        <div className="flex flex-wrap items-center gap-2">
           <label className="text-slate-600 font-bold">Date:</label>
           <select
             value={dateFilter}
@@ -126,7 +131,27 @@ export const DataTable = ({
             <option value="TODAY">Today</option>
             <option value="THIS_WEEK">This Week</option>
             <option value="THIS_MONTH">This Month</option>
+            <option value="CUSTOM">Custom Date</option>
           </select>
+
+          {dateFilter === 'CUSTOM' && (
+            <div className="flex items-center space-x-2 bg-white px-2 py-1 border border-slate-300 rounded-lg shadow-2xs">
+              <span className="text-slate-500 text-[11px] font-bold">From:</span>
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="px-1.5 py-0.5 border border-slate-200 rounded text-xs font-semibold text-slate-800"
+              />
+              <span className="text-slate-500 text-[11px] font-bold">To:</span>
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="px-1.5 py-0.5 border border-slate-200 rounded text-xs font-semibold text-slate-800"
+              />
+            </div>
+          )}
         </div>
 
         {/* Station Filter */}
