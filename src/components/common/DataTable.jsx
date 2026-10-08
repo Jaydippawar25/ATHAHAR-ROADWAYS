@@ -19,13 +19,69 @@ export const DataTable = ({
   showTotal = true,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [dateFilter, setDateFilter] = useState('ALL');
+  const [stationFilter, setStationFilter] = useState('ALL');
+  const [statusFilter, setStatusFilter] = useState('ALL');
+
+  // Extract station options dynamically from data rows
+  const stationOptions = Array.from(
+    new Set(
+      data
+        .flatMap((row) => [row.from, row.ctTo, row.toStation, row.station, row.fromStation])
+        .filter(Boolean)
+    )
+  );
 
   const filteredData = data.filter((row) => {
-    if (!searchTerm.trim()) return true;
-    const term = searchTerm.toLowerCase();
-    return Object.values(row).some((val) =>
-      String(val || '').toLowerCase().includes(term)
-    );
+    // 1. Search term filter
+    if (searchTerm.trim()) {
+      const term = searchTerm.toLowerCase();
+      const matchesSearch = Object.values(row).some((val) =>
+        String(val || '').toLowerCase().includes(term)
+      );
+      if (!matchesSearch) return false;
+    }
+
+    // 2. Date Filter
+    if (dateFilter !== 'ALL') {
+      const rowDateStr = row.date || row.inwardDate || row.outwardDate || row.createdAt;
+      if (rowDateStr) {
+        const rowDateStrClean = String(rowDateStr).split('T')[0];
+        const todayStr = new Date().toISOString().split('T')[0];
+
+        if (dateFilter === 'TODAY') {
+          if (rowDateStrClean !== todayStr) return false;
+        } else if (dateFilter === 'THIS_WEEK') {
+          const rowDateObj = new Date(rowDateStrClean);
+          const todayObj = new Date();
+          const diffDays = (todayObj - rowDateObj) / (1000 * 60 * 60 * 24);
+          if (diffDays < 0 || diffDays > 7) return false;
+        } else if (dateFilter === 'THIS_MONTH') {
+          const rowDateObj = new Date(rowDateStrClean);
+          const todayObj = new Date();
+          const isSameMonth = rowDateObj.getMonth() === todayObj.getMonth() && rowDateObj.getFullYear() === todayObj.getFullYear();
+          if (!isSameMonth) return false;
+        }
+      }
+    }
+
+    // 3. Station Filter
+    if (stationFilter !== 'ALL') {
+      const rowStation = row.from || row.ctTo || row.toStation || row.station || row.fromStation;
+      if (String(rowStation || '').toLowerCase() !== String(stationFilter).toLowerCase()) {
+        return false;
+      }
+    }
+
+    // 4. Status Filter
+    if (statusFilter !== 'ALL') {
+      const rowStatus = row.status || 'PENDING';
+      if (String(rowStatus).toUpperCase() !== String(statusFilter).toUpperCase()) {
+        return false;
+      }
+    }
+
+    return true;
   });
 
   const allSelected =
@@ -55,9 +111,59 @@ export const DataTable = ({
   const labelIndex = firstTotalIndex > 0 ? firstTotalIndex - 1 : 0;
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+    <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden space-y-0">
+      {/* Table Filter Controls Header Bar (Matching media_1791444487889.png) */}
+      <div className="px-4 py-3 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center gap-4 text-xs font-bold text-slate-700">
+        {/* Date Filter */}
+        <div className="flex items-center space-x-2">
+          <label className="text-slate-600 font-bold">Date:</label>
+          <select
+            value={dateFilter}
+            onChange={(e) => setDateFilter(e.target.value)}
+            className="px-3 py-1.5 bg-white border border-slate-300 rounded-lg font-bold text-slate-800 focus:outline-none focus:ring-1 focus:ring-sky-500 shadow-2xs"
+          >
+            <option value="ALL">All Dates</option>
+            <option value="TODAY">Today</option>
+            <option value="THIS_WEEK">This Week</option>
+            <option value="THIS_MONTH">This Month</option>
+          </select>
+        </div>
+
+        {/* Station Filter */}
+        <div className="flex items-center space-x-2">
+          <label className="text-slate-600 font-bold">Station:</label>
+          <select
+            value={stationFilter}
+            onChange={(e) => setStationFilter(e.target.value)}
+            className="px-3 py-1.5 bg-white border border-slate-300 rounded-lg font-bold text-slate-800 focus:outline-none focus:ring-1 focus:ring-sky-500 shadow-2xs"
+          >
+            <option value="ALL">All Stations</option>
+            {stationOptions.map((st) => (
+              <option key={st} value={st}>
+                {st}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Status Filter */}
+        <div className="flex items-center space-x-2">
+          <label className="text-slate-600 font-bold">Status:</label>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="px-3 py-1.5 bg-white border border-slate-300 rounded-lg font-bold text-slate-800 focus:outline-none focus:ring-1 focus:ring-sky-500 shadow-2xs"
+          >
+            <option value="ALL">All Status</option>
+            <option value="PENDING">PENDING</option>
+            <option value="DELIVERED">DELIVERED</option>
+            <option value="DISPATCHED">DISPATCHED</option>
+          </select>
+        </div>
+      </div>
+
       {/* Table Toolbar */}
-      <div className="p-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50">
+      <div className="p-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white">
         {searchable && (
           <div className="relative flex-1 max-w-md">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -66,7 +172,7 @@ export const DataTable = ({
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder={searchPlaceholder}
-              className="w-full pl-9 pr-4 py-2 bg-white border border-slate-300 rounded-lg text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
+              className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-300 rounded-lg text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
             />
           </div>
         )}
