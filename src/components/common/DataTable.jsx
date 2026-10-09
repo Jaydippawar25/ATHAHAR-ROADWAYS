@@ -22,6 +22,8 @@ export const DataTable = ({
   const [dateFilter, setDateFilter] = useState('ALL');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [stationFilter, setStationFilter] = useState('ALL');
+  const [statusFilter, setStatusFilter] = useState('ALL');
   const [consignerFilter, setConsignerFilter] = useState('ALL');
   const [consigneeFilter, setConsigneeFilter] = useState('ALL');
 
