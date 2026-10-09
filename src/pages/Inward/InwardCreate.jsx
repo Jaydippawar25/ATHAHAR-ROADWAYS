@@ -32,8 +32,8 @@ export const InwardCreate = () => {
     pkg: '',
     invoiceNo: '',
     ctTo: masters.stations[0]?.name || '',
-    consignorName: masters.consignors[0]?.name || '',
-    consigneeName: masters.consignees[0]?.name || '',
+    consignorName: '',
+    consigneeName: '',
     toPayAmount: '',
     tbbAmount: '',
     paidAmount: '',
@@ -131,8 +131,8 @@ export const InwardCreate = () => {
       pkg: '',
       invoiceNo: '',
       ctTo: masters.stations[0]?.name || '',
-      consignorName: masters.consignors[0]?.name || '',
-      consigneeName: masters.consignees[0]?.name || '',
+      consignorName: '',
+      consigneeName: '',
       toPayAmount: '',
       tbbAmount: '',
       paidAmount: '',
@@ -538,56 +538,38 @@ export const InwardCreate = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 items-end">
           <div>
             <label className="block text-[11px] font-black text-slate-700 uppercase mb-1">CONSIGNER:</label>
-            <div className="flex items-center space-x-1 min-w-0">
-              <select
-                name="consignorName"
-                value={itemForm.consignorName}
-                onChange={handleItemChange}
-                className="w-full px-2 py-1.5 bg-white border border-slate-300 rounded text-xs font-bold text-slate-800 truncate min-w-0"
-              >
-                <option value="">Select Consignor...</option>
-                {masters.consignors.map((c) => (
-                  <option key={c.id} value={c.name}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-              <button
-                type="button"
-                onClick={() => handleOpenQuickAdd('consignors', 'Consignor', 'consignorName', false)}
-                className="px-1.5 py-1.5 bg-slate-200 hover:bg-slate-300 border border-slate-300 rounded font-black text-xs text-slate-700 transition-colors shadow-2xs flex-shrink-0 cursor-pointer"
-                title="Quick Add Consignor"
-              >
-                ...
-              </button>
-            </div>
+            <input
+              type="text"
+              name="consignorName"
+              value={itemForm.consignorName}
+              onChange={handleItemChange}
+              list="consignors-list"
+              placeholder="Enter Consigner"
+              className="w-full px-2 py-1.5 bg-white border border-slate-300 rounded text-xs font-bold text-slate-800 uppercase placeholder-slate-400"
+            />
+            <datalist id="consignors-list">
+              {masters.consignors?.map((c) => (
+                <option key={c.id} value={c.name} />
+              ))}
+            </datalist>
           </div>
 
           <div>
             <label className="block text-[11px] font-black text-slate-700 uppercase mb-1">CONSIGNEE:</label>
-            <div className="flex items-center space-x-1 min-w-0">
-              <select
-                name="consigneeName"
-                value={itemForm.consigneeName}
-                onChange={handleItemChange}
-                className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded text-xs font-bold text-slate-800 truncate min-w-0"
-              >
-                <option value="">Select Consignee...</option>
-                {masters.consignees.map((c) => (
-                  <option key={c.id} value={c.name}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-              <button
-                type="button"
-                onClick={() => handleOpenQuickAdd('consignees', 'Consignee', 'consigneeName', false)}
-                className="px-1.5 py-1.5 bg-slate-200 hover:bg-slate-300 border border-slate-300 rounded font-black text-xs text-slate-700 transition-colors shadow-2xs flex-shrink-0 cursor-pointer"
-                title="Quick Add Consignee"
-              >
-                ...
-              </button>
-            </div>
+            <input
+              type="text"
+              name="consigneeName"
+              value={itemForm.consigneeName}
+              onChange={handleItemChange}
+              list="consignees-list"
+              placeholder="Enter Consignee"
+              className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded text-xs font-bold text-slate-800 uppercase placeholder-slate-400"
+            />
+            <datalist id="consignees-list">
+              {masters.consignees?.map((c) => (
+                <option key={c.id} value={c.name} />
+              ))}
+            </datalist>
           </div>
 
           <div>
