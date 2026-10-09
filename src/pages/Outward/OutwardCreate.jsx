@@ -20,7 +20,7 @@ export const OutwardCreate = () => {
     transporterName: masters.transporters[0]?.name || '',
     fromStation: masters.stations[0]?.name || 'SANGLI',
     vehicleNo: masters.vehicles[0]?.vehicleNo || '',
-    memoNo: '',
+    deliveryPersonName: masters.deliveryPersons[0]?.name || '',
     driverName: masters.drivers[0]?.name || '',
   });
 
@@ -105,7 +105,7 @@ export const OutwardCreate = () => {
       const newAdditions = unselectedFiltered.map((item, idx) => ({
         ...item,
         srNo: selectedItems.length + idx + 1,
-        deliveryPersonName: itemForm.deliveryPersonName || masters.deliveryPersons[0]?.name || '',
+        deliveryPersonName: headerData.deliveryPersonName || masters.deliveryPersons[0]?.name || '',
       }));
       setSelectedItems((prev) => [...prev, ...newAdditions]);
     } else if (filteredPendingStock.length > 0) {
@@ -204,7 +204,7 @@ export const OutwardCreate = () => {
       const newItem = {
         ...item,
         srNo: selectedItems.length + 1,
-        deliveryPersonName: itemForm.deliveryPersonName || masters.deliveryPersons[0]?.name || 'SANTOSH SAI RAM PALUS',
+        deliveryPersonName: headerData.deliveryPersonName || masters.deliveryPersons[0]?.name || 'SANTOSH SAI RAM PALUS',
       };
       setSelectedItems((prev) => [...prev, newItem]);
     }
@@ -484,17 +484,31 @@ export const OutwardCreate = () => {
           </div>
 
           <div>
-            <label className="block text-[11px] font-black text-slate-700 uppercase mb-1">
-              MEMO NO.
+            <label className="block text-[11px] font-black text-emerald-800 uppercase mb-1">
+              DELIVERY PERSON *
             </label>
-            <input
-              type="text"
-              name="memoNo"
-              value={headerData.memoNo}
-              onChange={handleHeaderChange}
-              placeholder="E.G. MM-9026"
-              className="w-full px-2.5 py-1.5 border border-slate-300 bg-white rounded text-xs font-bold text-slate-800 uppercase focus:ring-1 focus:ring-sky-500 placeholder-slate-400"
-            />
+            <div className="flex items-center space-x-1 min-w-0">
+              <select
+                name="deliveryPersonName"
+                value={headerData.deliveryPersonName}
+                onChange={handleHeaderChange}
+                className="flex-1 px-2.5 py-1.5 border border-emerald-300 bg-emerald-50 rounded text-xs font-extrabold text-emerald-900 focus:ring-1 focus:ring-emerald-500 min-w-0 truncate"
+              >
+                {masters.deliveryPersons.map((dp) => (
+                  <option key={dp.id} value={dp.name}>
+                    {dp.name}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                onClick={() => handleOpenQuickAdd('deliveryPersons', 'Delivery Person', 'deliveryPersonName', true)}
+                className="px-2 py-1.5 bg-emerald-200 hover:bg-emerald-300 border border-emerald-300 rounded font-black text-xs text-emerald-900 transition-colors shadow-2xs flex-shrink-0 cursor-pointer"
+                title="Quick Add Delivery Person"
+              >
+                ...
+              </button>
+            </div>
           </div>
 
           <div>
