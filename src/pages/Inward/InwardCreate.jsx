@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
@@ -36,8 +36,46 @@ export const InwardCreate = () => {
     consigneeName: '',
     toPayAmount: '',
     tbbAmount: '',
-    paidAmount: '',
   });
+
+  const fieldRefs = useRef([]);
+
+  const focusLRNoInput = () => {
+    setTimeout(() => {
+      if (fieldRefs.current[0]) {
+        fieldRefs.current[0].focus();
+        if (typeof fieldRefs.current[0].select === 'function') {
+          fieldRefs.current[0].select();
+        }
+      }
+    }, 50);
+  };
+
+  useEffect(() => {
+    focusLRNoInput();
+  }, []);
+
+  const handleKeyDown = (e, index) => {
+    if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+      e.preventDefault();
+      return;
+    }
+    if (e.key === 'Enter' || (e.key === 'Tab' && !e.shiftKey)) {
+      if (index >= 9) {
+        e.preventDefault();
+        handleAddOrUpdateLR();
+      } else {
+        e.preventDefault();
+        const nextField = fieldRefs.current[index + 1];
+        if (nextField) {
+          nextField.focus();
+          if (typeof nextField.select === 'function') {
+            nextField.select();
+          }
+        }
+      }
+    }
+  };
 
   // Array of staged LR items (Multi-LR entry support)
   const [stagedItems, setStagedItems] = useState([]);
@@ -148,6 +186,7 @@ export const InwardCreate = () => {
     const cleanLR = String(itemForm.lrNo).trim();
     if (!cleanLR) {
       setError('Please enter a valid LR No.');
+      focusLRNoInput();
       return;
     }
 
@@ -175,12 +214,14 @@ export const InwardCreate = () => {
     }
 
     resetForm();
+    focusLRNoInput();
   };
 
   const handleEditStagedItem = (index) => {
     const item = stagedItems[index];
     setItemForm({ ...item });
     setEditingIndex(index);
+    focusLRNoInput();
   };
 
   const handleDeleteStagedItem = (index) => {
@@ -493,6 +534,7 @@ export const InwardCreate = () => {
             <input
               type="text"
               readOnly
+              tabIndex={-1}
               value={editingIndex !== null ? stagedItems[editingIndex].srNo : stagedItems.length + 1}
               className="w-full px-2 py-1.5 bg-slate-200 border border-slate-300 rounded text-xs font-bold text-center text-slate-600"
             />
@@ -501,11 +543,14 @@ export const InwardCreate = () => {
           <div>
             <label className="block text-[11px] font-black text-[#1e295b] uppercase mb-1">LR NO: *</label>
             <input
+              ref={(el) => (fieldRefs.current[0] = el)}
+              onKeyDown={(e) => handleKeyDown(e, 0)}
               type="text"
               name="lrNo"
               value={itemForm.lrNo}
               onChange={handleItemChange}
               placeholder="E.G. 13941"
+              autoFocus
               className="w-full px-2.5 py-1.5 bg-sky-50/80 border border-slate-300 rounded text-xs font-black text-[#1e295b] uppercase focus:ring-1 focus:ring-sky-500 placeholder-slate-400"
             />
           </div>
@@ -513,6 +558,8 @@ export const InwardCreate = () => {
           <div>
             <label className="block text-[11px] font-black text-slate-700 uppercase mb-1">DATE:</label>
             <input
+              ref={(el) => (fieldRefs.current[1] = el)}
+              onKeyDown={(e) => handleKeyDown(e, 1)}
               type="date"
               name="date"
               value={itemForm.date}
@@ -524,6 +571,8 @@ export const InwardCreate = () => {
           <div>
             <label className="block text-[11px] font-black text-slate-700 uppercase mb-1">INVOICE NO:</label>
             <input
+              ref={(el) => (fieldRefs.current[2] = el)}
+              onKeyDown={(e) => handleKeyDown(e, 2)}
               type="text"
               name="invoiceNo"
               value={itemForm.invoiceNo}
@@ -539,6 +588,8 @@ export const InwardCreate = () => {
           <div>
             <label className="block text-[11px] font-black text-slate-700 uppercase mb-1">CONSIGNER:</label>
             <input
+              ref={(el) => (fieldRefs.current[3] = el)}
+              onKeyDown={(e) => handleKeyDown(e, 3)}
               type="text"
               name="consignorName"
               value={itemForm.consignorName}
@@ -557,6 +608,8 @@ export const InwardCreate = () => {
           <div>
             <label className="block text-[11px] font-black text-slate-700 uppercase mb-1">CONSIGNEE:</label>
             <input
+              ref={(el) => (fieldRefs.current[4] = el)}
+              onKeyDown={(e) => handleKeyDown(e, 4)}
               type="text"
               name="consigneeName"
               value={itemForm.consigneeName}
@@ -576,6 +629,8 @@ export const InwardCreate = () => {
             <label className="block text-[11px] font-black text-slate-700 uppercase mb-1">CT TO:</label>
             <div className="flex items-center space-x-1 min-w-0">
               <select
+                ref={(el) => (fieldRefs.current[5] = el)}
+                onKeyDown={(e) => handleKeyDown(e, 5)}
                 name="ctTo"
                 value={itemForm.ctTo}
                 onChange={handleItemChange}
@@ -589,6 +644,7 @@ export const InwardCreate = () => {
               </select>
               <button
                 type="button"
+                tabIndex={-1}
                 onClick={() => handleOpenQuickAdd('stations', 'Destination Station', 'ctTo', false)}
                 className="px-1.5 py-1.5 bg-slate-200 hover:bg-slate-300 border border-slate-300 rounded font-black text-xs text-slate-700 transition-colors shadow-2xs flex-shrink-0 cursor-pointer"
                 title="Quick Add Station"
@@ -604,13 +660,14 @@ export const InwardCreate = () => {
           <div>
             <label className="block text-[11px] font-black text-slate-700 uppercase mb-1">PKG:</label>
             <input
+              ref={(el) => (fieldRefs.current[6] = el)}
+              onKeyDown={(e) => handleKeyDown(e, 6)}
               type="text"
               inputMode="numeric"
               name="pkg"
               value={itemForm.pkg}
               onChange={handleItemChange}
               onWheel={(e) => e.target.blur()}
-              onKeyDown={(e) => (e.key === 'ArrowUp' || e.key === 'ArrowDown') && e.preventDefault()}
               placeholder="Qty"
               className="w-full px-2 py-1.5 bg-white border border-slate-300 rounded text-xs font-bold text-center placeholder-slate-400"
             />
@@ -619,13 +676,14 @@ export const InwardCreate = () => {
           <div>
             <label className="block text-[11px] font-black text-slate-700 uppercase mb-1">TO PAY:</label>
             <input
+              ref={(el) => (fieldRefs.current[7] = el)}
+              onKeyDown={(e) => handleKeyDown(e, 7)}
               type="text"
               inputMode="decimal"
               name="toPayAmount"
               value={itemForm.toPayAmount}
               onChange={handleItemChange}
               onWheel={(e) => e.target.blur()}
-              onKeyDown={(e) => (e.key === 'ArrowUp' || e.key === 'ArrowDown') && e.preventDefault()}
               placeholder="0.00"
               className="w-full px-2 py-1.5 bg-white border border-slate-300 rounded text-xs font-black text-amber-900 placeholder-slate-400"
             />
@@ -634,13 +692,14 @@ export const InwardCreate = () => {
           <div>
             <label className="block text-[11px] font-black text-slate-700 uppercase mb-1">TBB:</label>
             <input
+              ref={(el) => (fieldRefs.current[8] = el)}
+              onKeyDown={(e) => handleKeyDown(e, 8)}
               type="text"
               inputMode="decimal"
               name="tbbAmount"
               value={itemForm.tbbAmount}
               onChange={handleItemChange}
               onWheel={(e) => e.target.blur()}
-              onKeyDown={(e) => (e.key === 'ArrowUp' || e.key === 'ArrowDown') && e.preventDefault()}
               placeholder="0.00"
               className="w-full px-2 py-1.5 bg-white border border-slate-300 rounded text-xs font-black text-sky-900 placeholder-slate-400"
             />
@@ -649,13 +708,14 @@ export const InwardCreate = () => {
           <div>
             <label className="block text-[11px] font-black text-slate-700 uppercase mb-1">PAID:</label>
             <input
+              ref={(el) => (fieldRefs.current[9] = el)}
+              onKeyDown={(e) => handleKeyDown(e, 9)}
               type="text"
               inputMode="decimal"
               name="paidAmount"
               value={itemForm.paidAmount}
               onChange={handleItemChange}
               onWheel={(e) => e.target.blur()}
-              onKeyDown={(e) => (e.key === 'ArrowUp' || e.key === 'ArrowDown') && e.preventDefault()}
               placeholder="0.00"
               className="w-full px-2 py-1.5 bg-white border border-slate-300 rounded text-xs font-black text-emerald-900 placeholder-slate-400"
             />
@@ -664,10 +724,13 @@ export const InwardCreate = () => {
           <div>
             <label className="block text-[11px] font-black text-slate-700 uppercase mb-1">TOTAL:</label>
             <input
+              ref={(el) => (fieldRefs.current[10] = el)}
+              onKeyDown={(e) => handleKeyDown(e, 10)}
               type="text"
               readOnly
+              tabIndex={0}
               value={formatCurrency((Number(itemForm.toPayAmount) || 0) + (Number(itemForm.tbbAmount) || 0) + (Number(itemForm.paidAmount) || 0))}
-              className="w-full px-2 py-1.5 bg-slate-200/80 border border-slate-300 rounded text-xs font-black text-[#1e295b] text-right"
+              className="w-full px-2 py-1.5 bg-slate-200/80 border border-slate-300 rounded text-xs font-black text-[#1e295b] text-right focus:ring-2 focus:ring-sky-500 cursor-pointer"
             />
           </div>
         </div>
