@@ -55,6 +55,9 @@ export const createInward = (headerData, lrItems, currentUser = 'Operator') => {
   const totalTbb = lrItems.reduce((acc, curr) => acc + (Number(curr.tbbAmount) || 0), 0);
   const totalPaid = lrItems.reduce((acc, curr) => acc + (Number(curr.paidAmount) || 0), 0);
 
+  const consignorName = Array.from(new Set(lrItems.map((i) => i.consignorName).filter(Boolean))).join(', ');
+  const consigneeName = Array.from(new Set(lrItems.map((i) => i.consigneeName).filter(Boolean))).join(', ');
+
   const newInwardHeader = {
     id: inwardId,
     inwardNo: headerData.inwardNo || `INW-${inwards.length + 9000}`,
@@ -65,6 +68,8 @@ export const createInward = (headerData, lrItems, currentUser = 'Operator') => {
     ownerName: headerData.ownerName || '',
     from: headerData.from || 'MUMBAI',
     memoNo: headerData.memoNo || '',
+    consignorName,
+    consigneeName,
     totalQty,
     totalToPay,
     totalTbb,

@@ -58,9 +58,39 @@ export const InwardList = () => {
     setDeleteType(null);
   };
 
+  // Enrich inwards with consignor and consignee names derived from items
+  const enrichedInwards = inwards.map((inw) => {
+    const items = inwardItems.filter((item) => item.inwardId === inw.id || item.inwardNo === inw.inwardNo);
+    const consignors = Array.from(new Set(items.map((i) => i.consignorName).filter(Boolean))).join(', ');
+    const consignees = Array.from(new Set(items.map((i) => i.consigneeName).filter(Boolean))).join(', ');
+    return {
+      ...inw,
+      consignorName: inw.consignorName || consignors || '-',
+      consigneeName: inw.consigneeName || consignees || '-',
+    };
+  });
+
   const inwardHeaderColumns = [
     { label: 'Inward No.', key: 'inwardNo' },
     { label: 'Date', key: 'date', type: 'date' },
+    {
+      label: 'CONSIGNER',
+      key: 'consignorName',
+      render: (row) => (
+        <span className="font-semibold text-slate-800 max-w-[150px] truncate block" title={row.consignorName}>
+          {row.consignorName || '-'}
+        </span>
+      ),
+    },
+    {
+      label: 'CONSIGNEE',
+      key: 'consigneeName',
+      render: (row) => (
+        <span className="font-semibold text-slate-800 max-w-[150px] truncate block" title={row.consigneeName}>
+          {row.consigneeName || '-'}
+        </span>
+      ),
+    },
     { label: 'Vehicle No.', key: 'vehicleNo' },
     { label: 'Vehicle Owner', key: 'ownerName' },
     { label: 'From', key: 'from' },
@@ -178,8 +208,8 @@ export const InwardList = () => {
       {activeTab === 'transactions' ? (
         <DataTable
           columns={inwardHeaderColumns}
-          data={inwards}
-          searchPlaceholder="Search Inward No, Vehicle, Memo..."
+          data={enrichedInwards}
+          searchPlaceholder="Search Inward No, Vehicle, Memo, Consigner, Consignee..."
           onExportExcel={(data) => exportToExcel(data, 'Inward_Receipts', inwardHeaderColumns)}
           onExportPDF={(data) => exportToPDF('Inward Receipts Summary', inwardHeaderColumns, data, 'Inward_Receipts')}
         />

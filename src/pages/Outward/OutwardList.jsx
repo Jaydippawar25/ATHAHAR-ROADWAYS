@@ -57,9 +57,39 @@ export const OutwardList = () => {
     setDeleteType(null);
   };
 
+  // Enrich outwards with consignor and consignee names derived from items
+  const enrichedOutwards = outwards.map((out) => {
+    const items = outwardItems.filter((item) => item.outwardId === out.id || item.outwardNo === out.outwardNo);
+    const consignors = Array.from(new Set(items.map((i) => i.consignorName).filter(Boolean))).join(', ');
+    const consignees = Array.from(new Set(items.map((i) => i.consigneeName).filter(Boolean))).join(', ');
+    return {
+      ...out,
+      consignorName: out.consignorName || consignors || '-',
+      consigneeName: out.consigneeName || consignees || '-',
+    };
+  });
+
   const outwardHeaderColumns = [
     { label: 'Outward No.', key: 'outwardNo' },
     { label: 'Date', key: 'date', type: 'date' },
+    {
+      label: 'CONSIGNER',
+      key: 'consignorName',
+      render: (row) => (
+        <span className="font-semibold text-slate-800 max-w-[150px] truncate block" title={row.consignorName}>
+          {row.consignorName || '-'}
+        </span>
+      ),
+    },
+    {
+      label: 'CONSIGNEE',
+      key: 'consigneeName',
+      render: (row) => (
+        <span className="font-semibold text-slate-800 max-w-[150px] truncate block" title={row.consigneeName}>
+          {row.consigneeName || '-'}
+        </span>
+      ),
+    },
     { label: 'Vehicle No.', key: 'vehicleNo' },
     { label: 'Driver Name', key: 'driverName' },
     { label: 'From', key: 'from' },
@@ -178,8 +208,8 @@ export const OutwardList = () => {
       {activeTab === 'transactions' ? (
         <DataTable
           columns={outwardHeaderColumns}
-          data={outwards}
-          searchPlaceholder="Search Outward No, Vehicle, Driver, Memo..."
+          data={enrichedOutwards}
+          searchPlaceholder="Search Outward No, Vehicle, Driver, Memo, Consigner, Consignee..."
           onExportExcel={(data) => exportToExcel(data, 'Outward_Receipts', outwardHeaderColumns)}
           onExportPDF={(data) => exportToPDF('Outward Receipts Summary', outwardHeaderColumns, data, 'Outward_Receipts')}
         />

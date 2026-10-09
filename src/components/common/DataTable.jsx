@@ -22,14 +22,41 @@ export const DataTable = ({
   const [dateFilter, setDateFilter] = useState('ALL');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const [stationFilter, setStationFilter] = useState('ALL');
-  const [statusFilter, setStatusFilter] = useState('ALL');
+  const [consignerFilter, setConsignerFilter] = useState('ALL');
+  const [consigneeFilter, setConsigneeFilter] = useState('ALL');
 
   // Extract station options dynamically from data rows
   const stationOptions = Array.from(
     new Set(
       data
         .flatMap((row) => [row.from, row.ctTo, row.toStation, row.station, row.fromStation])
+        .filter(Boolean)
+    )
+  );
+
+  // Extract consigner & consignee options dynamically from data rows
+  const consignerOptions = Array.from(
+    new Set(
+      data
+        .flatMap((row) => {
+          const val = row.consignorName || row.consignor || row.consigners;
+          if (typeof val === 'string') return val.split(', ');
+          return [];
+        })
+        .map((s) => s.trim())
+        .filter(Boolean)
+    )
+  );
+
+  const consigneeOptions = Array.from(
+    new Set(
+      data
+        .flatMap((row) => {
+          const val = row.consigneeName || row.consignee || row.consignees;
+          if (typeof val === 'string') return val.split(', ');
+          return [];
+        })
+        .map((s) => s.trim())
         .filter(Boolean)
     )
   );
@@ -82,6 +109,22 @@ export const DataTable = ({
     if (statusFilter !== 'ALL') {
       const rowStatus = row.status || 'PENDING';
       if (String(rowStatus).toUpperCase() !== String(statusFilter).toUpperCase()) {
+        return false;
+      }
+    }
+
+    // 5. Consigner Filter
+    if (consignerFilter !== 'ALL') {
+      const rowConsigner = String(row.consignorName || row.consignor || row.consigners || '').toLowerCase();
+      if (!rowConsigner.includes(consignerFilter.toLowerCase())) {
+        return false;
+      }
+    }
+
+    // 6. Consignee Filter
+    if (consigneeFilter !== 'ALL') {
+      const rowConsignee = String(row.consigneeName || row.consignee || row.consignees || '').toLowerCase();
+      if (!rowConsignee.includes(consigneeFilter.toLowerCase())) {
         return false;
       }
     }
@@ -185,6 +228,44 @@ export const DataTable = ({
             <option value="DISPATCHED">DISPATCHED</option>
           </select>
         </div>
+
+        {/* Consigner Filter */}
+        {consignerOptions.length > 0 && (
+          <div className="flex items-center space-x-2">
+            <label className="text-slate-600 font-bold">Consigner:</label>
+            <select
+              value={consignerFilter}
+              onChange={(e) => setConsignerFilter(e.target.value)}
+              className="px-3 py-1.5 bg-white border border-slate-300 rounded-lg font-bold text-slate-800 focus:outline-none focus:ring-1 focus:ring-sky-500 shadow-2xs max-w-[180px] truncate"
+            >
+              <option value="ALL">All Consigners</option>
+              {consignerOptions.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {/* Consignee Filter */}
+        {consigneeOptions.length > 0 && (
+          <div className="flex items-center space-x-2">
+            <label className="text-slate-600 font-bold">Consignee:</label>
+            <select
+              value={consigneeFilter}
+              onChange={(e) => setConsigneeFilter(e.target.value)}
+              className="px-3 py-1.5 bg-white border border-slate-300 rounded-lg font-bold text-slate-800 focus:outline-none focus:ring-1 focus:ring-sky-500 shadow-2xs max-w-[180px] truncate"
+            >
+              <option value="ALL">All Consignees</option>
+              {consigneeOptions.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>
 
       {/* Table Toolbar */}
