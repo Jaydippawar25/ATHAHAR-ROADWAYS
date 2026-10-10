@@ -7,6 +7,7 @@ import { InwardCreate } from '../pages/Inward/InwardCreate';
 import { PendingStock } from '../pages/PendingStock/PendingStock';
 import { OutwardList } from '../pages/Outward/OutwardList';
 import { OutwardCreate } from '../pages/Outward/OutwardCreate';
+import { AllEntries } from '../pages/AllEntries/AllEntries';
 import { Masters } from '../pages/Masters/Masters';
 import { Reports } from '../pages/Reports/Reports';
 import { Settings } from '../pages/Settings/Settings';
@@ -69,6 +70,14 @@ export const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <OutwardCreate />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/all-entries"
+        element={
+          <ProtectedRoute>
+            <AllEntries />
           </ProtectedRoute>
         }
       />
