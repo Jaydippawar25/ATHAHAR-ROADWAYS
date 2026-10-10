@@ -76,7 +76,7 @@ export const OutwardList = () => {
       label: 'CONSIGNER',
       key: 'consignorName',
       render: (row) => (
-        <span className="font-semibold text-slate-800 max-w-[150px] truncate block" title={row.consignorName}>
+        <span className="font-semibold text-slate-800 max-w-[100px] truncate block" title={row.consignorName}>
           {row.consignorName || '-'}
         </span>
       ),
@@ -85,15 +85,47 @@ export const OutwardList = () => {
       label: 'CONSIGNEE',
       key: 'consigneeName',
       render: (row) => (
-        <span className="font-semibold text-slate-800 max-w-[150px] truncate block" title={row.consigneeName}>
+        <span className="font-semibold text-slate-800 max-w-[100px] truncate block" title={row.consigneeName}>
           {row.consigneeName || '-'}
         </span>
       ),
     },
-    { label: 'Vehicle No.', key: 'vehicleNo' },
-    { label: 'Driver Name', key: 'driverName' },
-    { label: 'From', key: 'from' },
-    { label: 'Memo No.', key: 'memoNo' },
+    {
+      label: 'Vehicle No.',
+      key: 'vehicleNo',
+      render: (row) => (
+        <span className="max-w-[85px] truncate block" title={row.vehicleNo}>
+          {row.vehicleNo || '-'}
+        </span>
+      ),
+    },
+    {
+      label: 'Driver Name',
+      key: 'driverName',
+      render: (row) => (
+        <span className="max-w-[85px] truncate block" title={row.driverName}>
+          {row.driverName || '-'}
+        </span>
+      ),
+    },
+    {
+      label: 'From',
+      key: 'from',
+      render: (row) => (
+        <span className="max-w-[75px] truncate block" title={row.from}>
+          {row.from || '-'}
+        </span>
+      ),
+    },
+    {
+      label: 'Memo No.',
+      key: 'memoNo',
+      render: (row) => (
+        <span className="max-w-[70px] truncate block" title={row.memoNo}>
+          {row.memoNo || '-'}
+        </span>
+      ),
+    },
     { label: 'PKG', key: 'totalQty' },
     { label: 'TO PAY', key: 'totalToPay', type: 'currency' },
     { label: 'T.B.B', key: 'totalTbb', type: 'currency' },
@@ -105,14 +137,14 @@ export const OutwardList = () => {
         <div className="flex items-center space-x-1">
           <button
             onClick={() => handleStartEdit(row, 'header')}
-            className="p-1.5 text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 rounded transition-colors"
+            className="p-1 text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 rounded transition-colors"
             title="Edit Outward Receipt"
           >
             <Pencil className="w-4 h-4" />
           </button>
           <button
             onClick={() => handleStartDelete(row, 'header')}
-            className="p-1.5 text-rose-600 hover:text-rose-800 hover:bg-rose-50 rounded transition-colors"
+            className="p-1 text-rose-600 hover:text-rose-800 hover:bg-rose-50 rounded transition-colors"
             title="Delete Outward Receipt"
           >
             <Trash2 className="w-4 h-4" />

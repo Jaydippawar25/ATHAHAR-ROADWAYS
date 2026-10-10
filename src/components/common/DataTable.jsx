@@ -313,10 +313,10 @@ export const DataTable = ({
       {/* Table Container */}
       <div className="w-full overflow-x-auto no-scrollbar">
         <table className="w-full text-left text-xs text-slate-700">
-          <thead className="bg-slate-100 text-slate-600 font-bold border-b border-slate-200 text-[10px] sm:text-[11px] uppercase tracking-tight">
+          <thead className="bg-slate-100 text-slate-700 font-black border-b border-slate-200 text-[10px] uppercase tracking-tight">
             <tr>
               {selectable && (
-                <th className="px-1.5 py-2 w-7 text-center">
+                <th className="px-1 py-1.5 w-6 text-center">
                   <input
                     type="checkbox"
                     checked={allSelected}
@@ -326,7 +326,7 @@ export const DataTable = ({
                 </th>
               )}
               {columns.map((col, idx) => (
-                <th key={idx} className="px-1.5 py-2 whitespace-nowrap">
+                <th key={idx} className="px-1 py-1.5 whitespace-nowrap">
                   {col.label}
                 </th>
               ))}
@@ -337,7 +337,7 @@ export const DataTable = ({
               <tr>
                 <td
                   colSpan={columns.length + (selectable ? 1 : 0)}
-                  className="p-8 text-center text-slate-500 font-medium"
+                  className="p-8 text-center text-slate-500 font-medium text-xs"
                 >
                   No records found.
                 </td>
@@ -351,7 +351,7 @@ export const DataTable = ({
                   }`}
                 >
                   {selectable && (
-                    <td className="px-1.5 py-1.5 text-center">
+                    <td className="px-1 py-1 text-center">
                       <input
                         type="checkbox"
                         checked={selectedIds.includes(row.id)}
@@ -374,7 +374,7 @@ export const DataTable = ({
                     }
 
                     return (
-                      <td key={colIdx} className="px-1.5 py-1.5 font-medium text-slate-800 text-[11px] sm:text-xs">
+                      <td key={colIdx} className="px-1 py-1 font-semibold text-slate-800 text-[11px]">
                         {cellVal ?? '-'}
                       </td>
                     );
@@ -395,13 +395,13 @@ export const DataTable = ({
             }, 0);
 
             return (
-              <tfoot className="bg-sky-50/90 border-t-2 border-slate-300 font-extrabold text-slate-900 text-[11px] sm:text-xs">
+              <tfoot className="bg-sky-50/90 border-t-2 border-slate-300 font-extrabold text-slate-900 text-[11px]">
                 <tr>
-                  {selectable && <td className="px-1.5 py-1.5"></td>}
+                  {selectable && <td className="px-1 py-1"></td>}
                   {columns.map((col, colIdx) => {
                     if (colIdx === labelIndex) {
                       return (
-                        <td key={colIdx} className="px-1.5 py-1.5 text-right font-black tracking-wider uppercase text-slate-900">
+                        <td key={colIdx} className="px-1 py-1 text-right font-black tracking-wider uppercase text-slate-900">
                           TOTAL:
                         </td>
                       );
@@ -416,14 +416,14 @@ export const DataTable = ({
 
                       if (k.includes('pkg') || k.includes('qty')) {
                         return (
-                          <td key={colIdx} className="px-1.5 py-1.5 font-black text-slate-900 whitespace-nowrap">
+                          <td key={colIdx} className="px-1 py-1 font-black text-slate-900 whitespace-nowrap">
                             {sum} Pkgs
                           </td>
                         );
                       }
 
                       return (
-                        <td key={colIdx} className="px-1.5 py-1.5 font-extrabold text-[#1e295b] whitespace-nowrap">
+                        <td key={colIdx} className="px-1 py-1 font-extrabold text-[#1e295b] whitespace-nowrap">
                           {formatCurrency(sum)}
                         </td>
                       );
@@ -431,13 +431,13 @@ export const DataTable = ({
 
                     if (colIdx === columns.length - 1) {
                       return (
-                        <td key={colIdx} className="px-1.5 py-1 font-black text-emerald-900 bg-emerald-100/90 rounded text-center whitespace-nowrap border border-emerald-300 shadow-xs" title="To Pay + TBB + Paid = Total">
+                        <td key={colIdx} className="px-1 py-1 font-black text-emerald-900 bg-emerald-100/90 rounded text-center whitespace-nowrap border border-emerald-300 shadow-xs" title="To Pay + TBB + Paid = Total">
                           Total: {formatCurrency(grandTotalSum)}
                         </td>
                       );
                     }
 
-                    return <td key={colIdx} className="px-1.5 py-1.5"></td>;
+                    return <td key={colIdx} className="px-1 py-1"></td>;
                   })}
                 </tr>
               </tfoot>
