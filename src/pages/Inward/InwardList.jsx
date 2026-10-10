@@ -95,10 +95,10 @@ export const InwardList = () => {
     { label: 'Vehicle Owner', key: 'ownerName' },
     { label: 'From', key: 'from' },
     { label: 'Memo No.', key: 'memoNo' },
-    { label: 'Total PKG', key: 'totalQty' },
-    { label: 'Total To Pay', key: 'totalToPay', type: 'currency' },
-    { label: 'Total TBB', key: 'totalTbb', type: 'currency' },
-    { label: 'Total Paid', key: 'totalPaid', type: 'currency' },
+    { label: 'PKG', key: 'totalQty' },
+    { label: 'TO PAY', key: 'totalToPay', type: 'currency' },
+    { label: 'T.B.B', key: 'totalTbb', type: 'currency' },
+    { label: 'PAID', key: 'totalPaid', type: 'currency' },
     {
       label: 'Actions',
       key: 'actions',
@@ -134,7 +134,7 @@ export const InwardList = () => {
     { label: 'Consignee', key: 'consigneeName' },
     { label: 'PKG', key: 'pkg' },
     { label: 'To Pay', key: 'toPayAmount', type: 'currency' },
-    { label: 'TBB Amt', key: 'tbbAmount', type: 'currency' },
+    { label: 'T.B.B', key: 'tbbAmount', type: 'currency' },
     { label: 'Paid', key: 'paidAmount', type: 'currency' },
     { label: 'Status', key: 'status', type: 'status' },
     {

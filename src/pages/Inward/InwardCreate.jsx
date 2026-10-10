@@ -852,10 +852,10 @@ export const InwardCreate = () => {
           </button>
         </div>
 
-        {/* Right Summary Totals (TOTAL QTY, TO PAY, TOTAL TBB, TOTAL PAID) */}
+        {/* Right Summary Totals (PKG, TO PAY, T.B.B, PAID) */}
         <div className="flex flex-wrap items-center gap-2 text-xs font-black text-slate-800 w-full lg:w-auto justify-end">
           <div className="flex items-center space-x-1.5 bg-white px-3 py-1.5 rounded border border-slate-300 shadow-2xs">
-            <span className="text-slate-600 uppercase text-[11px]">TOTAL QTY:</span>
+            <span className="text-slate-600 uppercase text-[11px]">PKG:</span>
             <span className="text-slate-900 font-black text-xs">{totalQty}</span>
           </div>
 
@@ -865,12 +865,12 @@ export const InwardCreate = () => {
           </div>
 
           <div className="flex items-center space-x-1.5 bg-sky-50 px-3 py-1.5 rounded border border-sky-300 text-sky-900 shadow-2xs">
-            <span className="text-sky-800 uppercase text-[11px]">TOTAL TBB:</span>
+            <span className="text-sky-800 uppercase text-[11px]">T.B.B:</span>
             <span className="font-black text-xs">{formatCurrency(totalTbb)}</span>
           </div>
 
           <div className="flex items-center space-x-1.5 bg-emerald-50 px-3 py-1.5 rounded border border-emerald-300 text-emerald-900 shadow-2xs">
-            <span className="text-emerald-800 uppercase text-[11px]">TOTAL PAID:</span>
+            <span className="text-emerald-800 uppercase text-[11px]">PAID:</span>
             <span className="font-black text-xs">{formatCurrency(totalPaid)}</span>
           </div>
         </div>

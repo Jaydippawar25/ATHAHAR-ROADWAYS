@@ -18,7 +18,7 @@ export const Reports = () => {
     { label: 'Consignee', key: 'consigneeName' },
     { label: 'PKG', key: 'pkg' },
     { label: 'To Pay', key: 'toPayAmount', type: 'currency' },
-    { label: 'TBB Amt', key: 'tbbAmount', type: 'currency' },
+    { label: 'T.B.B', key: 'tbbAmount', type: 'currency' },
     { label: 'Paid', key: 'paidAmount', type: 'currency' },
     { label: 'Status', key: 'status', type: 'status' },
   ];
