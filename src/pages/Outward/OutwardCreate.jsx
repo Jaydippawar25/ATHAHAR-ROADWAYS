@@ -22,6 +22,7 @@ export const OutwardCreate = () => {
     vehicleNo: masters.vehicles[0]?.vehicleNo || '',
     deliveryPersonName: masters.deliveryPersons[0]?.name || '',
     driverName: masters.drivers[0]?.name || '',
+    memoNo: '',
   });
 
   // ITEM ENTRY FORM (Matching LIMRA Outward LR detail fields)
@@ -537,6 +538,20 @@ export const OutwardCreate = () => {
                 ...
               </button>
             </div>
+          </div>
+
+          <div>
+            <label className="block text-[11px] font-black text-slate-700 uppercase mb-1">
+              MEMO NO.
+            </label>
+            <input
+              type="text"
+              name="memoNo"
+              value={headerData.memoNo}
+              onChange={handleHeaderChange}
+              placeholder="MEMO NO."
+              className="w-full px-2.5 py-1.5 border border-slate-300 bg-white rounded text-xs font-bold text-slate-800 focus:ring-1 focus:ring-sky-500 uppercase"
+            />
           </div>
         </div>
       </fieldset>
