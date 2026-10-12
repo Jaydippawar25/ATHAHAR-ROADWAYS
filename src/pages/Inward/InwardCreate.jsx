@@ -310,6 +310,16 @@ export const InwardCreate = () => {
 
   // Aggregate Totals across staged items (plus active form if filled)
   const currentLrNo = String(itemForm?.lrNo ?? '').trim();
+  const hasFormDraft = Boolean(
+    currentLrNo ||
+      itemForm?.pkg ||
+      itemForm?.invoiceNo ||
+      String(itemForm?.consignorName ?? '').trim() ||
+      String(itemForm?.consigneeName ?? '').trim() ||
+      itemForm?.toPayAmount ||
+      itemForm?.tbbAmount ||
+      itemForm?.paidAmount
+  );
   const existingPreviewBase =
     editingIndex !== null && stagedItems[editingIndex] ? stagedItems[editingIndex] : {};
   const currentFormPreviewItem = {
@@ -318,9 +328,9 @@ export const InwardCreate = () => {
       editingIndex !== null && stagedItems[editingIndex]
         ? stagedItems[editingIndex].srNo
         : stagedItems.length + 1,
-    lrNo: currentLrNo,
+    lrNo: currentLrNo || '...',
     date: itemForm?.date || getTodayDateString(),
-    pkg: Number(itemForm?.pkg) || 1,
+    pkg: Number(itemForm?.pkg) || 0,
     invoiceNo: itemForm?.invoiceNo || '',
     ctTo: itemForm?.ctTo || masters.stations[0]?.name || '',
     consignorName: itemForm?.consignorName || '',
@@ -328,14 +338,13 @@ export const InwardCreate = () => {
     toPayAmount: Number(itemForm?.toPayAmount) || 0,
     tbbAmount: Number(itemForm?.tbbAmount) || 0,
     paidAmount: Number(itemForm?.paidAmount) || 0,
+    isDraftPreview: true,
   };
 
   const allLRs = [...stagedItems];
   if (editingIndex !== null && allLRs[editingIndex]) {
-    if (currentLrNo) {
-      allLRs[editingIndex] = currentFormPreviewItem;
-    }
-  } else if (currentLrNo) {
+    allLRs[editingIndex] = currentFormPreviewItem;
+  } else if (hasFormDraft) {
     allLRs.push(currentFormPreviewItem);
   }
 
@@ -394,7 +403,12 @@ export const InwardCreate = () => {
     setError('');
     setSuccess('');
 
-    let finalItems = [...allLRs];
+    let finalItems = allLRs
+      .filter((item) => String(item.lrNo ?? '').trim() && String(item.lrNo ?? '').trim() !== '...')
+      .map((item) => ({
+        ...item,
+        pkg: Number(item.pkg) || 1,
+      }));
 
     if (finalItems.length === 0) {
       setError('Please enter at least one LR No. before saving or printing.');
@@ -913,71 +927,109 @@ export const InwardCreate = () => {
       </fieldset>
 
       {/* STAGED ITEMS TABLE (LIMRA Grid View) */}
-      <div className="bg-white border border-slate-300 rounded-xl overflow-hidden shadow-2xs">
-        <div className="overflow-x-auto no-scrollbar max-h-48">
-          <table className="w-full text-left text-xs text-slate-700">
-            <thead className="bg-slate-200 text-slate-800 font-black text-[10px] uppercase tracking-tight sticky top-0 border-b border-slate-300">
-              <tr>
-                <th className="px-2 py-1.5 w-10 text-center">SRNO</th>
-                <th className="px-2 py-1.5">LR NO</th>
-                <th className="px-2 py-1.5">INDATE</th>
-                <th className="px-2 py-1.5 text-center">PKG</th>
-                <th className="px-2 py-1.5">INV NO</th>
-                <th className="px-2 py-1.5">CT TO</th>
-                <th className="px-2 py-1.5">CONSIGNER</th>
-                <th className="px-2 py-1.5">CONSIGNEE</th>
-                <th className="px-2 py-1.5 text-right">TO PAY</th>
-                <th className="px-2 py-1.5 text-right">TBB</th>
-                <th className="px-2 py-1.5 text-right">PAID</th>
-                <th className="px-2 py-1.5 text-center w-16">ACTION</th>
+      <div className="bg-white rounded-lg border-2 border-slate-300 shadow-xs overflow-hidden">
+        <div className="overflow-x-auto min-h-[220px] max-h-[340px]">
+          <table className="w-full text-left border-collapse">
+            <thead className="bg-slate-800 text-white sticky top-0 z-10">
+              <tr className="text-[11px] font-bold uppercase tracking-wider">
+                <th className="py-2 px-2.5 border-r border-slate-700 w-12 text-center">SRNO</th>
+                <th className="py-2 px-2.5 border-r border-slate-700">LR NO</th>
+                <th className="py-2 px-2.5 border-r border-slate-700">INDATE</th>
+                <th className="py-2 px-2.5 border-r border-slate-700 text-right">PKG</th>
+                <th className="py-2 px-2.5 border-r border-slate-700">INV NO</th>
+                <th className="py-2 px-2.5 border-r border-slate-700">CT TO</th>
+                <th className="py-2 px-2.5 border-r border-slate-700">CONSIGNER</th>
+                <th className="py-2 px-2.5 border-r border-slate-700">CONSIGNEE</th>
+                <th className="py-2 px-2.5 border-r border-slate-700 text-right">TO PAY</th>
+                <th className="py-2 px-2.5 border-r border-slate-700 text-right">TBB</th>
+                <th className="py-2 px-2.5 border-r border-slate-700 text-right">PAID</th>
+                <th className="py-2 px-2.5 text-center w-24">ACTION</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-200">
+            <tbody className="divide-y divide-slate-200 text-xs">
               {allLRs.length === 0 ? (
                 <tr>
-                  <td colSpan="12" className="py-6 px-4 text-center text-slate-400 font-bold text-xs">
+                  <td colSpan="12" className="py-12 text-center text-slate-400 font-medium">
                     No LR entries added yet. Fill LR details above to populate grid.
                   </td>
                 </tr>
               ) : (
                 allLRs.map((item, idx) => (
-                  <tr key={idx} className="hover:bg-sky-50/60 font-semibold text-[11px]">
-                    <td className="px-2 py-1.5 text-center font-black text-slate-600">{item.srNo}</td>
-                    <td className="px-2 py-1.5 font-black text-sky-700">{item.lrNo}</td>
-                    <td className="px-2 py-1.5">{item.date}</td>
-                    <td className="px-2 py-1.5 text-center font-bold">{item.pkg}</td>
-                    <td className="px-2 py-1.5">{item.invoiceNo || '-'}</td>
-                    <td className="px-2 py-1.5 font-bold text-slate-800">{item.ctTo}</td>
-                    <td className="px-2 py-1.5 text-slate-700">{item.consignorName || '-'}</td>
-                    <td className="px-2 py-1.5 text-slate-700">{item.consigneeName || '-'}</td>
-                    <td className="px-2 py-1.5 text-right font-black text-amber-800">
-                      {formatCurrency(item.toPayAmount)}
+                  <tr
+                    key={idx}
+                    className={`transition-colors ${
+                      item.isDraftPreview
+                        ? 'bg-sky-50/90 border-l-4 border-sky-500 animate-pulse'
+                        : editingIndex === idx
+                        ? 'bg-amber-50'
+                        : 'hover:bg-slate-50'
+                    }`}
+                  >
+                    <td className="py-1.5 px-2.5 border-r border-slate-200 text-center font-bold text-slate-700">
+                      {item.srNo}
                     </td>
-                    <td className="px-2 py-1.5 text-right font-black text-sky-800">
-                      {formatCurrency(item.tbbAmount)}
-                    </td>
-                    <td className="px-2 py-1.5 text-right font-black text-emerald-800">
-                      {formatCurrency(item.paidAmount)}
-                    </td>
-                    <td className="px-2 py-1.5 text-center">
-                      <div className="flex items-center justify-center space-x-1">
-                        <button
-                          type="button"
-                          onClick={() => handleEditStagedItem(idx)}
-                          className="p-1 text-sky-600 hover:bg-sky-100 rounded"
-                          title="Edit LR"
-                        >
-                          <Edit2 className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteStagedItem(idx)}
-                          className="p-1 text-rose-600 hover:bg-rose-100 rounded"
-                          title="Delete LR"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
+                    <td className="py-1.5 px-2.5 border-r border-slate-200 font-extrabold text-sky-800">
+                      <div className="flex items-center gap-1.5">
+                        <span>{item.lrNo}</span>
+                        {item.isDraftPreview && (
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-sky-100 text-sky-700 border border-sky-300">
+                            <Eye className="w-2.5 h-2.5 mr-0.5" /> Live
+                          </span>
+                        )}
                       </div>
+                    </td>
+                    <td className="py-1.5 px-2.5 border-r border-slate-200 text-slate-700">
+                      {formatDate(item.date)}
+                    </td>
+                    <td className="py-1.5 px-2.5 border-r border-slate-200 text-right font-bold text-slate-900">
+                      {item.pkg}
+                    </td>
+                    <td className="py-1.5 px-2.5 border-r border-slate-200 text-slate-700">
+                      {item.invoiceNo || '-'}
+                    </td>
+                    <td className="py-1.5 px-2.5 border-r border-slate-200 font-semibold text-slate-800">
+                      {item.ctTo || '-'}
+                    </td>
+                    <td className="py-1.5 px-2.5 border-r border-slate-200 text-slate-700">
+                      {item.consignorName || '-'}
+                    </td>
+                    <td className="py-1.5 px-2.5 border-r border-slate-200 text-slate-700">
+                      {item.consigneeName || '-'}
+                    </td>
+                    <td className="py-1.5 px-2.5 border-r border-slate-200 text-right font-semibold text-slate-800">
+                      {Number(item.toPayAmount || 0).toFixed(2)}
+                    </td>
+                    <td className="py-1.5 px-2.5 border-r border-slate-200 text-right font-semibold text-slate-800">
+                      {Number(item.tbbAmount || 0).toFixed(2)}
+                    </td>
+                    <td className="py-1.5 px-2.5 border-r border-slate-200 text-right font-semibold text-slate-800">
+                      {Number(item.paidAmount || 0).toFixed(2)}
+                    </td>
+                    <td className="py-1.5 px-2.5 text-center">
+                      {item.isDraftPreview ? (
+                        <div className="flex items-center justify-center space-x-1">
+                          <span className="text-[10px] font-semibold text-sky-600 italic">Typing...</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-center space-x-1">
+                          <button
+                            type="button"
+                            onClick={() => handleEditStagedItem(idx)}
+                            className="p-1 text-sky-600 hover:bg-sky-50 rounded cursor-pointer"
+                            title="Edit LR"
+                          >
+                            <Edit2 className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteStagedItem(idx)}
+                            className="p-1 text-red-600 hover:bg-red-50 rounded cursor-pointer"
+                            title="Delete LR"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      )}
                     </td>
                   </tr>
                 ))
