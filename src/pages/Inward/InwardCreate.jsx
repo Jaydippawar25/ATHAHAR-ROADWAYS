@@ -289,7 +289,7 @@ export const InwardCreate = () => {
       }
 
       setTimeout(() => {
-        navigate('/inward');
+        navigate('/inward/list');
       }, 1200);
     } catch (err) {
       setError(err.message || 'Failed to save Inward transaction.');
@@ -307,7 +307,7 @@ export const InwardCreate = () => {
 
         <button
           type="button"
-          onClick={() => navigate('/inward')}
+          onClick={() => navigate('/inward/list')}
           className="inline-flex items-center space-x-2 bg-sky-600 hover:bg-sky-700 text-white font-bold px-4 py-2 rounded-lg text-xs shadow-sm transition-all self-end sm:self-auto cursor-pointer"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -844,7 +844,7 @@ export const InwardCreate = () => {
 
           <button
             type="button"
-            onClick={() => navigate('/inward')}
+            onClick={() => navigate('/inward/list')}
             className="inline-flex items-center space-x-1.5 px-4 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-lg text-xs shadow-sm transition-all cursor-pointer"
           >
             <X className="w-4 h-4" />

@@ -166,7 +166,7 @@ export const Dashboard = () => {
               <ArrowDownLeft className="w-5 h-5 text-sky-500" />
               <span>Recent Inward Transactions</span>
             </h3>
-            <Link to="/inward" className="text-xs font-semibold text-sky-600 hover:underline">
+            <Link to="/inward/list" className="text-xs font-semibold text-sky-600 hover:underline">
               View All
             </Link>
           </div>

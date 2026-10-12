@@ -29,6 +29,14 @@ export const AppRoutes = () => {
         path="/inward"
         element={
           <ProtectedRoute>
+            <InwardCreate />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/inward/list"
+        element={
+          <ProtectedRoute>
             <InwardList />
           </ProtectedRoute>
         }
