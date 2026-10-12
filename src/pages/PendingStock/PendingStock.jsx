@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { useNavigate } from 'react-router-dom';
-import { PackageCheck, ArrowUpRight, Clock, Pencil, Trash2, AlertTriangle } from 'lucide-react';
+import { PackageCheck, ArrowUpRight, Clock, Pencil, Trash2, AlertTriangle, Eye, FileSpreadsheet } from 'lucide-react';
 import { DataTable } from '../../components/common/DataTable';
 import { Modal } from '../../components/common/Modal';
-import { calculateDaysPending } from '../../utils/dateUtils';
+import { StatusBadge } from '../../components/common/StatusBadge';
+import { calculateDaysPending, formatDate } from '../../utils/dateUtils';
+import { formatCurrency } from '../../utils/numberUtils';
 import { exportToExcel, exportToPDF } from '../../services/exportService';
 
 export const PendingStock = () => {
@@ -12,10 +14,16 @@ export const PendingStock = () => {
   const navigate = useNavigate();
   const [selectedIds, setSelectedIds] = useState([]);
 
-  // Modal states for edit & delete
+  // Modal states for view, edit & delete
+  const [viewingRecord, setViewingRecord] = useState(null);
   const [editingRecord, setEditingRecord] = useState(null);
   const [editFormData, setEditFormData] = useState({});
   const [deleteRecord, setDeleteRecord] = useState(null);
+
+  const handleExportRowExcel = (row) => {
+    const cols = pendingColumns.filter((c) => c.key !== 'actions');
+    exportToExcel([row], `Pending_LR_${row.lrNo}`, cols);
+  };
 
   const handleStartEdit = (row) => {
     setEditingRecord(row);
@@ -61,15 +69,29 @@ export const PendingStock = () => {
       render: (row) => (
         <div className="flex items-center space-x-1">
           <button
+            onClick={() => setViewingRecord(row)}
+            className="p-1 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded transition-colors cursor-pointer"
+            title="View Pending LR"
+          >
+            <Eye className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => handleExportRowExcel(row)}
+            className="p-1 text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 rounded transition-colors cursor-pointer"
+            title="Export Excel"
+          >
+            <FileSpreadsheet className="w-4 h-4" />
+          </button>
+          <button
             onClick={() => handleStartEdit(row)}
-            className="p-1.5 text-sky-600 hover:text-sky-800 hover:bg-sky-50 rounded transition-colors"
+            className="p-1 text-sky-600 hover:text-sky-800 hover:bg-sky-50 rounded transition-colors cursor-pointer"
             title="Edit Pending LR"
           >
             <Pencil className="w-4 h-4" />
           </button>
           <button
             onClick={() => setDeleteRecord(row)}
-            className="p-1.5 text-rose-600 hover:text-rose-800 hover:bg-rose-50 rounded transition-colors"
+            className="p-1 text-rose-600 hover:text-rose-800 hover:bg-rose-50 rounded transition-colors cursor-pointer"
             title="Delete Pending LR"
           >
             <Trash2 className="w-4 h-4" />
@@ -136,6 +158,91 @@ export const PendingStock = () => {
         onExportExcel={(data) => exportToExcel(data, 'Pending_Stock_Report', pendingColumns)}
         onExportPDF={(data) => exportToPDF('Pending Stock Register', pendingColumns, data, 'Pending_Stock_Report')}
       />
+
+      {/* VIEW MODAL */}
+      <Modal
+        isOpen={!!viewingRecord}
+        onClose={() => setViewingRecord(null)}
+        title={`Pending LR Details #${viewingRecord?.lrNo}`}
+        maxWidth="max-w-2xl"
+      >
+        {viewingRecord && (
+          <div className="space-y-4 text-xs">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
+              <div>
+                <span className="text-slate-400 font-bold uppercase block text-[10px]">LR No.</span>
+                <span className="font-black text-sky-700 text-sm">{viewingRecord.lrNo}</span>
+              </div>
+              <div>
+                <span className="text-slate-400 font-bold uppercase block text-[10px]">Inward No.</span>
+                <span className="font-bold text-slate-900">{viewingRecord.inwardNo || '-'}</span>
+              </div>
+              <div>
+                <span className="text-slate-400 font-bold uppercase block text-[10px]">Inward Date</span>
+                <span className="font-bold text-slate-800">{formatDate(viewingRecord.inwardDate || viewingRecord.date)}</span>
+              </div>
+              <div>
+                <span className="text-slate-400 font-bold uppercase block text-[10px]">Memo No.</span>
+                <span className="font-bold text-slate-800">{viewingRecord.memoNo || '-'}</span>
+              </div>
+              <div>
+                <span className="text-slate-400 font-bold uppercase block text-[10px]">Invoice No.</span>
+                <span className="font-bold text-slate-800">{viewingRecord.invoiceNo || '-'}</span>
+              </div>
+              <div>
+                <span className="text-slate-400 font-bold uppercase block text-[10px]">Status</span>
+                <StatusBadge status={viewingRecord.status} />
+              </div>
+              <div>
+                <span className="text-slate-400 font-bold uppercase block text-[10px]">CT To</span>
+                <span className="font-bold text-slate-800">{viewingRecord.ctTo || '-'}</span>
+              </div>
+              <div>
+                <span className="text-slate-400 font-bold uppercase block text-[10px]">Consignor</span>
+                <span className="font-bold text-slate-800">{viewingRecord.consignorName || '-'}</span>
+              </div>
+              <div>
+                <span className="text-slate-400 font-bold uppercase block text-[10px]">Consignee</span>
+                <span className="font-bold text-slate-800">{viewingRecord.consigneeName || '-'}</span>
+              </div>
+              <div>
+                <span className="text-slate-400 font-bold uppercase block text-[10px]">Packages</span>
+                <span className="font-black text-slate-900">{viewingRecord.pkg || 0} Pkgs</span>
+              </div>
+              <div>
+                <span className="text-slate-400 font-bold uppercase block text-[10px]">To Pay</span>
+                <span className="font-bold text-amber-700">{formatCurrency(viewingRecord.toPayAmount)}</span>
+              </div>
+              <div>
+                <span className="text-slate-400 font-bold uppercase block text-[10px]">T.B.B</span>
+                <span className="font-bold text-sky-700">{formatCurrency(viewingRecord.tbbAmount)}</span>
+              </div>
+              <div>
+                <span className="text-slate-400 font-bold uppercase block text-[10px]">Paid</span>
+                <span className="font-bold text-emerald-700">{formatCurrency(viewingRecord.paidAmount)}</span>
+              </div>
+            </div>
+
+            <div className="flex justify-end space-x-2 pt-3 border-t border-slate-200">
+              <button
+                type="button"
+                onClick={() => handleExportRowExcel(viewingRecord)}
+                className="inline-flex items-center space-x-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-xs shadow-xs cursor-pointer"
+              >
+                <FileSpreadsheet className="w-4 h-4" />
+                <span>Export Excel</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewingRecord(null)}
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg text-xs cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        )}
+      </Modal>
 
       {/* EDIT MODAL */}
       <Modal

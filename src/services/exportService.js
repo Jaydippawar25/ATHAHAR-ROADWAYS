@@ -7,9 +7,11 @@ import { formatCurrency } from '../utils/numberUtils';
 export const exportToExcel = (data, filename = 'export', columns = []) => {
   if (!data || data.length === 0) return;
 
+  const validColumns = columns.filter((col) => col.key !== 'actions' && col.label !== 'Actions');
+
   const exportRows = data.map((row) => {
     const formatted = {};
-    columns.forEach((col) => {
+    validColumns.forEach((col) => {
       formatted[col.label] = row[col.key] ?? '-';
     });
     return formatted;
@@ -23,6 +25,7 @@ export const exportToExcel = (data, filename = 'export', columns = []) => {
 
 export const exportToPDF = (title, columns, data, filename = 'report') => {
   const doc = new jsPDF();
+  const validColumns = columns.filter((col) => col.key !== 'actions' && col.label !== 'Actions');
   
   doc.setFontSize(16);
   doc.text('ATHAHAR ROADWAYS', 14, 15);
@@ -31,9 +34,9 @@ export const exportToPDF = (title, columns, data, filename = 'report') => {
   doc.setFontSize(9);
   doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 28);
 
-  const tableHeaders = columns.map((col) => col.label);
+  const tableHeaders = validColumns.map((col) => col.label);
   const tableRows = data.map((row) =>
-    columns.map((col) => {
+    validColumns.map((col) => {
       const val = row[col.key];
       if (col.type === 'currency') return formatCurrency(val);
       if (col.type === 'date') return formatDate(val);

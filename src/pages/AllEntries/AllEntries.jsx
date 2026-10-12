@@ -12,10 +12,14 @@ import {
   Layers,
   FileSpreadsheet,
   FileText,
+  Eye,
 } from 'lucide-react';
 import { DataTable } from '../../components/common/DataTable';
 import { Modal } from '../../components/common/Modal';
+import { StatusBadge } from '../../components/common/StatusBadge';
 import { exportToExcel, exportToPDF } from '../../services/exportService';
+import { formatDate } from '../../utils/dateUtils';
+import { formatCurrency } from '../../utils/numberUtils';
 
 export const AllEntries = () => {
   const {
@@ -37,13 +41,45 @@ export const AllEntries = () => {
   // Active view tab: 'all_lrs' | 'inward_headers' | 'outward_headers'
   const [activeTab, setActiveTab] = useState('all_lrs');
 
-  // Modal states for edit & delete
+  // Modal states for view, edit & delete
+  const [viewingRecord, setViewingRecord] = useState(null);
+  const [viewCategory, setViewCategory] = useState(null);
   const [editingRecord, setEditingRecord] = useState(null);
   const [editCategory, setEditCategory] = useState(null); // 'inward_header' | 'inward_item' | 'outward_header' | 'outward_item'
   const [editFormData, setEditFormData] = useState({});
 
   const [deleteRecord, setDeleteRecord] = useState(null);
   const [deleteCategory, setDeleteCategory] = useState(null);
+
+  const handleStartView = (row, category) => {
+    setViewCategory(category);
+    setViewingRecord(row);
+  };
+
+  const handleExportRowExcel = (row, category) => {
+    if (category === 'inward_header') {
+      const items = inwardItems.filter((item) => item.inwardId === row.id || item.inwardNo === row.inwardNo);
+      if (items.length > 0) {
+        const cols = combinedLRColumns.filter((c) => c.key !== 'actions');
+        exportToExcel(items, `Inward_${row.inwardNo}_LRs`, cols);
+      } else {
+        const cols = inwardHeaderColumns.filter((c) => c.key !== 'actions');
+        exportToExcel([row], `Inward_${row.inwardNo}`, cols);
+      }
+    } else if (category === 'outward_header') {
+      const items = outwardItems.filter((item) => item.outwardId === row.id || item.outwardNo === row.outwardNo);
+      if (items.length > 0) {
+        const cols = combinedLRColumns.filter((c) => c.key !== 'actions');
+        exportToExcel(items, `Outward_${row.outwardNo}_LRs`, cols);
+      } else {
+        const cols = outwardHeaderColumns.filter((c) => c.key !== 'actions');
+        exportToExcel([row], `Outward_${row.outwardNo}`, cols);
+      }
+    } else {
+      const cols = combinedLRColumns.filter((c) => c.key !== 'actions');
+      exportToExcel([row], `LR_${row.lrNo}`, cols);
+    }
+  };
 
   const handleStartEdit = (row, category) => {
     setEditCategory(category);
@@ -203,15 +239,29 @@ export const AllEntries = () => {
       render: (row) => (
         <div className="flex items-center space-x-1">
           <button
+            onClick={() => handleStartView(row, row.recordCategory || 'inward_item')}
+            className="p-1 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded transition-colors cursor-pointer"
+            title="View Entry"
+          >
+            <Eye className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => handleExportRowExcel(row, row.recordCategory || 'inward_item')}
+            className="p-1 text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 rounded transition-colors cursor-pointer"
+            title="Export Excel"
+          >
+            <FileSpreadsheet className="w-4 h-4" />
+          </button>
+          <button
             onClick={() => handleStartEdit(row, row.recordCategory || 'inward_item')}
-            className="p-1 text-sky-600 hover:text-sky-800 hover:bg-sky-50 rounded transition-colors"
+            className="p-1 text-sky-600 hover:text-sky-800 hover:bg-sky-50 rounded transition-colors cursor-pointer"
             title="Edit Entry"
           >
             <Pencil className="w-4 h-4" />
           </button>
           <button
             onClick={() => handleStartDelete(row, row.recordCategory || 'inward_item')}
-            className="p-1 text-rose-600 hover:text-rose-800 hover:bg-rose-50 rounded transition-colors"
+            className="p-1 text-rose-600 hover:text-rose-800 hover:bg-rose-50 rounded transition-colors cursor-pointer"
             title="Delete Entry"
           >
             <Trash2 className="w-4 h-4" />
@@ -288,15 +338,29 @@ export const AllEntries = () => {
       render: (row) => (
         <div className="flex items-center space-x-1">
           <button
+            onClick={() => handleStartView(row, 'inward_header')}
+            className="p-1 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded transition-colors cursor-pointer"
+            title="View Receipt"
+          >
+            <Eye className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => handleExportRowExcel(row, 'inward_header')}
+            className="p-1 text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 rounded transition-colors cursor-pointer"
+            title="Export Excel"
+          >
+            <FileSpreadsheet className="w-4 h-4" />
+          </button>
+          <button
             onClick={() => handleStartEdit(row, 'inward_header')}
-            className="p-1 text-sky-600 hover:text-sky-800 hover:bg-sky-50 rounded transition-colors"
+            className="p-1 text-sky-600 hover:text-sky-800 hover:bg-sky-50 rounded transition-colors cursor-pointer"
             title="Edit Receipt"
           >
             <Pencil className="w-4 h-4" />
           </button>
           <button
             onClick={() => handleStartDelete(row, 'inward_header')}
-            className="p-1 text-rose-600 hover:text-rose-800 hover:bg-rose-50 rounded transition-colors"
+            className="p-1 text-rose-600 hover:text-rose-800 hover:bg-rose-50 rounded transition-colors cursor-pointer"
             title="Delete Receipt"
           >
             <Trash2 className="w-4 h-4" />
@@ -373,15 +437,29 @@ export const AllEntries = () => {
       render: (row) => (
         <div className="flex items-center space-x-1">
           <button
+            onClick={() => handleStartView(row, 'outward_header')}
+            className="p-1 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded transition-colors cursor-pointer"
+            title="View Outward Receipt"
+          >
+            <Eye className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => handleExportRowExcel(row, 'outward_header')}
+            className="p-1 text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 rounded transition-colors cursor-pointer"
+            title="Export Excel"
+          >
+            <FileSpreadsheet className="w-4 h-4" />
+          </button>
+          <button
             onClick={() => handleStartEdit(row, 'outward_header')}
-            className="p-1 text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 rounded transition-colors"
+            className="p-1 text-sky-600 hover:text-sky-800 hover:bg-sky-50 rounded transition-colors cursor-pointer"
             title="Edit Outward Receipt"
           >
             <Pencil className="w-4 h-4" />
           </button>
           <button
             onClick={() => handleStartDelete(row, 'outward_header')}
-            className="p-1 text-rose-600 hover:text-rose-800 hover:bg-rose-50 rounded transition-colors"
+            className="p-1 text-rose-600 hover:text-rose-800 hover:bg-rose-50 rounded transition-colors cursor-pointer"
             title="Delete Outward Receipt"
           >
             <Trash2 className="w-4 h-4" />
@@ -539,6 +617,208 @@ export const AllEntries = () => {
           />
         )}
       </div>
+
+      {/* View Record Modal */}
+      {viewingRecord && (
+        <Modal
+          isOpen={!!viewingRecord}
+          onClose={() => setViewingRecord(null)}
+          title={
+            viewCategory === 'inward_header'
+              ? `Inward Receipt Details #${viewingRecord.inwardNo}`
+              : viewCategory === 'outward_header'
+              ? `Outward Receipt Details #${viewingRecord.outwardNo}`
+              : `LR Entry Details #${viewingRecord.lrNo}`
+          }
+          maxWidth="max-w-3xl"
+        >
+          <div className="space-y-4 text-xs">
+            {viewCategory?.includes('header') ? (
+              <>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+                  <div>
+                    <span className="text-slate-400 font-bold uppercase block text-[10px]">
+                      {viewCategory === 'inward_header' ? 'Inward No.' : 'Outward No.'}
+                    </span>
+                    <span className="font-black text-slate-900 text-sm">
+                      {viewingRecord.inwardNo || viewingRecord.outwardNo}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 font-bold uppercase block text-[10px]">Date</span>
+                    <span className="font-bold text-slate-800">{formatDate(viewingRecord.date)}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 font-bold uppercase block text-[10px]">Vehicle No.</span>
+                    <span className="font-black text-sky-700">{viewingRecord.vehicleNo || '-'}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 font-bold uppercase block text-[10px]">
+                      {viewCategory === 'inward_header' ? 'Vehicle Owner' : 'Driver Name'}
+                    </span>
+                    <span className="font-bold text-slate-800">
+                      {viewingRecord.ownerName || viewingRecord.driverName || '-'}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 font-bold uppercase block text-[10px]">From Station</span>
+                    <span className="font-bold text-slate-800">{viewingRecord.from || '-'}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 font-bold uppercase block text-[10px]">Memo No.</span>
+                    <span className="font-bold text-slate-800">{viewingRecord.memoNo || '-'}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 font-bold uppercase block text-[10px]">Total PKG</span>
+                    <span className="font-black text-slate-900">{viewingRecord.totalQty || 0} Pkgs</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 font-bold uppercase block text-[10px]">Total Freight</span>
+                    <span className="font-black text-emerald-700">
+                      {formatCurrency(
+                        (Number(viewingRecord.totalToPay) || 0) +
+                          (Number(viewingRecord.totalTbb) || 0) +
+                          (Number(viewingRecord.totalPaid) || 0)
+                      )}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Associated LRs Table */}
+                <div className="space-y-2">
+                  <h4 className="font-black text-slate-700 uppercase tracking-wider text-[11px]">
+                    Associated LR Items
+                  </h4>
+                  <div className="border border-slate-200 rounded-xl overflow-x-auto max-h-60">
+                    <table className="w-full text-left text-[11px]">
+                      <thead className="bg-slate-100 text-slate-700 font-black uppercase border-b border-slate-200">
+                        <tr>
+                          <th className="p-2">LR No.</th>
+                          <th className="p-2">Consigner</th>
+                          <th className="p-2">Consignee</th>
+                          <th className="p-2">CT To</th>
+                          <th className="p-2">PKG</th>
+                          <th className="p-2">To Pay</th>
+                          <th className="p-2">TBB</th>
+                          <th className="p-2">Paid</th>
+                          <th className="p-2">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {(viewCategory === 'inward_header'
+                          ? inwardItems.filter(
+                              (item) =>
+                                item.inwardId === viewingRecord.id || item.inwardNo === viewingRecord.inwardNo
+                            )
+                          : outwardItems.filter(
+                              (item) =>
+                                item.outwardId === viewingRecord.id || item.outwardNo === viewingRecord.outwardNo
+                            )
+                        ).map((lr, idx) => (
+                          <tr key={lr.id || idx} className="hover:bg-slate-50 font-semibold">
+                            <td className="p-2 font-black text-sky-700">{lr.lrNo}</td>
+                            <td className="p-2">{lr.consignorName || '-'}</td>
+                            <td className="p-2">{lr.consigneeName || '-'}</td>
+                            <td className="p-2">{lr.ctTo || '-'}</td>
+                            <td className="p-2 font-bold">{lr.pkg}</td>
+                            <td className="p-2">{formatCurrency(lr.toPayAmount)}</td>
+                            <td className="p-2">{formatCurrency(lr.tbbAmount)}</td>
+                            <td className="p-2">{formatCurrency(lr.paidAmount)}</td>
+                            <td className="p-2">
+                              <StatusBadge status={lr.status} />
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                <div>
+                  <span className="text-slate-400 font-bold uppercase block text-[10px]">LR No.</span>
+                  <span className="font-black text-sky-800 text-sm">{viewingRecord.lrNo}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 font-bold uppercase block text-[10px]">Status</span>
+                  <StatusBadge status={viewingRecord.status} />
+                </div>
+                <div>
+                  <span className="text-slate-400 font-bold uppercase block text-[10px]">Packages</span>
+                  <span className="font-black text-slate-900">{viewingRecord.pkg || 0} Pkgs</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 font-bold uppercase block text-[10px]">Inward No.</span>
+                  <span className="font-bold text-slate-800">{viewingRecord.inwardNo || '-'}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 font-bold uppercase block text-[10px]">Inward Date</span>
+                  <span className="font-bold text-slate-800">{formatDate(viewingRecord.inwardDate)}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 font-bold uppercase block text-[10px]">Outward No.</span>
+                  <span className="font-bold text-slate-800">{viewingRecord.outwardNo || '-'}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 font-bold uppercase block text-[10px]">Outward Date</span>
+                  <span className="font-bold text-slate-800">{formatDate(viewingRecord.outwardDate)}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 font-bold uppercase block text-[10px]">Delivery Person</span>
+                  <span className="font-bold text-emerald-800">{viewingRecord.deliveryPersonName || '-'}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 font-bold uppercase block text-[10px]">CT To</span>
+                  <span className="font-bold text-slate-800">{viewingRecord.ctTo || '-'}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 font-bold uppercase block text-[10px]">Consigner</span>
+                  <span className="font-bold text-slate-800">{viewingRecord.consignorName || '-'}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 font-bold uppercase block text-[10px]">Consignee</span>
+                  <span className="font-bold text-slate-800">{viewingRecord.consigneeName || '-'}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 font-bold uppercase block text-[10px]">Invoice No.</span>
+                  <span className="font-bold text-slate-800">{viewingRecord.invoiceNo || '-'}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 font-bold uppercase block text-[10px]">To Pay</span>
+                  <span className="font-bold text-amber-700">{formatCurrency(viewingRecord.toPayAmount)}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 font-bold uppercase block text-[10px]">T.B.B</span>
+                  <span className="font-bold text-sky-700">{formatCurrency(viewingRecord.tbbAmount)}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 font-bold uppercase block text-[10px]">Paid</span>
+                  <span className="font-bold text-emerald-700">{formatCurrency(viewingRecord.paidAmount)}</span>
+                </div>
+              </div>
+            )}
+
+            <div className="flex justify-end space-x-2 pt-3 border-t border-slate-200">
+              <button
+                type="button"
+                onClick={() => handleExportRowExcel(viewingRecord, viewCategory)}
+                className="inline-flex items-center space-x-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-xs shadow-xs cursor-pointer"
+              >
+                <FileSpreadsheet className="w-4 h-4" />
+                <span>Export Excel</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewingRecord(null)}
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg text-xs cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
 
       {/* Edit Record Modal */}
       {editingRecord && (
