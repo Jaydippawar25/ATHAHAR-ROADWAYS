@@ -946,9 +946,9 @@ export const AllEntries = () => {
               <button
                 type="button"
                 onClick={() => handlePrintRecord(viewingRecord, viewCategory)}
-                className="inline-flex items-center space-x-1.5 px-3.5 py-2 bg-sky-600 hover:bg-sky-700 text-white font-bold rounded-lg text-xs shadow-xs cursor-pointer"
+                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded shadow-xs flex items-center cursor-pointer"
               >
-                <Printer className="w-4 h-4" />
+                <Printer className="w-4 h-4 mr-1.5" />
                 <span>Print</span>
               </button>
               <button

@@ -988,24 +988,24 @@ export const InwardCreate = () => {
 
       {/* BOTTOM SUMMARY & ACTIONS (LIMRA Footer Controls - Single Clean Line) */}
       <div className="bg-slate-200/90 rounded-xl border border-slate-300 p-3 flex flex-col lg:flex-row items-center justify-between gap-3 shadow-2xs">
-        {/* Left Action Buttons (Save, Print, Print Preview, Close) */}
-        <div className="flex flex-wrap items-center gap-2.5 w-full lg:w-auto">
+        {/* Left Action Buttons (Save, Print) */}
+        <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
           <button
             type="button"
             onClick={() => handleFinalSubmit(false)}
-            className="inline-flex items-center space-x-2 px-4 py-2.5 bg-gradient-to-r from-slate-900 to-[#072440] hover:from-black hover:to-[#041627] text-white font-bold rounded-lg text-xs shadow-sm transition-all cursor-pointer"
+            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded shadow-xs flex items-center cursor-pointer"
           >
-            <Save className="w-4 h-4 text-emerald-400" />
-            <span>Save</span>
+            <Save className="w-4 h-4 mr-1.5" />
+            {editingInwardId ? 'Update Inward' : 'Save'}
           </button>
 
           <button
             type="button"
             onClick={() => handleFinalSubmit(true)}
-            className="inline-flex items-center space-x-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-xs shadow-sm transition-all cursor-pointer"
+            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded shadow-xs flex items-center cursor-pointer"
           >
-            <Printer className="w-4 h-4" />
-            <span>Print</span>
+            <Printer className="w-4 h-4 mr-1.5" />
+            Print
           </button>
         </div>
 
