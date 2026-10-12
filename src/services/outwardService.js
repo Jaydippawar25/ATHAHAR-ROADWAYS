@@ -8,7 +8,7 @@ export const getAllOutwards = () => {
 };
 
 export const getNextOutwardNo = (outwardsList) => {
-  const list = outwardsList || getAllOutwards();
+  const list = (outwardsList || getAllOutwards()).filter((item) => !item.isCrossOutward);
   const serialNums = list
     .map((item) => {
       const match = String(item.outwardNo ?? '').match(/(\d+)$/);
@@ -17,6 +17,18 @@ export const getNextOutwardNo = (outwardsList) => {
     .filter((num) => !isNaN(num) && num > 0 && num < 1000);
   const nextNum = serialNums.length > 0 ? Math.max(...serialNums) + 1 : 1;
   return `OUT-${String(nextNum).padStart(2, '0')}`;
+};
+
+export const getNextCrossOutwardNo = (outwardsList) => {
+  const list = (outwardsList || getAllOutwards()).filter((item) => item.isCrossOutward);
+  const serialNums = list
+    .map((item) => {
+      const match = String(item.outwardNo ?? '').match(/(\d+)$/);
+      return match ? parseInt(match[1], 10) : NaN;
+    })
+    .filter((num) => !isNaN(num) && num > 0 && num < 1000);
+  const nextNum = serialNums.length > 0 ? Math.max(...serialNums) + 1 : 1;
+  return `STOCK-OUT-${String(nextNum).padStart(2, '0')}`;
 };
 
 export const getAllOutwardItems = () => {
@@ -59,7 +71,9 @@ export const createOutward = (headerData, selectedPendingItems, currentUser = 'O
 
   const newOutwardHeader = {
     id: outwardId,
-    outwardNo: headerData.outwardNo || getNextOutwardNo(outwards),
+    outwardNo:
+      headerData.outwardNo ||
+      (isCrossOutward ? getNextCrossOutwardNo(outwards) : getNextOutwardNo(outwards)),
     date: headerData.date,
     transporterName: headerData.transporterName || '',
     vehicleNo: headerData.vehicleNo,

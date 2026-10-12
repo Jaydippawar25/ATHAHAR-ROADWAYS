@@ -7,7 +7,7 @@ import { Save, Printer, ArrowLeft, AlertCircle, Plus, Trash2, Edit2, RotateCcw, 
 import { getTodayDateString, formatDate } from '../../utils/dateUtils';
 import { formatCurrency } from '../../utils/numberUtils';
 import { printRecordDetails } from '../../services/exportService';
-import { getNextOutwardNo } from '../../services/outwardService';
+import { getNextCrossOutwardNo } from '../../services/outwardService';
 
 export const CrossOutwardCreate = () => {
   const navigate = useNavigate();
@@ -20,7 +20,7 @@ export const CrossOutwardCreate = () => {
 
   // HEADER DETAILS (8 fields matching screenshot)
   const [headerData, setHeaderData] = useState({
-    outwardNo: getNextOutwardNo(outwards),
+    outwardNo: getNextCrossOutwardNo(outwards),
     date: getTodayDateString(),
     transporterName: masters.transporters[0]?.name || '',
     fromStation: masters.stations[0]?.name || 'SANGLI',
@@ -90,7 +90,7 @@ export const CrossOutwardCreate = () => {
     if (location.state?.editOutward) {
       const edit = location.state.editOutward;
       setHeaderData({
-        outwardNo: edit.outwardNo || getNextOutwardNo(outwards),
+        outwardNo: edit.outwardNo || getNextCrossOutwardNo(outwards),
         date: edit.date || edit.outwardDate || getTodayDateString(),
         transporterName: edit.transporterName || masters.transporters[0]?.name || '',
         fromStation: edit.from || edit.fromStation || masters.stations[0]?.name || 'SANGLI',
@@ -402,7 +402,7 @@ export const CrossOutwardCreate = () => {
         );
 
         setSuccess('Cross Stock Out Entry saved successfully!');
-        const nextNo = getNextOutwardNo();
+        const nextNo = getNextCrossOutwardNo();
         setHeaderData((prev) => ({
           ...prev,
           outwardNo: nextNo,
@@ -481,7 +481,7 @@ export const CrossOutwardCreate = () => {
           {/* NO */}
           <div>
             <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">
-              No. (Outward No)
+              NO. (STOCK OUT)
             </label>
             <input
               type="text"
