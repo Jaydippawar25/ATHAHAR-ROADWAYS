@@ -56,7 +56,7 @@ export const AppRoutes = () => {
         path="/outward"
         element={
           <ProtectedRoute>
-            <OutwardList />
+            <OutwardCreate />
           </ProtectedRoute>
         }
       />

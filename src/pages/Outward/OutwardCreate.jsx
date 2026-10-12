@@ -329,7 +329,7 @@ export const OutwardCreate = () => {
       }
 
       setTimeout(() => {
-        navigate('/outward');
+        navigate('/outward/list');
       }, 1200);
     } catch (err) {
       setError(err.message || 'Failed to save Outward transaction.');
@@ -347,7 +347,7 @@ export const OutwardCreate = () => {
 
         <button
           type="button"
-          onClick={() => navigate('/outward')}
+          onClick={() => navigate('/outward/list')}
           className="inline-flex items-center space-x-2 bg-sky-600 hover:bg-sky-700 text-white font-bold px-4 py-2 rounded-lg text-xs shadow-sm transition-all self-end sm:self-auto cursor-pointer"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -790,7 +790,7 @@ export const OutwardCreate = () => {
 
           <button
             type="button"
-            onClick={() => navigate('/outward')}
+            onClick={() => navigate('/outward/list')}
             className="inline-flex items-center space-x-1.5 px-4 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-lg text-xs shadow-sm transition-all cursor-pointer"
           >
             <X className="w-4 h-4" />
