@@ -160,34 +160,34 @@ export const OutwardList = () => {
       label: 'Actions',
       key: 'actions',
       render: (row) => (
-        <div className="flex items-center space-x-0.5">
+        <div className="flex items-center justify-center space-x-0.5">
           <button
             onClick={() => handleStartView(row, 'header')}
-            className="p-1 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded transition-colors cursor-pointer"
+            className="p-0.5 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded transition-colors cursor-pointer"
             title="View Outward Receipt"
           >
-            <Eye className="w-4 h-4" />
+            <Eye className="w-3.5 h-3.5" />
           </button>
           <button
             onClick={() => handleExportRowExcel(row, 'header')}
-            className="p-1 text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 rounded transition-colors cursor-pointer"
+            className="p-0.5 text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 rounded transition-colors cursor-pointer"
             title="Export Excel"
           >
-            <FileSpreadsheet className="w-4 h-4" />
+            <FileSpreadsheet className="w-3.5 h-3.5" />
           </button>
           <button
             onClick={() => handleStartEdit(row, 'header')}
-            className="p-1 text-sky-600 hover:text-sky-800 hover:bg-sky-50 rounded transition-colors cursor-pointer"
+            className="p-0.5 text-sky-600 hover:text-sky-800 hover:bg-sky-50 rounded transition-colors cursor-pointer"
             title="Edit Outward Receipt"
           >
-            <Pencil className="w-4 h-4" />
+            <Pencil className="w-3.5 h-3.5" />
           </button>
           <button
             onClick={() => handleStartDelete(row, 'header')}
-            className="p-1 text-rose-600 hover:text-rose-800 hover:bg-rose-50 rounded transition-colors cursor-pointer"
+            className="p-0.5 text-rose-600 hover:text-rose-800 hover:bg-rose-50 rounded transition-colors cursor-pointer"
             title="Delete Outward Receipt"
           >
-            <Trash2 className="w-4 h-4" />
+            <Trash2 className="w-3.5 h-3.5" />
           </button>
         </div>
       ),
@@ -195,11 +195,11 @@ export const OutwardList = () => {
   ];
 
   const deliveredItemColumns = [
-    { label: 'Outward No.', key: 'outwardNo' },
+    { label: 'Out No.', key: 'outwardNo' },
     { label: 'LR No.', key: 'lrNo', render: (row) => <span className="font-extrabold text-emerald-700">{row.lrNo}</span> },
-    { label: 'Outward Date', key: 'outwardDate', type: 'date' },
-    { label: 'Inward Date', key: 'inwardDate', type: 'date' },
-    { label: 'Delivery Person', key: 'deliveryPersonName' },
+    { label: 'Out Date', key: 'outwardDate', type: 'date' },
+    { label: 'In Date', key: 'inwardDate', type: 'date' },
+    { label: 'Del. Person', key: 'deliveryPersonName' },
     { label: 'Invoice No.', key: 'invoiceNo' },
     { label: 'CT To', key: 'ctTo' },
     { label: 'Consignor', key: 'consignorName' },
@@ -213,34 +213,34 @@ export const OutwardList = () => {
       label: 'Actions',
       key: 'actions',
       render: (row) => (
-        <div className="flex items-center space-x-0.5">
+        <div className="flex items-center justify-center space-x-0.5">
           <button
             onClick={() => handleStartView(row, 'item')}
-            className="p-1 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded transition-colors cursor-pointer"
+            className="p-0.5 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded transition-colors cursor-pointer"
             title="View Delivered LR"
           >
-            <Eye className="w-4 h-4" />
+            <Eye className="w-3.5 h-3.5" />
           </button>
           <button
             onClick={() => handleExportRowExcel(row, 'item')}
-            className="p-1 text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 rounded transition-colors cursor-pointer"
+            className="p-0.5 text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 rounded transition-colors cursor-pointer"
             title="Export Excel"
           >
-            <FileSpreadsheet className="w-4 h-4" />
+            <FileSpreadsheet className="w-3.5 h-3.5" />
           </button>
           <button
             onClick={() => handleStartEdit(row, 'item')}
-            className="p-1 text-sky-600 hover:text-sky-800 hover:bg-sky-50 rounded transition-colors cursor-pointer"
+            className="p-0.5 text-sky-600 hover:text-sky-800 hover:bg-sky-50 rounded transition-colors cursor-pointer"
             title="Edit Delivered LR Entry"
           >
-            <Pencil className="w-4 h-4" />
+            <Pencil className="w-3.5 h-3.5" />
           </button>
           <button
             onClick={() => handleStartDelete(row, 'item')}
-            className="p-1 text-rose-600 hover:text-rose-800 hover:bg-rose-50 rounded transition-colors cursor-pointer"
+            className="p-0.5 text-rose-600 hover:text-rose-800 hover:bg-rose-50 rounded transition-colors cursor-pointer"
             title="Delete Delivered LR Entry"
           >
-            <Trash2 className="w-4 h-4" />
+            <Trash2 className="w-3.5 h-3.5" />
           </button>
         </div>
       ),
