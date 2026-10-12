@@ -526,7 +526,7 @@ export const OutwardCreate = () => {
         <button
           type="button"
           onClick={() => navigate('/all-entries', { state: { tab: 'outward_headers' } })}
-          className="inline-flex items-center bg-sky-600 hover:bg-sky-700 text-white font-bold px-4 py-2 rounded-lg text-xs shadow-sm transition-all self-end sm:self-auto cursor-pointer"
+          className="inline-flex items-center justify-center bg-sky-600 hover:bg-sky-700 text-white font-extrabold px-6 py-2.5 rounded-xl text-sm shadow-md transition-all self-end sm:self-auto cursor-pointer"
         >
           <span>Show All Outward</span>
         </button>
