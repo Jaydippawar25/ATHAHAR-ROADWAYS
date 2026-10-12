@@ -244,7 +244,7 @@ export const AllEntries = () => {
       label: 'Actions',
       key: 'actions',
       render: (row) => (
-        <div className="flex items-center space-x-1">
+        <div className="flex items-center space-x-0.5">
           <button
             onClick={() => handleStartView(row, row.recordCategory || 'inward_item')}
             className="p-1 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded transition-colors cursor-pointer"
@@ -285,7 +285,7 @@ export const AllEntries = () => {
       label: 'CONSIGNER',
       key: 'consignorName',
       render: (row) => (
-        <span className="font-semibold text-slate-800 max-w-[100px] truncate block" title={row.consignorName}>
+        <span className="font-semibold text-slate-800 max-w-[90px] truncate block" title={row.consignorName}>
           {row.consignorName || '-'}
         </span>
       ),
@@ -294,7 +294,7 @@ export const AllEntries = () => {
       label: 'CONSIGNEE',
       key: 'consigneeName',
       render: (row) => (
-        <span className="font-semibold text-slate-800 max-w-[100px] truncate block" title={row.consigneeName}>
+        <span className="font-semibold text-slate-800 max-w-[90px] truncate block" title={row.consigneeName}>
           {row.consigneeName || '-'}
         </span>
       ),
@@ -321,7 +321,7 @@ export const AllEntries = () => {
       label: 'From',
       key: 'from',
       render: (row) => (
-        <span className="max-w-[75px] truncate block" title={row.from}>
+        <span className="max-w-[70px] truncate block" title={row.from}>
           {row.from || '-'}
         </span>
       ),
@@ -330,7 +330,7 @@ export const AllEntries = () => {
       label: 'Memo No.',
       key: 'memoNo',
       render: (row) => (
-        <span className="max-w-[70px] truncate block" title={row.memoNo}>
+        <span className="max-w-[65px] truncate block" title={row.memoNo}>
           {row.memoNo || '-'}
         </span>
       ),
@@ -343,7 +343,7 @@ export const AllEntries = () => {
       label: 'Actions',
       key: 'actions',
       render: (row) => (
-        <div className="flex items-center space-x-1">
+        <div className="flex items-center space-x-0.5">
           <button
             onClick={() => handleStartView(row, 'inward_header')}
             className="p-1 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded transition-colors cursor-pointer"
@@ -384,7 +384,7 @@ export const AllEntries = () => {
       label: 'CONSIGNER',
       key: 'consignorName',
       render: (row) => (
-        <span className="font-semibold text-slate-800 max-w-[100px] truncate block" title={row.consignorName}>
+        <span className="font-semibold text-slate-800 max-w-[90px] truncate block" title={row.consignorName}>
           {row.consignorName || '-'}
         </span>
       ),
@@ -393,7 +393,7 @@ export const AllEntries = () => {
       label: 'CONSIGNEE',
       key: 'consigneeName',
       render: (row) => (
-        <span className="font-semibold text-slate-800 max-w-[100px] truncate block" title={row.consigneeName}>
+        <span className="font-semibold text-slate-800 max-w-[90px] truncate block" title={row.consigneeName}>
           {row.consigneeName || '-'}
         </span>
       ),
@@ -420,7 +420,7 @@ export const AllEntries = () => {
       label: 'From',
       key: 'from',
       render: (row) => (
-        <span className="max-w-[75px] truncate block" title={row.from}>
+        <span className="max-w-[70px] truncate block" title={row.from}>
           {row.from || '-'}
         </span>
       ),
@@ -429,7 +429,7 @@ export const AllEntries = () => {
       label: 'Memo No.',
       key: 'memoNo',
       render: (row) => (
-        <span className="max-w-[70px] truncate block" title={row.memoNo}>
+        <span className="max-w-[65px] truncate block" title={row.memoNo}>
           {row.memoNo || '-'}
         </span>
       ),
@@ -442,7 +442,7 @@ export const AllEntries = () => {
       label: 'Actions',
       key: 'actions',
       render: (row) => (
-        <div className="flex items-center space-x-1">
+        <div className="flex items-center space-x-0.5">
           <button
             onClick={() => handleStartView(row, 'outward_header')}
             className="p-1 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded transition-colors cursor-pointer"

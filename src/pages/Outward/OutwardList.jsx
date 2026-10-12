@@ -160,7 +160,7 @@ export const OutwardList = () => {
       label: 'Actions',
       key: 'actions',
       render: (row) => (
-        <div className="flex items-center space-x-1">
+        <div className="flex items-center space-x-0.5">
           <button
             onClick={() => handleStartView(row, 'header')}
             className="p-1 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded transition-colors cursor-pointer"
@@ -213,7 +213,7 @@ export const OutwardList = () => {
       label: 'Actions',
       key: 'actions',
       render: (row) => (
-        <div className="flex items-center space-x-1">
+        <div className="flex items-center space-x-0.5">
           <button
             onClick={() => handleStartView(row, 'item')}
             className="p-1 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded transition-colors cursor-pointer"
