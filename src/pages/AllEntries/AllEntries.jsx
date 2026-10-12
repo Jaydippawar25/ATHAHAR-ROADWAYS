@@ -687,40 +687,40 @@ export const AllEntries = () => {
       {/* Main Tab Controls & Data Table */}
       <div className="space-y-4">
         {/* Tab Selection Buttons */}
-        <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 pb-2">
+        <div className="flex flex-wrap items-center gap-3 border-b border-slate-200 pb-3">
           <button
             onClick={() => setActiveTab('all_lrs')}
-            className={`px-4 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center space-x-2 cursor-pointer ${
+            className={`px-7 py-3.5 min-w-[210px] justify-center rounded-xl font-extrabold text-sm transition-all flex items-center space-x-2.5 cursor-pointer ${
               activeTab === 'all_lrs'
-                ? 'bg-slate-900 text-white shadow'
-                : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+                ? 'bg-slate-900 text-white shadow-md'
+                : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200 shadow-2xs'
             }`}
           >
-            <Layers className="w-4 h-4" />
+            <Layers className="w-5 h-5" />
             <span>All LR Entries ({combinedLREntries.length})</span>
           </button>
 
           <button
             onClick={() => setActiveTab('inward_headers')}
-            className={`px-4 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center space-x-2 cursor-pointer ${
+            className={`px-7 py-3.5 min-w-[210px] justify-center rounded-xl font-extrabold text-sm transition-all flex items-center space-x-2.5 cursor-pointer ${
               activeTab === 'inward_headers'
-                ? 'bg-sky-600 text-white shadow'
-                : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+                ? 'bg-sky-600 text-white shadow-md'
+                : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200 shadow-2xs'
             }`}
           >
-            <ArrowDownLeft className="w-4 h-4" />
+            <ArrowDownLeft className="w-5 h-5" />
             <span>Inward Receipts ({enrichedInwards.length})</span>
           </button>
 
           <button
             onClick={() => setActiveTab('outward_headers')}
-            className={`px-4 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center space-x-2 cursor-pointer ${
+            className={`px-7 py-3.5 min-w-[210px] justify-center rounded-xl font-extrabold text-sm transition-all flex items-center space-x-2.5 cursor-pointer ${
               activeTab === 'outward_headers'
-                ? 'bg-emerald-600 text-white shadow'
-                : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+                ? 'bg-emerald-600 text-white shadow-md'
+                : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200 shadow-2xs'
             }`}
           >
-            <ArrowUpRight className="w-4 h-4" />
+            <ArrowUpRight className="w-5 h-5" />
             <span>Outward Receipts ({enrichedOutwards.length})</span>
           </button>
         </div>
