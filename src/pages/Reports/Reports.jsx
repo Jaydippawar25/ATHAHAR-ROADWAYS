@@ -35,20 +35,13 @@ export const Reports = () => {
       label: 'Actions',
       key: 'actions',
       render: (row) => (
-        <div className="flex items-center space-x-1">
+        <div className="flex items-center justify-center space-x-1">
           <button
             onClick={() => setViewingRecord(row)}
             className="p-1 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded transition-colors cursor-pointer"
             title="View LR Details"
           >
             <Eye className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => handleExportRowExcel(row)}
-            className="p-1 text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 rounded transition-colors cursor-pointer"
-            title="Export Excel"
-          >
-            <FileSpreadsheet className="w-4 h-4" />
           </button>
         </div>
       ),

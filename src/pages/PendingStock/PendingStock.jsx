@@ -67,20 +67,13 @@ export const PendingStock = () => {
       label: 'Actions',
       key: 'actions',
       render: (row) => (
-        <div className="flex items-center justify-center space-x-0.5">
+        <div className="flex items-center justify-center space-x-1">
           <button
             onClick={() => setViewingRecord(row)}
             className="p-0.5 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded transition-colors cursor-pointer"
             title="View Pending LR"
           >
             <Eye className="w-3.5 h-3.5" />
-          </button>
-          <button
-            onClick={() => handleExportRowExcel(row)}
-            className="p-0.5 text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 rounded transition-colors cursor-pointer"
-            title="Export Excel"
-          >
-            <FileSpreadsheet className="w-3.5 h-3.5" />
           </button>
           <button
             onClick={() => handleStartEdit(row)}

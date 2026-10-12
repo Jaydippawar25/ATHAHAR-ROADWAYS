@@ -260,20 +260,13 @@ export const AllEntries = () => {
       label: 'Actions',
       key: 'actions',
       render: (row) => (
-        <div className="flex items-center justify-center space-x-0.5">
+        <div className="flex items-center justify-center space-x-1">
           <button
             onClick={() => handleStartView(row, row.recordCategory || 'inward_item')}
             className="p-0.5 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded transition-colors cursor-pointer"
             title="View Entry"
           >
             <Eye className="w-3.5 h-3.5" />
-          </button>
-          <button
-            onClick={() => handleExportRowExcel(row, row.recordCategory || 'inward_item')}
-            className="p-0.5 text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 rounded transition-colors cursor-pointer"
-            title="Export Excel"
-          >
-            <FileSpreadsheet className="w-3.5 h-3.5" />
           </button>
           <button
             onClick={() => handleStartEdit(row, row.recordCategory || 'inward_item')}
@@ -367,20 +360,13 @@ export const AllEntries = () => {
       label: 'Actions',
       key: 'actions',
       render: (row) => (
-        <div className="flex items-center justify-center space-x-0.5">
+        <div className="flex items-center justify-center space-x-1">
           <button
             onClick={() => handleStartView(row, 'inward_header')}
             className="p-0.5 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded transition-colors cursor-pointer"
             title="View Receipt"
           >
             <Eye className="w-3.5 h-3.5" />
-          </button>
-          <button
-            onClick={() => handleExportRowExcel(row, 'inward_header')}
-            className="p-0.5 text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 rounded transition-colors cursor-pointer"
-            title="Export Excel"
-          >
-            <FileSpreadsheet className="w-3.5 h-3.5" />
           </button>
           <button
             onClick={() => handleStartEdit(row, 'inward_header')}
@@ -474,20 +460,13 @@ export const AllEntries = () => {
       label: 'Actions',
       key: 'actions',
       render: (row) => (
-        <div className="flex items-center justify-center space-x-0.5">
+        <div className="flex items-center justify-center space-x-1">
           <button
             onClick={() => handleStartView(row, 'outward_header')}
             className="p-0.5 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded transition-colors cursor-pointer"
             title="View Outward Receipt"
           >
             <Eye className="w-3.5 h-3.5" />
-          </button>
-          <button
-            onClick={() => handleExportRowExcel(row, 'outward_header')}
-            className="p-0.5 text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 rounded transition-colors cursor-pointer"
-            title="Export Excel"
-          >
-            <FileSpreadsheet className="w-3.5 h-3.5" />
           </button>
           <button
             onClick={() => handleStartEdit(row, 'outward_header')}
