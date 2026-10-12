@@ -869,24 +869,6 @@ export const OutwardCreate = () => {
             <Printer className="w-4 h-4" />
             <span>Print</span>
           </button>
-
-          <button
-            type="button"
-            onClick={() => handleFinalSubmit(true)}
-            className="inline-flex items-center space-x-2 px-4 py-2.5 bg-sky-600 hover:bg-sky-700 text-white font-bold rounded-lg text-xs shadow-sm transition-all cursor-pointer"
-          >
-            <Eye className="w-4 h-4" />
-            <span>Print Preview</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => navigate('/outward/list')}
-            className="inline-flex items-center space-x-1.5 px-4 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-lg text-xs shadow-sm transition-all cursor-pointer"
-          >
-            <X className="w-4 h-4" />
-            <span>Close</span>
-          </button>
         </div>
 
         {/* Right Summary Totals (PKG, TO PAY, T.B.B, PAID) */}
