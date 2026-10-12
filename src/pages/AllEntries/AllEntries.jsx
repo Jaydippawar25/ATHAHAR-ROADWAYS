@@ -13,11 +13,12 @@ import {
   FileSpreadsheet,
   FileText,
   Eye,
+  Printer,
 } from 'lucide-react';
 import { DataTable } from '../../components/common/DataTable';
 import { Modal } from '../../components/common/Modal';
 import { StatusBadge } from '../../components/common/StatusBadge';
-import { exportToExcel, exportToPDF } from '../../services/exportService';
+import { exportToExcel, exportToPDF, printRecordDetails } from '../../services/exportService';
 import { formatDate } from '../../utils/dateUtils';
 import { formatCurrency } from '../../utils/numberUtils';
 
@@ -86,6 +87,58 @@ export const AllEntries = () => {
     } else {
       const cols = combinedLRColumns.filter((c) => c.key !== 'actions');
       exportToExcel([row], `LR_${row.lrNo}`, cols);
+    }
+  };
+
+  const handlePrintRecord = (row, category) => {
+    if (category?.includes('header')) {
+      const isInward = category === 'inward_header';
+      const items = isInward
+        ? inwardItems.filter((item) => item.inwardId === row.id || item.inwardNo === row.inwardNo)
+        : outwardItems.filter((item) => item.outwardId === row.id || item.outwardNo === row.outwardNo);
+      const totalFreight =
+        (Number(row.totalToPay) || 0) + (Number(row.totalTbb) || 0) + (Number(row.totalPaid) || 0);
+
+      printRecordDetails({
+        title: isInward
+          ? `Inward Receipt Details #${row.inwardNo}`
+          : `Outward Receipt Details #${row.outwardNo}`,
+        fields: [
+          { label: isInward ? 'Inward No.' : 'Outward No.', value: row.inwardNo || row.outwardNo },
+          { label: 'Date', value: formatDate(row.date) },
+          { label: 'Vehicle No.', value: row.vehicleNo || '-' },
+          {
+            label: isInward ? 'Vehicle Owner' : 'Driver Name',
+            value: row.ownerName || row.driverName || '-',
+          },
+          { label: 'From Station', value: row.from || '-' },
+          { label: 'Memo No.', value: row.memoNo || '-' },
+          { label: 'Total PKG', value: `${row.totalQty || 0} Pkgs` },
+          { label: 'Total Freight', value: formatCurrency(totalFreight) },
+        ],
+        items,
+      });
+    } else {
+      printRecordDetails({
+        title: `LR Entry Details #${row.lrNo}`,
+        fields: [
+          { label: 'LR No.', value: row.lrNo },
+          { label: 'Status', value: row.status },
+          { label: 'Packages', value: `${row.pkg || 0} Pkgs` },
+          { label: 'Inward No.', value: row.inwardNo || '-' },
+          { label: 'Inward Date', value: formatDate(row.inwardDate) },
+          { label: 'Outward No.', value: row.outwardNo || '-' },
+          { label: 'Outward Date', value: formatDate(row.outwardDate) },
+          { label: 'Delivery Person', value: row.deliveryPersonName || '-' },
+          { label: 'CT To', value: row.ctTo || '-' },
+          { label: 'Consigner', value: row.consignorName || '-' },
+          { label: 'Consignee', value: row.consigneeName || '-' },
+          { label: 'Invoice No.', value: row.invoiceNo || '-' },
+          { label: 'To Pay', value: formatCurrency(row.toPayAmount) },
+          { label: 'T.B.B', value: formatCurrency(row.tbbAmount) },
+          { label: 'Paid', value: formatCurrency(row.paidAmount) },
+        ],
+      });
     }
   };
 
@@ -881,6 +934,14 @@ export const AllEntries = () => {
             )}
 
             <div className="flex justify-end space-x-2 pt-3 border-t border-slate-200">
+              <button
+                type="button"
+                onClick={() => handlePrintRecord(viewingRecord, viewCategory)}
+                className="inline-flex items-center space-x-1.5 px-3.5 py-2 bg-sky-600 hover:bg-sky-700 text-white font-bold rounded-lg text-xs shadow-xs cursor-pointer"
+              >
+                <Printer className="w-4 h-4" />
+                <span>Print</span>
+              </button>
               <button
                 type="button"
                 onClick={() => handleExportRowExcel(viewingRecord, viewCategory)}

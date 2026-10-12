@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
-import { FileText, Eye, FileSpreadsheet } from 'lucide-react';
+import { FileText, Eye, FileSpreadsheet, Printer } from 'lucide-react';
 import { DataTable } from '../../components/common/DataTable';
 import { Modal } from '../../components/common/Modal';
 import { StatusBadge } from '../../components/common/StatusBadge';
-import { exportToExcel, exportToPDF } from '../../services/exportService';
+import { exportToExcel, exportToPDF, printRecordDetails } from '../../services/exportService';
 import { formatDate } from '../../utils/dateUtils';
 import { formatCurrency } from '../../utils/numberUtils';
 
@@ -16,6 +16,26 @@ export const Reports = () => {
   const handleExportRowExcel = (row) => {
     const cols = columns.filter((c) => c.key !== 'actions');
     exportToExcel([row], `Report_LR_${row.lrNo}`, cols);
+  };
+
+  const handlePrintRecord = (row) => {
+    printRecordDetails({
+      title: `LR Report Details #${row.lrNo}`,
+      fields: [
+        { label: 'LR No.', value: row.lrNo },
+        { label: 'Inward Date', value: formatDate(row.inwardDate || row.date) },
+        { label: 'Outward Date', value: formatDate(row.outwardDate) },
+        { label: 'Invoice No.', value: row.invoiceNo || '-' },
+        { label: 'CT To', value: row.ctTo || '-' },
+        { label: 'Status', value: row.status },
+        { label: 'Consignor', value: row.consignorName || '-' },
+        { label: 'Consignee', value: row.consigneeName || '-' },
+        { label: 'Packages', value: `${row.pkg || 0} Pkgs` },
+        { label: 'To Pay', value: formatCurrency(row.toPayAmount) },
+        { label: 'T.B.B', value: formatCurrency(row.tbbAmount) },
+        { label: 'Paid', value: formatCurrency(row.paidAmount) },
+      ],
+    });
   };
 
   const columns = [
@@ -167,6 +187,14 @@ export const Reports = () => {
             </div>
 
             <div className="flex justify-end space-x-2 pt-3 border-t border-slate-200">
+              <button
+                type="button"
+                onClick={() => handlePrintRecord(viewingRecord)}
+                className="inline-flex items-center space-x-1.5 px-3.5 py-2 bg-sky-600 hover:bg-sky-700 text-white font-bold rounded-lg text-xs shadow-xs cursor-pointer"
+              >
+                <Printer className="w-4 h-4" />
+                <span>Print</span>
+              </button>
               <button
                 type="button"
                 onClick={() => handleExportRowExcel(viewingRecord)}

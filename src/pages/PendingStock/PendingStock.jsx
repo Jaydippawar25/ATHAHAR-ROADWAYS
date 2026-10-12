@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { useNavigate } from 'react-router-dom';
-import { PackageCheck, ArrowUpRight, Clock, Pencil, Trash2, AlertTriangle, Eye, FileSpreadsheet } from 'lucide-react';
+import { PackageCheck, ArrowUpRight, Clock, Pencil, Trash2, AlertTriangle, Eye, FileSpreadsheet, Printer } from 'lucide-react';
 import { DataTable } from '../../components/common/DataTable';
 import { Modal } from '../../components/common/Modal';
 import { StatusBadge } from '../../components/common/StatusBadge';
 import { calculateDaysPending, formatDate } from '../../utils/dateUtils';
 import { formatCurrency } from '../../utils/numberUtils';
-import { exportToExcel, exportToPDF } from '../../services/exportService';
+import { exportToExcel, exportToPDF, printRecordDetails } from '../../services/exportService';
 
 export const PendingStock = () => {
   const { inwards, inwardItems, pendingStock, handleDeleteInwardItem, handleUpdateInwardItem } = useApp();
@@ -23,6 +23,27 @@ export const PendingStock = () => {
   const handleExportRowExcel = (row) => {
     const cols = pendingColumns.filter((c) => c.key !== 'actions');
     exportToExcel([row], `Pending_LR_${row.lrNo}`, cols);
+  };
+
+  const handlePrintRecord = (row) => {
+    printRecordDetails({
+      title: `Pending LR Details #${row.lrNo}`,
+      fields: [
+        { label: 'LR No.', value: row.lrNo },
+        { label: 'Inward No.', value: row.inwardNo || '-' },
+        { label: 'Inward Date', value: formatDate(row.inwardDate || row.date) },
+        { label: 'Memo No.', value: row.memoNo || '-' },
+        { label: 'Invoice No.', value: row.invoiceNo || '-' },
+        { label: 'Status', value: row.status },
+        { label: 'CT To', value: row.ctTo || '-' },
+        { label: 'Consignor', value: row.consignorName || '-' },
+        { label: 'Consignee', value: row.consigneeName || '-' },
+        { label: 'Packages', value: `${row.pkg || 0} Pkgs` },
+        { label: 'To Pay', value: formatCurrency(row.toPayAmount) },
+        { label: 'T.B.B', value: formatCurrency(row.tbbAmount) },
+        { label: 'Paid', value: formatCurrency(row.paidAmount) },
+      ],
+    });
   };
 
   const handleStartEdit = (row) => {
@@ -236,6 +257,14 @@ export const PendingStock = () => {
             </div>
 
             <div className="flex justify-end space-x-2 pt-3 border-t border-slate-200">
+              <button
+                type="button"
+                onClick={() => handlePrintRecord(viewingRecord)}
+                className="inline-flex items-center space-x-1.5 px-3.5 py-2 bg-sky-600 hover:bg-sky-700 text-white font-bold rounded-lg text-xs shadow-xs cursor-pointer"
+              >
+                <Printer className="w-4 h-4" />
+                <span>Print</span>
+              </button>
               <button
                 type="button"
                 onClick={() => handleExportRowExcel(viewingRecord)}
