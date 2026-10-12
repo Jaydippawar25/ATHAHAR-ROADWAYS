@@ -4,8 +4,9 @@ import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 import { Modal } from '../../components/common/Modal';
 import { Save, Printer, ArrowLeft, AlertCircle, Plus, Trash2, Edit2, RotateCcw, PackageCheck, Eye, X, Search } from 'lucide-react';
-import { getTodayDateString } from '../../utils/dateUtils';
+import { getTodayDateString, formatDate } from '../../utils/dateUtils';
 import { formatCurrency } from '../../utils/numberUtils';
+import { printRecordDetails } from '../../services/exportService';
 
 export const OutwardCreate = () => {
   const navigate = useNavigate();
@@ -442,6 +443,45 @@ export const OutwardCreate = () => {
       return;
     }
 
+    if (shouldPrint) {
+      if (editingOutwardId || editOutwardData) {
+        try {
+          handleUpdateFullOutward(
+            editingOutwardId || editOutwardData?.outwardNo,
+            headerData,
+            finalItems,
+            user?.displayName || 'Operator'
+          );
+        } catch (err) {
+          // Proceed with printing current form data
+        }
+      }
+
+      const printToPay = finalItems.reduce((sum, item) => sum + (Number(item.toPayAmount) || 0), 0);
+      const printTbb = finalItems.reduce((sum, item) => sum + (Number(item.tbbAmount) || 0), 0);
+      const printPaid = finalItems.reduce((sum, item) => sum + (Number(item.paidAmount) || 0), 0);
+
+      printRecordDetails({
+        title: `Outward Receipt Details #${headerData.outwardNo}`,
+        fields: [
+          { label: 'Outward No.', value: headerData.outwardNo },
+          { label: 'Date', value: formatDate(headerData.date) },
+          { label: 'Vehicle No.', value: headerData.vehicleNo || '-' },
+          { label: 'Delivery Person', value: headerData.deliveryPersonName || '-' },
+          { label: 'Driver Name', value: headerData.driverName || '-' },
+          { label: 'From Station', value: headerData.fromStation || '-' },
+          { label: 'Memo No.', value: headerData.memoNo || '-' },
+          {
+            label: 'Total Freight',
+            value: formatCurrency(printToPay + printTbb + printPaid),
+          },
+        ],
+        items: finalItems,
+        showDeliveryPerson: true,
+      });
+      return;
+    }
+
     try {
       if (editingOutwardId || editOutwardData) {
         handleUpdateFullOutward(
@@ -454,10 +494,6 @@ export const OutwardCreate = () => {
       } else {
         handleCreateOutward(headerData, finalItems, user?.displayName || 'Operator');
         setSuccess(`Outward Receipt #${headerData.outwardNo} saved successfully! Status updated to DELIVERED.`);
-      }
-
-      if (shouldPrint) {
-        setTimeout(() => window.print(), 300);
       }
 
       setTimeout(() => {

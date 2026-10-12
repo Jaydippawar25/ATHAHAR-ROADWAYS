@@ -55,8 +55,13 @@ export const exportToPDF = (title, columns, data, filename = 'report') => {
   doc.save(`${filename}_${new Date().toISOString().split('T')[0]}.pdf`);
 };
 
-export const printRecordDetails = ({ title, fields = [], items = [] }) => {
-  const iframe = document.createElement('iframe');
+export const printRecordDetails = ({ title, fields = [], items = [], showDeliveryPerson = false }) => {
+  let iframe = document.getElementById('athahar-print-frame');
+  if (iframe) {
+    document.body.removeChild(iframe);
+  }
+  iframe = document.createElement('iframe');
+  iframe.id = 'athahar-print-frame';
   iframe.style.position = 'fixed';
   iframe.style.right = '0';
   iframe.style.bottom = '0';
@@ -75,42 +80,66 @@ export const printRecordDetails = ({ title, fields = [], items = [] }) => {
     )
     .join('');
 
+  const hasDelPerson =
+    showDeliveryPerson ||
+    (items && items.some((i) => i.deliveryPersonName && i.deliveryPersonName !== '-'));
+
+  const totalPkg = (items || []).reduce((sum, i) => sum + (Number(i.pkg) || 0), 0);
+  const totalToPay = (items || []).reduce((sum, i) => sum + (Number(i.toPayAmount) || 0), 0);
+  const totalTbb = (items || []).reduce((sum, i) => sum + (Number(i.tbbAmount) || 0), 0);
+  const totalPaid = (items || []).reduce((sum, i) => sum + (Number(i.paidAmount) || 0), 0);
+
   const itemsHtml =
     items && items.length > 0
       ? `
-      <h4 class="section-title">Associated LR Items</h4>
+      <h4 class="section-title">LR Items (${items.length})</h4>
       <table>
         <thead>
           <tr>
+            <th style="width: 40px; text-align: center;">SR</th>
             <th>LR No.</th>
+            <th>Date</th>
+            <th>Inv No.</th>
             <th>Consigner</th>
             <th>Consignee</th>
             <th>CT To</th>
-            <th>PKG</th>
-            <th>To Pay</th>
-            <th>TBB</th>
-            <th>Paid</th>
-            <th>Status</th>
+            ${hasDelPerson ? '<th>Del. Person</th>' : ''}
+            <th style="text-align: center;">PKG</th>
+            <th style="text-align: right;">To Pay</th>
+            <th style="text-align: right;">T.B.B</th>
+            <th style="text-align: right;">Paid</th>
           </tr>
         </thead>
         <tbody>
           ${items
             .map(
-              (lr) => `
+              (lr, idx) => `
             <tr>
+              <td style="text-align: center;" class="bold">${lr.srNo ?? idx + 1}</td>
               <td class="bold">${lr.lrNo || '-'}</td>
+              <td>${formatDate(lr.inwardDate || lr.date)}</td>
+              <td>${lr.invoiceNo || '-'}</td>
               <td>${lr.consignorName || '-'}</td>
               <td>${lr.consigneeName || '-'}</td>
-              <td>${lr.ctTo || '-'}</td>
-              <td class="bold">${lr.pkg ?? 0}</td>
-              <td>${formatCurrency(lr.toPayAmount)}</td>
-              <td>${formatCurrency(lr.tbbAmount)}</td>
-              <td>${formatCurrency(lr.paidAmount)}</td>
-              <td>${lr.status || '-'}</td>
+              <td class="bold">${lr.ctTo || '-'}</td>
+              ${hasDelPerson ? `<td>${lr.deliveryPersonName || '-'}</td>` : ''}
+              <td style="text-align: center;" class="bold">${lr.pkg ?? 0}</td>
+              <td style="text-align: right;">${formatCurrency(lr.toPayAmount)}</td>
+              <td style="text-align: right;">${formatCurrency(lr.tbbAmount)}</td>
+              <td style="text-align: right;">${formatCurrency(lr.paidAmount)}</td>
             </tr>`
             )
             .join('')}
         </tbody>
+        <tfoot>
+          <tr class="totals-row">
+            <td colspan="${hasDelPerson ? 8 : 7}" style="text-align: right;">TOTAL:</td>
+            <td style="text-align: center;">${totalPkg}</td>
+            <td style="text-align: right;">${formatCurrency(totalToPay)}</td>
+            <td style="text-align: right;">${formatCurrency(totalTbb)}</td>
+            <td style="text-align: right;">${formatCurrency(totalPaid)}</td>
+          </tr>
+        </tfoot>
       </table>`
       : '';
 
@@ -121,26 +150,29 @@ export const printRecordDetails = ({ title, fields = [], items = [] }) => {
         <title>${title}</title>
         <style>
           * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-          body { margin: 0; padding: 24px; color: #0f172a; font-size: 12px; }
+          body { margin: 0; padding: 24px; color: #0f172a; font-size: 12px; background: #fff; }
           .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #0f172a; padding-bottom: 12px; margin-bottom: 16px; }
           .company { font-size: 20px; font-weight: 900; letter-spacing: 0.5px; color: #0f172a; margin: 0; }
-          .doc-title { font-size: 14px; font-weight: 700; color: #0284c7; margin: 4px 0 0 0; }
-          .timestamp { font-size: 11px; color: #64748b; font-weight: 600; }
-          .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; background: #f8fafc; padding: 14px; border: 1px solid #cbd5e1; border-radius: 8px; margin-bottom: 20px; }
+          .address { font-size: 10px; font-weight: 600; color: #475569; margin: 3px 0 0 0; }
+          .doc-title { font-size: 14px; font-weight: 800; color: #0284c7; margin: 6px 0 0 0; }
+          .timestamp { font-size: 11px; color: #64748b; font-weight: 600; text-align: right; }
+          .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; background: #f8fafc; padding: 14px; border: 1px solid #cbd5e1; border-radius: 8px; margin-bottom: 20px; }
           .field-box { display: flex; flex-direction: column; }
           .field-label { font-size: 10px; font-weight: 700; text-transform: uppercase; color: #64748b; margin-bottom: 2px; }
-          .field-value { font-size: 13px; font-weight: 800; color: #0f172a; }
+          .field-value { font-size: 12px; font-weight: 800; color: #0f172a; }
           .section-title { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; color: #334155; margin: 16px 0 8px 0; }
           table { width: 100%; border-collapse: collapse; font-size: 11px; }
-          th, td { border: 1px solid #cbd5e1; padding: 7px 8px; text-align: left; }
+          th, td { border: 1px solid #cbd5e1; padding: 6px 8px; text-align: left; }
           th { background: #f1f5f9; font-weight: 800; text-transform: uppercase; color: #334155; }
           .bold { font-weight: 800; }
+          .totals-row td { background: #f8fafc; font-weight: 900; border-top: 2px solid #0f172a; }
         </style>
       </head>
       <body>
         <div class="header">
           <div>
             <h1 class="company">ATHAHAR ROADWAYS</h1>
+            <p class="address">NEXT TO PARVATI CRANE, VAKHAR BHAG, SANGLI-416416 | MOB: 9370229449 / 9850329449</p>
             <p class="doc-title">${title}</p>
           </div>
           <div class="timestamp">Printed on: ${new Date().toLocaleString()}</div>
@@ -159,13 +191,10 @@ export const printRecordDetails = ({ title, fields = [], items = [] }) => {
   doc.close();
 
   setTimeout(() => {
-    iframe.contentWindow.focus();
-    iframe.contentWindow.print();
-    setTimeout(() => {
-      if (document.body.contains(iframe)) {
-        document.body.removeChild(iframe);
-      }
-    }, 1000);
-  }, 150);
+    if (iframe.contentWindow) {
+      iframe.contentWindow.focus();
+      iframe.contentWindow.print();
+    }
+  }, 200);
 };
 

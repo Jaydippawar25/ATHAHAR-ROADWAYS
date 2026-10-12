@@ -4,8 +4,9 @@ import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 import { Modal } from '../../components/common/Modal';
 import { Save, Printer, ArrowLeft, AlertCircle, Plus, Trash2, Edit2, RotateCcw, Eye, X } from 'lucide-react';
-import { getTodayDateString } from '../../utils/dateUtils';
+import { getTodayDateString, formatDate } from '../../utils/dateUtils';
 import { formatCurrency } from '../../utils/numberUtils';
+import { printRecordDetails } from '../../services/exportService';
 
 export const InwardCreate = () => {
   const navigate = useNavigate();
@@ -395,7 +396,41 @@ export const InwardCreate = () => {
     let finalItems = [...allLRs];
 
     if (finalItems.length === 0) {
-      setError('Please enter at least one LR No. before saving.');
+      setError('Please enter at least one LR No. before saving or printing.');
+      return;
+    }
+
+    if (shouldPrint) {
+      if (editingInwardId || editInwardData) {
+        try {
+          handleUpdateFullInward(
+            editingInwardId || editInwardData?.inwardNo,
+            headerData,
+            finalItems,
+            user?.displayName || 'Operator'
+          );
+        } catch (err) {
+          // Proceed with printing current form data
+        }
+      }
+
+      printRecordDetails({
+        title: `Inward Receipt Details #${headerData.inwardNo}`,
+        fields: [
+          { label: 'Inward No.', value: headerData.inwardNo },
+          { label: 'Date', value: formatDate(headerData.date) },
+          { label: 'Vehicle No.', value: headerData.vehicleNo || '-' },
+          { label: 'Vehicle Owner', value: headerData.ownerName || '-' },
+          { label: 'Driver Name', value: headerData.driverName || '-' },
+          { label: 'From Station', value: headerData.fromStation || '-' },
+          { label: 'Memo No.', value: headerData.memoNo || '-' },
+          {
+            label: 'Total Freight',
+            value: formatCurrency(totalToPay + totalTbb + totalPaid),
+          },
+        ],
+        items: finalItems,
+      });
       return;
     }
 
@@ -411,10 +446,6 @@ export const InwardCreate = () => {
       } else {
         handleCreateInward(headerData, finalItems, user?.displayName || 'Operator');
         setSuccess(`Inward Receipt #${headerData.inwardNo} saved successfully!`);
-      }
-
-      if (shouldPrint) {
-        setTimeout(() => window.print(), 300);
       }
 
       setTimeout(() => {
