@@ -389,28 +389,20 @@ export const CrossOutwardCreate = () => {
           user?.name || 'Operator'
         );
         setSuccess(`Cross Stock Out Entry #${headerData.outwardNo} updated successfully!`);
-        setTimeout(() => {
-          navigate('/all-entries', {
-            state: { tab: location.state?.returnTab || 'outward_headers' },
-          });
-        }, 600);
       } else {
         handleCreateOutward(
           payloadHeader,
           finalItems,
           user?.name || 'Operator'
         );
-
-        setSuccess('Cross Stock Out Entry saved successfully!');
-        const nextNo = getNextCrossOutwardNo();
-        setHeaderData((prev) => ({
-          ...prev,
-          outwardNo: nextNo,
-          memoNo: '',
-        }));
-        setLrItems([]);
-        resetItemForm(1);
+        setSuccess(`Cross Stock Out Entry #${headerData.outwardNo} saved successfully!`);
       }
+
+      setTimeout(() => {
+        navigate('/all-entries', {
+          state: { tab: location.state?.returnTab || 'stock_out_headers' },
+        });
+      }, 300);
     } catch (err) {
       setError(err.message || 'Failed to save Cross Stock Out entry.');
     }
@@ -422,7 +414,7 @@ export const CrossOutwardCreate = () => {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 bg-white px-4 py-3 rounded-lg border border-slate-200 shadow-xs">
         <div className="flex items-center space-x-3">
           <button
-            onClick={() => navigate('/all-entries', { state: { tab: 'outward_headers' } })}
+            onClick={() => navigate('/all-entries', { state: { tab: 'stock_out_headers' } })}
             className="p-1.5 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-md transition-colors cursor-pointer"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -449,10 +441,10 @@ export const CrossOutwardCreate = () => {
         <div className="flex items-center space-x-2">
           <button
             type="button"
-            onClick={() => navigate('/all-entries', { state: { tab: 'outward_headers' } })}
+            onClick={() => navigate('/all-entries', { state: { tab: 'stock_out_headers' } })}
             className="px-5 py-2.5 text-sm font-extrabold text-slate-800 bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded-lg transition-colors cursor-pointer shadow-xs"
           >
-            Show All Outward
+            Show All Stock-Out
           </button>
         </div>
       </div>
@@ -1025,7 +1017,7 @@ export const CrossOutwardCreate = () => {
             className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded shadow-xs flex items-center cursor-pointer"
           >
             <Save className="w-4 h-4 mr-1.5" />
-            {editingOutwardId ? 'Update Outward' : 'Save'}
+            {editingOutwardId ? 'Update Stock-Out' : 'Save'}
           </button>
 
           <button
@@ -1037,7 +1029,7 @@ export const CrossOutwardCreate = () => {
               printRecordDetails({
                 title: `Cross Stock Out Receipt Details #${headerData.outwardNo}`,
                 fields: [
-                  { label: 'Outward No.', value: headerData.outwardNo },
+                  { label: 'Stock-Out No.', value: headerData.outwardNo },
                   { label: 'Date', value: formatDate(headerData.date) },
                   { label: 'Transporter', value: headerData.transporterName || '-' },
                   { label: 'From Station', value: headerData.fromStation || '-' },

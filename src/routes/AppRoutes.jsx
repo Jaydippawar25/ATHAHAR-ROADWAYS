@@ -81,6 +81,10 @@ export const AppRoutes = () => {
         }
       />
       <Route
+        path="/cross-outward/list"
+        element={<Navigate to="/all-entries" state={{ tab: 'stock_out_headers' }} replace />}
+      />
+      <Route
         path="/all-entries"
         element={
           <ProtectedRoute>

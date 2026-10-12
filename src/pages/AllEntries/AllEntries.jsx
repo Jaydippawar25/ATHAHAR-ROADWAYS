@@ -5,6 +5,7 @@ import {
   ArrowLeftRight,
   ArrowDownLeft,
   ArrowUpRight,
+  Shuffle,
   PackageCheck,
   Pencil,
   Trash2,
@@ -41,7 +42,7 @@ export const AllEntries = () => {
     handleUpdateOutwardItem,
   } = useApp();
 
-  // Active view tab: 'all_lrs' | 'inward_headers' | 'outward_headers'
+  // Active view tab: 'all_lrs' | 'inward_headers' | 'outward_headers' | 'stock_out_headers'
   const [activeTab, setActiveTab] = useState(location.state?.tab || 'all_lrs');
 
   useEffect(() => {
@@ -54,7 +55,7 @@ export const AllEntries = () => {
   const [viewingRecord, setViewingRecord] = useState(null);
   const [viewCategory, setViewCategory] = useState(null);
   const [editingRecord, setEditingRecord] = useState(null);
-  const [editCategory, setEditCategory] = useState(null); // 'inward_header' | 'inward_item' | 'outward_header' | 'outward_item'
+  const [editCategory, setEditCategory] = useState(null); // 'inward_header' | 'inward_item' | 'outward_header' | 'stock_out_header' | 'outward_item'
   const [editFormData, setEditFormData] = useState({});
 
   const [deleteRecord, setDeleteRecord] = useState(null);
@@ -75,14 +76,16 @@ export const AllEntries = () => {
         const cols = inwardHeaderColumns.filter((c) => c.key !== 'actions');
         exportToExcel([row], `Inward_${row.inwardNo}`, cols);
       }
-    } else if (category === 'outward_header') {
+    } else if (category === 'outward_header' || category === 'stock_out_header') {
       const items = outwardItems.filter((item) => item.outwardId === row.id || item.outwardNo === row.outwardNo);
+      const isStockOut = category === 'stock_out_header' || row.isCrossOutward;
+      const prefix = isStockOut ? 'StockOut' : 'Outward';
       if (items.length > 0) {
         const cols = combinedLRColumns.filter((c) => c.key !== 'actions');
-        exportToExcel(items, `Outward_${row.outwardNo}_LRs`, cols);
+        exportToExcel(items, `${prefix}_${row.outwardNo}_LRs`, cols);
       } else {
-        const cols = outwardHeaderColumns.filter((c) => c.key !== 'actions');
-        exportToExcel([row], `Outward_${row.outwardNo}`, cols);
+        const cols = (isStockOut ? stockOutHeaderColumns : outwardHeaderColumns).filter((c) => c.key !== 'actions');
+        exportToExcel([row], `${prefix}_${row.outwardNo}`, cols);
       }
     } else {
       const cols = combinedLRColumns.filter((c) => c.key !== 'actions');
@@ -93,6 +96,7 @@ export const AllEntries = () => {
   const handlePrintRecord = (row, category) => {
     if (category?.includes('header')) {
       const isInward = category === 'inward_header';
+      const isStockOut = category === 'stock_out_header' || row.isCrossOutward;
       const items = isInward
         ? inwardItems.filter((item) => item.inwardId === row.id || item.inwardNo === row.inwardNo)
         : outwardItems.filter((item) => item.outwardId === row.id || item.outwardNo === row.outwardNo);
@@ -102,15 +106,23 @@ export const AllEntries = () => {
       printRecordDetails({
         title: isInward
           ? `Inward Receipt Details #${row.inwardNo}`
+          : isStockOut
+          ? `Stock-Out Receipt Details #${row.outwardNo}`
           : `Outward Receipt Details #${row.outwardNo}`,
         fields: [
-          { label: isInward ? 'Inward No.' : 'Outward No.', value: row.inwardNo || row.outwardNo },
+          {
+            label: isInward ? 'Inward No.' : isStockOut ? 'Stock-Out No.' : 'Outward No.',
+            value: row.inwardNo || row.outwardNo,
+          },
           { label: 'Date', value: formatDate(row.date) },
           { label: 'Vehicle No.', value: row.vehicleNo || '-' },
           {
             label: isInward ? 'Vehicle Owner' : 'Driver Name',
-            value: row.ownerName || row.driverName || '-',
+            value: isInward ? row.ownerName || '-' : row.driverName || row.ownerName || '-',
           },
+          ...(isStockOut && row.ownerName
+            ? [{ label: 'Vehicle Owner', value: row.ownerName }]
+            : []),
           { label: 'From Station', value: row.from || '-' },
           { label: 'Memo No.', value: row.memoNo || '-' },
           { label: 'Total PKG', value: `${row.totalQty || 0} Pkgs` },
@@ -175,11 +187,15 @@ export const AllEntries = () => {
           returnTab: activeTab,
         },
       });
-    } else if (category === 'outward_header') {
+    } else if (category === 'outward_header' || category === 'stock_out_header') {
       const items = outwardItems.filter(
         (item) => item.outwardId === row.id || item.outwardNo === row.outwardNo
       );
-      navigate(row.isCrossOutward ? '/cross-outward' : '/outward', {
+      const isStockOut =
+        category === 'stock_out_header' ||
+        row.isCrossOutward ||
+        String(row.outwardNo || '').startsWith('STOCK-OUT');
+      navigate(isStockOut ? '/cross-outward' : '/outward', {
         state: {
           editOutward: { ...row, items },
           returnTab: activeTab,
@@ -194,7 +210,11 @@ export const AllEntries = () => {
             (item) => item.outwardId === parentOutward.id || item.outwardNo === parentOutward.outwardNo
           )
         : [row];
-      const isCross = Boolean(parentOutward?.isCrossOutward || row.isCrossOutward);
+      const isCross = Boolean(
+        parentOutward?.isCrossOutward ||
+          row.isCrossOutward ||
+          String(parentOutward?.outwardNo || row.outwardNo || '').startsWith('STOCK-OUT')
+      );
       navigate(isCross ? '/cross-outward' : '/outward', {
         state: {
           editOutward: {
@@ -222,7 +242,7 @@ export const AllEntries = () => {
       handleUpdateInwardHeader(editingRecord.id, editFormData);
     } else if (editCategory === 'inward_item') {
       handleUpdateInwardItem(editingRecord.id, editFormData);
-    } else if (editCategory === 'outward_header') {
+    } else if (editCategory === 'outward_header' || editCategory === 'stock_out_header') {
       handleUpdateOutwardHeader(editingRecord.id, editFormData);
     } else if (editCategory === 'outward_item') {
       handleUpdateOutwardItem(editingRecord.id, editFormData);
@@ -236,7 +256,7 @@ export const AllEntries = () => {
       handleDeleteInward(deleteRecord.id);
     } else if (deleteCategory === 'inward_item') {
       handleDeleteInwardItem(deleteRecord.id);
-    } else if (deleteCategory === 'outward_header') {
+    } else if (deleteCategory === 'outward_header' || deleteCategory === 'stock_out_header') {
       handleDeleteOutward(deleteRecord.id);
     } else if (deleteCategory === 'outward_item') {
       handleDeleteOutwardItem(deleteRecord.id);
@@ -262,7 +282,7 @@ export const AllEntries = () => {
   });
 
   // Enrich outwards with consignor and consignee names and live totals derived from items
-  const enrichedOutwards = outwards.map((out) => {
+  const allEnrichedOutwards = outwards.map((out) => {
     const items = outwardItems.filter((item) => item.outwardId === out.id || item.outwardNo === out.outwardNo);
     const consignors = Array.from(new Set(items.map((i) => i.consignorName).filter(Boolean))).join(', ');
     const consignees = Array.from(new Set(items.map((i) => i.consigneeName).filter(Boolean))).join(', ');
@@ -276,6 +296,12 @@ export const AllEntries = () => {
       totalPaid: items.length > 0 ? items.reduce((acc, curr) => acc + (Number(curr.paidAmount) || 0), 0) : out.totalPaid,
     };
   });
+
+  const isStockOutRecord = (out) =>
+    Boolean(out.isCrossOutward || String(out.outwardNo || '').toUpperCase().startsWith('STOCK-OUT'));
+
+  const enrichedOutwards = allEnrichedOutwards.filter((out) => !isStockOutRecord(out));
+  const enrichedStockOuts = allEnrichedOutwards.filter((out) => isStockOutRecord(out));
 
   // Combine inward and outward items into a unified master list of all LR entries
   const allLREntriesMap = new Map();
@@ -310,8 +336,9 @@ export const AllEntries = () => {
   const combinedLREntries = Array.from(allLREntriesMap.values());
 
   // Statistics
-  const totalInwardPkg = inwards.reduce((sum, i) => sum + (Number(i.totalQty) || 0), 0);
-  const totalOutwardPkg = outwards.reduce((sum, o) => sum + (Number(o.totalQty) || 0), 0);
+  const totalInwardPkg = enrichedInwards.reduce((sum, i) => sum + (Number(i.totalQty) || 0), 0);
+  const totalOutwardPkg = enrichedOutwards.reduce((sum, o) => sum + (Number(o.totalQty) || 0), 0);
+  const totalStockOutPkg = enrichedStockOuts.reduce((sum, o) => sum + (Number(o.totalQty) || 0), 0);
 
   // Column Definitions
   const combinedLRColumns = [
@@ -612,6 +639,115 @@ export const AllEntries = () => {
     },
   ];
 
+  const stockOutHeaderColumns = [
+    {
+      label: 'Stock-Out No.',
+      key: 'outwardNo',
+      render: (row) => (
+        <span className="font-bold text-slate-900 whitespace-nowrap block" title={row.outwardNo}>
+          {row.outwardNo || '-'}
+        </span>
+      ),
+    },
+    { label: 'Date', key: 'date', type: 'date' },
+    {
+      label: 'CONSIGNER',
+      key: 'consignorName',
+      render: (row) => (
+        <span className="font-semibold text-slate-800 max-w-[80px] truncate block" title={row.consignorName}>
+          {row.consignorName || '-'}
+        </span>
+      ),
+    },
+    {
+      label: 'CONSIGNEE',
+      key: 'consigneeName',
+      render: (row) => (
+        <span className="font-semibold text-slate-800 max-w-[80px] truncate block" title={row.consigneeName}>
+          {row.consigneeName || '-'}
+        </span>
+      ),
+    },
+    {
+      label: 'Vehicle No.',
+      key: 'vehicleNo',
+      render: (row) => (
+        <span className="whitespace-nowrap block" title={row.vehicleNo}>
+          {row.vehicleNo || '-'}
+        </span>
+      ),
+    },
+    {
+      label: 'Driver Name',
+      key: 'driverName',
+      render: (row) => (
+        <span className="max-w-[75px] truncate block" title={row.driverName}>
+          {row.driverName || '-'}
+        </span>
+      ),
+    },
+    {
+      label: 'Vehicle Owner',
+      key: 'ownerName',
+      render: (row) => (
+        <span className="max-w-[75px] truncate block" title={row.ownerName}>
+          {row.ownerName || '-'}
+        </span>
+      ),
+    },
+    {
+      label: 'From',
+      key: 'from',
+      render: (row) => (
+        <span className="max-w-[60px] truncate block" title={row.from}>
+          {row.from || '-'}
+        </span>
+      ),
+    },
+    {
+      label: 'Memo No.',
+      key: 'memoNo',
+      render: (row) => (
+        <span className="max-w-[55px] truncate block" title={row.memoNo}>
+          {row.memoNo || '-'}
+        </span>
+      ),
+    },
+    { label: 'PKG', key: 'totalQty' },
+    { label: 'TO PAY', key: 'totalToPay', type: 'currency' },
+    { label: 'T.B.B', key: 'totalTbb', type: 'currency' },
+    { label: 'PAID', key: 'totalPaid', type: 'currency' },
+    {
+      label: 'Actions',
+      key: 'actions',
+      render: (row) => (
+        <div className="flex items-center justify-center space-x-1">
+          <button
+            onClick={() => handleStartView(row, 'stock_out_header')}
+            className="p-0.5 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded transition-colors cursor-pointer"
+            title="View Stock-Out Receipt"
+          >
+            <Eye className="w-3.5 h-3.5" />
+          </button>
+          <button
+            onClick={() => handleStartEdit(row, 'stock_out_header')}
+            className="p-0.5 text-sky-600 hover:text-sky-800 hover:bg-sky-50 rounded transition-colors cursor-pointer"
+            title="Edit Stock-Out Receipt"
+          >
+            <Pencil className="w-3.5 h-3.5" />
+          </button>
+          <button
+            onClick={() => handleStartDelete(row, 'stock_out_header')}
+            className="p-0.5 text-rose-600 hover:text-rose-800 hover:bg-rose-50 rounded transition-colors cursor-pointer"
+            title="Delete Stock-Out Receipt"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      ),
+    },
+  ];
+
   return (
     <div className="space-y-6 text-slate-800 max-w-full">
       {/* Top Header Title & Navigation Bar */}
@@ -622,12 +758,12 @@ export const AllEntries = () => {
             <span>All Inward & Outward Entries</span>
           </h2>
           <p className="text-xs text-slate-500 font-medium mt-0.5">
-            Complete transaction register of all inward receipts, outward dispatches, and individual LR records
+            Complete transaction register of all inward receipts, outward dispatches, stock-out entries, and individual LR records
           </p>
         </div>
 
         {/* Quick Action Navigation Buttons */}
-        <div className="flex items-center space-x-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Link
             to="/inward/new"
             className="inline-flex items-center space-x-1.5 bg-sky-600 hover:bg-sky-700 text-white font-bold px-3.5 py-2 rounded-xl text-xs shadow-sm transition-all"
@@ -642,17 +778,24 @@ export const AllEntries = () => {
             <ArrowUpRight className="w-4 h-4" />
             <span>New Outward</span>
           </Link>
+          <Link
+            to="/cross-outward"
+            className="inline-flex items-center space-x-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3.5 py-2 rounded-xl text-xs shadow-sm transition-all"
+          >
+            <Shuffle className="w-4 h-4" />
+            <span>New Stock-Out</span>
+          </Link>
         </div>
       </div>
 
       {/* Summary KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3.5">
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
           <div className="flex items-center justify-between text-slate-500 mb-1">
             <span className="text-xs font-bold uppercase tracking-wider">Inward Receipts</span>
             <ArrowDownLeft className="w-4 h-4 text-sky-600" />
           </div>
-          <p className="text-xl font-black text-slate-900">{inwards.length}</p>
+          <p className="text-xl font-black text-slate-900">{enrichedInwards.length}</p>
           <p className="text-[11px] text-sky-700 font-semibold mt-0.5">{totalInwardPkg} Total PKG</p>
         </div>
 
@@ -661,8 +804,17 @@ export const AllEntries = () => {
             <span className="text-xs font-bold uppercase tracking-wider">Outward Receipts</span>
             <ArrowUpRight className="w-4 h-4 text-emerald-600" />
           </div>
-          <p className="text-xl font-black text-slate-900">{outwards.length}</p>
+          <p className="text-xl font-black text-slate-900">{enrichedOutwards.length}</p>
           <p className="text-[11px] text-emerald-700 font-semibold mt-0.5">{totalOutwardPkg} Total PKG</p>
+        </div>
+
+        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
+          <div className="flex items-center justify-between text-slate-500 mb-1">
+            <span className="text-xs font-bold uppercase tracking-wider">Stock-Out Receipts</span>
+            <Shuffle className="w-4 h-4 text-indigo-600" />
+          </div>
+          <p className="text-xl font-black text-slate-900">{enrichedStockOuts.length}</p>
+          <p className="text-[11px] text-indigo-700 font-semibold mt-0.5">{totalStockOutPkg} Total PKG</p>
         </div>
 
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
@@ -723,6 +875,18 @@ export const AllEntries = () => {
             <ArrowUpRight className="w-5 h-5" />
             <span>Outward Receipts ({enrichedOutwards.length})</span>
           </button>
+
+          <button
+            onClick={() => setActiveTab('stock_out_headers')}
+            className={`px-7 py-3.5 min-w-[210px] justify-center rounded-xl font-extrabold text-sm transition-all flex items-center space-x-2.5 cursor-pointer ${
+              activeTab === 'stock_out_headers'
+                ? 'bg-indigo-600 text-white shadow-md'
+                : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200 shadow-2xs'
+            }`}
+          >
+            <Shuffle className="w-5 h-5" />
+            <span>Stock-Out Receipts ({enrichedStockOuts.length})</span>
+          </button>
         </div>
 
         {/* Dynamic Table Rendering based on Active Tab */}
@@ -759,6 +923,18 @@ export const AllEntries = () => {
             }
           />
         )}
+
+        {activeTab === 'stock_out_headers' && (
+          <DataTable
+            columns={stockOutHeaderColumns}
+            data={enrichedStockOuts}
+            searchPlaceholder="Search Stock-Out Receipts by Stock-Out No., Vehicle No., Driver, Vehicle Owner..."
+            onExportExcel={(data) => exportToExcel(data, 'Stock_Out_Receipts_Register', stockOutHeaderColumns)}
+            onExportPDF={(data) =>
+              exportToPDF('Stock-Out Receipts Register', stockOutHeaderColumns, data, 'Stock_Out_Receipts_Register')
+            }
+          />
+        )}
       </div>
 
       {/* View Record Modal */}
@@ -769,6 +945,8 @@ export const AllEntries = () => {
           title={
             viewCategory === 'inward_header'
               ? `Inward Receipt Details #${viewingRecord.inwardNo}`
+              : viewCategory === 'stock_out_header'
+              ? `Stock-Out Receipt Details #${viewingRecord.outwardNo}`
               : viewCategory === 'outward_header'
               ? `Outward Receipt Details #${viewingRecord.outwardNo}`
               : `LR Entry Details #${viewingRecord.lrNo}`
@@ -781,7 +959,11 @@ export const AllEntries = () => {
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
                   <div>
                     <span className="text-slate-400 font-bold uppercase block text-[10px]">
-                      {viewCategory === 'inward_header' ? 'Inward No.' : 'Outward No.'}
+                      {viewCategory === 'inward_header'
+                        ? 'Inward No.'
+                        : viewCategory === 'stock_out_header'
+                        ? 'Stock-Out No.'
+                        : 'Outward No.'}
                     </span>
                     <span className="font-black text-slate-900 text-sm">
                       {viewingRecord.inwardNo || viewingRecord.outwardNo}
@@ -800,7 +982,9 @@ export const AllEntries = () => {
                       {viewCategory === 'inward_header' ? 'Vehicle Owner' : 'Driver Name'}
                     </span>
                     <span className="font-bold text-slate-800">
-                      {viewingRecord.ownerName || viewingRecord.driverName || '-'}
+                      {viewCategory === 'inward_header'
+                        ? viewingRecord.ownerName || '-'
+                        : viewingRecord.driverName || viewingRecord.ownerName || '-'}
                     </span>
                   </div>
                   <div>
