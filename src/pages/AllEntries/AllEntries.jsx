@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
   ArrowLeftRight,
   ArrowDownLeft,
@@ -760,31 +760,6 @@ export const AllEntries = () => {
           <p className="text-xs text-slate-500 font-medium mt-0.5">
             Complete transaction register of all inward receipts, outward dispatches, stock-out entries, and individual LR records
           </p>
-        </div>
-
-        {/* Quick Action Navigation Buttons */}
-        <div className="flex flex-wrap items-center gap-2">
-          <Link
-            to="/inward/new"
-            className="inline-flex items-center space-x-1.5 bg-sky-600 hover:bg-sky-700 text-white font-bold px-3.5 py-2 rounded-xl text-xs shadow-sm transition-all"
-          >
-            <ArrowDownLeft className="w-4 h-4" />
-            <span>New Inward</span>
-          </Link>
-          <Link
-            to="/outward/new"
-            className="inline-flex items-center space-x-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3.5 py-2 rounded-xl text-xs shadow-sm transition-all"
-          >
-            <ArrowUpRight className="w-4 h-4" />
-            <span>New Outward</span>
-          </Link>
-          <Link
-            to="/cross-outward"
-            className="inline-flex items-center space-x-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3.5 py-2 rounded-xl text-xs shadow-sm transition-all"
-          >
-            <Shuffle className="w-4 h-4" />
-            <span>New Stock-Out</span>
-          </Link>
         </div>
       </div>
 
