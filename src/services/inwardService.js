@@ -66,7 +66,7 @@ export const createInward = (headerData, lrItems, currentUser = 'Operator') => {
     vehicleNo: headerData.vehicleNo || 'MH-04-FK-1234',
     driverName: headerData.driverName || 'RAMESH KUMAR',
     ownerName: headerData.ownerName || '',
-    from: headerData.from || 'MUMBAI',
+    from: headerData.from || headerData.fromStation || 'MUMBAI',
     memoNo: headerData.memoNo || '',
     consignorName,
     consigneeName,
@@ -258,5 +258,126 @@ export const updateInwardItem = (itemId, updatedFields) => {
   }
 
   return true;
+};
+
+export const updateFullInward = (inwardId, headerData, lrItems, currentUser = 'Operator') => {
+  if (!lrItems || lrItems.length === 0) {
+    throw new Error('Inward must contain at least one LR entry.');
+  }
+
+  let inwards = getAllInwards();
+  let inwardItems = getAllInwardItems();
+
+  const existingHeader = inwards.find((inv) => inv.id === inwardId || inv.inwardNo === headerData.inwardNo);
+  const resolvedInwardId = existingHeader ? existingHeader.id : inwardId;
+
+  // Check duplicate LR in current submission or pending database (excluding items belonging to this inward)
+  const seenLRs = new Set();
+  for (const item of lrItems) {
+    const cleanLR = String(item.lrNo ?? '').trim();
+    if (!cleanLR) {
+      throw new Error('LR No. cannot be empty.');
+    }
+    if (seenLRs.has(cleanLR.toLowerCase())) {
+      throw new Error(`Duplicate LR No. "${cleanLR}" found in this inward submission.`);
+    }
+    seenLRs.add(cleanLR.toLowerCase());
+
+    const duplicateInOtherInward = inwardItems.some(
+      (existing) =>
+        existing.inwardId !== resolvedInwardId &&
+        existing.status === STATUS.PENDING &&
+        String(existing.lrNo ?? '').trim().toLowerCase() === cleanLR.toLowerCase()
+    );
+    if (duplicateInOtherInward) {
+      throw new Error(`LR No. "${cleanLR}" is already present in Pending Stock.`);
+    }
+  }
+
+  const totalQty = lrItems.reduce((acc, curr) => acc + (Number(curr.pkg) || 0), 0);
+  const totalToPay = lrItems.reduce((acc, curr) => acc + (Number(curr.toPayAmount) || 0), 0);
+  const totalTbb = lrItems.reduce((acc, curr) => acc + (Number(curr.tbbAmount) || 0), 0);
+  const totalPaid = lrItems.reduce((acc, curr) => acc + (Number(curr.paidAmount) || 0), 0);
+
+  const consignorName = Array.from(new Set(lrItems.map((i) => i.consignorName).filter(Boolean))).join(', ');
+  const consigneeName = Array.from(new Set(lrItems.map((i) => i.consigneeName).filter(Boolean))).join(', ');
+
+  const updatedHeaderFields = {
+    inwardNo: headerData.inwardNo || existingHeader?.inwardNo,
+    date: headerData.date,
+    transporterName: headerData.transporterName || 'ATHAHAR ROADWAYS MAIN',
+    vehicleNo: headerData.vehicleNo || 'MH-04-FK-1234',
+    driverName: headerData.driverName || 'RAMESH KUMAR',
+    ownerName: headerData.ownerName || '',
+    from: headerData.from || headerData.fromStation || 'MUMBAI',
+    memoNo: headerData.memoNo || '',
+    consignorName,
+    consigneeName,
+    totalQty,
+    totalToPay,
+    totalTbb,
+    totalPaid,
+    updatedAt: new Date().toISOString(),
+    updatedBy: currentUser,
+  };
+
+  inwards = inwards.map((inv) =>
+    inv.id === resolvedInwardId ? { ...inv, ...updatedHeaderFields } : inv
+  );
+
+  // Map existing items of this inward to preserve IDs and delivery statuses if already delivered
+  const existingChildItems = inwardItems.filter((item) => item.inwardId === resolvedInwardId);
+
+  const rebuiltItems = lrItems.map((item, index) => {
+    const cleanLR = String(item.lrNo ?? '').trim();
+    const matchedOld =
+      existingChildItems.find((old) => old.id && old.id === item.id) ||
+      existingChildItems.find((old) => String(old.lrNo ?? '').trim().toLowerCase() === cleanLR.toLowerCase());
+
+    return {
+      ...(matchedOld || {}),
+      id: matchedOld?.id || item.id || `item-${Date.now()}-${index}`,
+      inwardId: resolvedInwardId,
+      inwardNo: updatedHeaderFields.inwardNo,
+      inwardDate: headerData.date,
+      transporterName: updatedHeaderFields.transporterName,
+      vehicleNo: updatedHeaderFields.vehicleNo,
+      driverName: updatedHeaderFields.driverName,
+      ownerName: updatedHeaderFields.ownerName,
+      from: item.from || updatedHeaderFields.from,
+      memoNo: updatedHeaderFields.memoNo,
+      srNo: index + 1,
+      lrNo: cleanLR,
+      date: item.date || headerData.date,
+      pkg: Number(item.pkg) || 1,
+      invoiceNo: item.invoiceNo || '',
+      ctTo: item.ctTo || item.destinationStation || 'SANGLI',
+      consignorName: item.consignorName || '',
+      consignorAddress: item.consignorAddress || '',
+      consignorGst: item.consignorGst || '',
+      consigneeName: item.consigneeName || '',
+      consigneeAddress: item.consigneeAddress || '',
+      consigneeGst: item.consigneeGst || '',
+      freight: Number(item.freight) || 0,
+      hamali: Number(item.hamali) || 0,
+      otherCharges: Number(item.otherCharges) || 0,
+      statCharges: Number(item.statCharges) || 0,
+      totalFreight: Number(item.totalFreight) || Number(item.toPayAmount) || 0,
+      paymentType: item.paymentType || 'TOPAY',
+      toPayAmount: Number(item.toPayAmount) || 0,
+      tbbAmount: Number(item.tbbAmount) || 0,
+      paidAmount: Number(item.paidAmount) || 0,
+      status: matchedOld?.status || item.status || STATUS.PENDING,
+      createdAt: matchedOld?.createdAt || new Date().toISOString(),
+    };
+  });
+
+  const otherInwardItems = inwardItems.filter((item) => item.inwardId !== resolvedInwardId);
+  const updatedInwardItems = [...rebuiltItems, ...otherInwardItems];
+
+  setStoredItem(STORAGE_KEYS.INWARDS, inwards);
+  setStoredItem(STORAGE_KEYS.INWARD_ITEMS, updatedInwardItems);
+
+  return inwards.find((inv) => inv.id === resolvedInwardId);
 };
 

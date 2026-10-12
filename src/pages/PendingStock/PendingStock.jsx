@@ -10,7 +10,7 @@ import { formatCurrency } from '../../utils/numberUtils';
 import { exportToExcel, exportToPDF } from '../../services/exportService';
 
 export const PendingStock = () => {
-  const { pendingStock, handleDeleteInwardItem, handleUpdateInwardItem } = useApp();
+  const { inwards, inwardItems, pendingStock, handleDeleteInwardItem, handleUpdateInwardItem } = useApp();
   const navigate = useNavigate();
   const [selectedIds, setSelectedIds] = useState([]);
 
@@ -26,8 +26,27 @@ export const PendingStock = () => {
   };
 
   const handleStartEdit = (row) => {
-    setEditingRecord(row);
-    setEditFormData({ ...row });
+    const parentInward = inwards.find(
+      (inw) => inw.id === row.inwardId || inw.inwardNo === row.inwardNo
+    );
+    const items = parentInward
+      ? inwardItems.filter(
+          (item) => item.inwardId === parentInward.id || item.inwardNo === parentInward.inwardNo
+        )
+      : [row];
+    navigate('/inward', {
+      state: {
+        editInward: {
+          ...(parentInward || row),
+          id: parentInward?.id || row.inwardId || row.id,
+          inwardNo: parentInward?.inwardNo || row.inwardNo,
+          date: parentInward?.date || row.inwardDate || row.date,
+          items: items.length > 0 ? items : [row],
+        },
+        focusLrNo: row.lrNo,
+        returnPath: '/pending',
+      },
+    });
   };
 
   const handleSaveEdit = (e) => {

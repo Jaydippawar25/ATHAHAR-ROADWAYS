@@ -9,6 +9,7 @@ import {
   deleteInwardItem,
   updateInwardHeader,
   updateInwardItem,
+  updateFullInward,
 } from '../services/inwardService';
 import {
   getAllOutwards,
@@ -18,6 +19,7 @@ import {
   deleteOutwardItem,
   updateOutwardHeader,
   updateOutwardItem,
+  updateFullOutward,
 } from '../services/outwardService';
 
 const AppContext = createContext(null);
@@ -41,6 +43,12 @@ export const AppProvider = ({ children }) => {
 
   const handleCreateInward = (headerData, lrItems, username) => {
     const res = createInward(headerData, lrItems, username);
+    refreshData();
+    return res;
+  };
+
+  const handleUpdateFullInward = (id, headerData, lrItems, username) => {
+    const res = updateFullInward(id, headerData, lrItems, username);
     refreshData();
     return res;
   };
@@ -71,6 +79,12 @@ export const AppProvider = ({ children }) => {
 
   const handleCreateOutward = (headerData, selectedPendingItems, username) => {
     const res = createOutward(headerData, selectedPendingItems, username);
+    refreshData();
+    return res;
+  };
+
+  const handleUpdateFullOutward = (id, headerData, selectedPendingItems, username) => {
+    const res = updateFullOutward(id, headerData, selectedPendingItems, username);
     refreshData();
     return res;
   };
@@ -128,11 +142,13 @@ export const AppProvider = ({ children }) => {
         pendingStock,
         refreshData,
         handleCreateInward,
+        handleUpdateFullInward,
         handleDeleteInward,
         handleDeleteInwardItem,
         handleUpdateInwardHeader,
         handleUpdateInwardItem,
         handleCreateOutward,
+        handleUpdateFullOutward,
         handleDeleteOutward,
         handleDeleteOutwardItem,
         handleUpdateOutwardHeader,

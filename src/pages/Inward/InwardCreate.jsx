@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 import { Modal } from '../../components/common/Modal';
@@ -9,8 +9,12 @@ import { formatCurrency } from '../../utils/numberUtils';
 
 export const InwardCreate = () => {
   const navigate = useNavigate();
-  const { masters, handleCreateInward, handleAddMaster } = useApp();
+  const location = useLocation();
+  const { masters, handleCreateInward, handleUpdateFullInward, handleAddMaster } = useApp();
   const { user } = useAuth();
+
+  const editInwardData = location.state?.editInward || null;
+  const editingInwardId = editInwardData?.id || null;
 
   // HEADER DETAILS (Transporter, Vehicle, Driver, Memo, From Station, Owner)
   const [headerData, setHeaderData] = useState({
@@ -36,6 +40,7 @@ export const InwardCreate = () => {
     consigneeName: '',
     toPayAmount: '',
     tbbAmount: '',
+    paidAmount: '',
   });
 
   const fieldRefs = useRef([]);
@@ -51,9 +56,79 @@ export const InwardCreate = () => {
     }, 50);
   };
 
+  // Array of staged LR items (Multi-LR entry support)
+  const [stagedItems, setStagedItems] = useState([]);
+  const [editingIndex, setEditingIndex] = useState(null);
+
   useEffect(() => {
+    if (location.state?.editInward) {
+      const editData = location.state.editInward;
+      setHeaderData({
+        inwardNo: editData.inwardNo || '',
+        date: editData.date || editData.inwardDate || getTodayDateString(),
+        transporterName: editData.transporterName || masters.transporters[0]?.name || '',
+        fromStation:
+          editData.from ||
+          editData.fromStation ||
+          masters.stations[1]?.name ||
+          masters.stations[0]?.name ||
+          '',
+        vehicleNo: editData.vehicleNo || masters.vehicles[0]?.vehicleNo || '',
+        ownerName:
+          editData.ownerName ||
+          masters.vehicles[0]?.ownerName ||
+          masters.owners?.[0]?.name ||
+          '',
+        memoNo: editData.memoNo || '',
+        driverName: editData.driverName || masters.drivers[0]?.name || '',
+      });
+
+      const items = (editData.items || []).map((item, idx) => ({
+        ...item,
+        srNo: idx + 1,
+        lrNo: String(item.lrNo ?? ''),
+        date: item.date || item.inwardDate || editData.date || getTodayDateString(),
+        pkg: Number(item.pkg) || 1,
+        invoiceNo: item.invoiceNo || '',
+        ctTo: item.ctTo || item.destinationStation || masters.stations[0]?.name || '',
+        consignorName: item.consignorName || '',
+        consigneeName: item.consigneeName || '',
+        toPayAmount: Number(item.toPayAmount) || 0,
+        tbbAmount: Number(item.tbbAmount) || 0,
+        paidAmount: Number(item.paidAmount) || 0,
+      }));
+
+      setStagedItems(items);
+
+      if (items.length > 0) {
+        let targetIdx = 0;
+        if (location.state.focusLrNo) {
+          const foundIdx = items.findIndex(
+            (i) =>
+              String(i.lrNo).trim().toLowerCase() ===
+              String(location.state.focusLrNo).trim().toLowerCase()
+          );
+          if (foundIdx !== -1) targetIdx = foundIdx;
+        }
+        const targetItem = items[targetIdx];
+        setItemForm({
+          srNo: targetItem.srNo,
+          lrNo: String(targetItem.lrNo ?? ''),
+          date: targetItem.date || getTodayDateString(),
+          pkg: targetItem.pkg !== undefined && targetItem.pkg !== null ? String(targetItem.pkg) : '',
+          invoiceNo: String(targetItem.invoiceNo ?? ''),
+          ctTo: targetItem.ctTo || masters.stations[0]?.name || '',
+          consignorName: String(targetItem.consignorName ?? ''),
+          consigneeName: String(targetItem.consigneeName ?? ''),
+          toPayAmount: targetItem.toPayAmount ? String(targetItem.toPayAmount) : '',
+          tbbAmount: targetItem.tbbAmount ? String(targetItem.tbbAmount) : '',
+          paidAmount: targetItem.paidAmount ? String(targetItem.paidAmount) : '',
+        });
+        setEditingIndex(targetIdx);
+      }
+    }
     focusLRNoInput();
-  }, []);
+  }, [location.state]);
 
   const handleKeyDown = (e, index) => {
     if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
@@ -76,10 +151,6 @@ export const InwardCreate = () => {
       }
     }
   };
-
-  // Array of staged LR items (Multi-LR entry support)
-  const [stagedItems, setStagedItems] = useState([]);
-  const [editingIndex, setEditingIndex] = useState(null);
 
   // Quick Add Master State for [...] buttons
   const [quickAddModal, setQuickAddModal] = useState({
@@ -245,7 +316,7 @@ export const InwardCreate = () => {
     if (currentLrNo) {
       allLRs[editingIndex] = currentFormPreviewItem;
     }
-  } else if (stagedItems.length === 0 && currentLrNo) {
+  } else if (currentLrNo) {
     allLRs.push(currentFormPreviewItem);
   }
 
@@ -312,16 +383,25 @@ export const InwardCreate = () => {
     }
 
     try {
-      handleCreateInward(headerData, finalItems, user?.displayName || 'Operator');
-      setSuccess(`Inward Receipt #${headerData.inwardNo} saved successfully!`);
+      if (editingInwardId) {
+        handleUpdateFullInward(editingInwardId, headerData, finalItems, user?.displayName || 'Operator');
+        setSuccess(`Inward Receipt #${headerData.inwardNo} updated successfully!`);
+      } else {
+        handleCreateInward(headerData, finalItems, user?.displayName || 'Operator');
+        setSuccess(`Inward Receipt #${headerData.inwardNo} saved successfully!`);
+      }
 
       if (shouldPrint) {
         setTimeout(() => window.print(), 500);
       }
 
       setTimeout(() => {
-        navigate('/all-entries', { state: { tab: 'inward_headers' } });
-      }, 1200);
+        if (location.state?.returnPath) {
+          navigate(location.state.returnPath);
+        } else {
+          navigate('/all-entries', { state: { tab: location.state?.returnTab || 'inward_headers' } });
+        }
+      }, 1000);
     } catch (err) {
       setError(err.message || 'Failed to save Inward transaction.');
     }
@@ -332,8 +412,14 @@ export const InwardCreate = () => {
       {/* Top Header Title & Back Navigation */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 pb-3">
         <div>
-          <h2 className="text-xl font-black text-slate-900 tracking-tight">Inward Details</h2>
-          <p className="text-xs text-slate-500 font-medium">Record inward receipt memo and transport LR entries</p>
+          <h2 className="text-xl font-black text-slate-900 tracking-tight">
+            {editingInwardId ? `Edit Inward Details (#${headerData.inwardNo})` : 'Inward Details'}
+          </h2>
+          <p className="text-xs text-slate-500 font-medium">
+            {editingInwardId
+              ? 'Update inward receipt memo and transport LR entries'
+              : 'Record inward receipt memo and transport LR entries'}
+          </p>
         </div>
 
         <button

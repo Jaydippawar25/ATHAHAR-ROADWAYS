@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   ArrowLeftRight,
   ArrowDownLeft,
@@ -23,6 +23,7 @@ import { formatCurrency } from '../../utils/numberUtils';
 
 export const AllEntries = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const {
     inwards,
     inwardItems,
@@ -89,9 +90,71 @@ export const AllEntries = () => {
   };
 
   const handleStartEdit = (row, category) => {
-    setEditCategory(category);
-    setEditingRecord(row);
-    setEditFormData({ ...row });
+    if (category === 'inward_header') {
+      const items = inwardItems.filter(
+        (item) => item.inwardId === row.id || item.inwardNo === row.inwardNo
+      );
+      navigate('/inward', {
+        state: {
+          editInward: { ...row, items },
+          returnTab: activeTab,
+        },
+      });
+    } else if (category === 'inward_item') {
+      const parentInward = inwards.find(
+        (inw) => inw.id === row.inwardId || inw.inwardNo === row.inwardNo
+      );
+      const items = parentInward
+        ? inwardItems.filter(
+            (item) => item.inwardId === parentInward.id || item.inwardNo === parentInward.inwardNo
+          )
+        : [row];
+      navigate('/inward', {
+        state: {
+          editInward: {
+            ...(parentInward || row),
+            id: parentInward?.id || row.inwardId || row.id,
+            inwardNo: parentInward?.inwardNo || row.inwardNo,
+            date: parentInward?.date || row.inwardDate || row.date,
+            items: items.length > 0 ? items : [row],
+          },
+          focusLrNo: row.lrNo,
+          returnTab: activeTab,
+        },
+      });
+    } else if (category === 'outward_header') {
+      const items = outwardItems.filter(
+        (item) => item.outwardId === row.id || item.outwardNo === row.outwardNo
+      );
+      navigate('/outward', {
+        state: {
+          editOutward: { ...row, items },
+          returnTab: activeTab,
+        },
+      });
+    } else if (category === 'outward_item') {
+      const parentOutward = outwards.find(
+        (out) => out.id === row.outwardId || out.outwardNo === row.outwardNo
+      );
+      const items = parentOutward
+        ? outwardItems.filter(
+            (item) => item.outwardId === parentOutward.id || item.outwardNo === parentOutward.outwardNo
+          )
+        : [row];
+      navigate('/outward', {
+        state: {
+          editOutward: {
+            ...(parentOutward || row),
+            id: parentOutward?.id || row.outwardId || row.id,
+            outwardNo: parentOutward?.outwardNo || row.outwardNo,
+            date: parentOutward?.date || row.outwardDate || row.date,
+            items: items.length > 0 ? items : [row],
+          },
+          focusLrNo: row.lrNo,
+          returnTab: activeTab,
+        },
+      });
+    }
   };
 
   const handleStartDelete = (row, category) => {

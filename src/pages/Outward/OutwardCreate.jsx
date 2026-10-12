@@ -10,8 +10,11 @@ import { formatCurrency } from '../../utils/numberUtils';
 export const OutwardCreate = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { masters, pendingStock, handleCreateOutward, handleAddMaster } = useApp();
+  const { masters, pendingStock, handleCreateOutward, handleUpdateFullOutward, handleAddMaster } = useApp();
   const { user } = useAuth();
+
+  const editOutwardData = location.state?.editOutward || null;
+  const editingOutwardId = editOutwardData?.id || null;
 
   // HEADER DETAILS (Outward Memo Header)
   const [headerData, setHeaderData] = useState({
@@ -85,7 +88,20 @@ export const OutwardCreate = () => {
   const [editingIndex, setEditingIndex] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
 
-  const filteredPendingStock = pendingStock.filter((item) => {
+  // Combine pendingStock with items currently in editOutward so they show up in the godown picker
+  const availableStock = React.useMemo(() => {
+    if (!editOutwardData?.items?.length) return pendingStock;
+    const existingIds = new Set(pendingStock.map((p) => p.id));
+    const extraEditedItems = editOutwardData.items
+      .map((item) => ({
+        ...item,
+        id: item.inwardItemId || item.id,
+      }))
+      .filter((item) => !existingIds.has(item.id));
+    return [...extraEditedItems, ...pendingStock];
+  }, [pendingStock, editOutwardData]);
+
+  const filteredPendingStock = availableStock.filter((item) => {
     if (!searchTerm.trim()) return true;
     const term = searchTerm.toLowerCase().trim();
     return (
@@ -128,9 +144,49 @@ export const OutwardCreate = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  // Auto-load items passed from Pending Stock page
+  // Auto-load items passed from Pending Stock page or Edit Mode from All Entries
   useEffect(() => {
-    if (location.state?.selectedPendingItems && location.state.selectedPendingItems.length > 0) {
+    if (location.state?.editOutward) {
+      const editData = location.state.editOutward;
+      setHeaderData({
+        outwardNo: editData.outwardNo || '',
+        date: editData.date || editData.outwardDate || getTodayDateString(),
+        transporterName: editData.transporterName || masters.transporters[0]?.name || '',
+        fromStation: editData.from || editData.fromStation || masters.stations[0]?.name || 'SANGLI',
+        vehicleNo: editData.vehicleNo || masters.vehicles[0]?.vehicleNo || '',
+        deliveryPersonName:
+          editData.deliveryPersonName ||
+          editData.items?.[0]?.deliveryPersonName ||
+          masters.deliveryPersons[0]?.name ||
+          '',
+        driverName: editData.driverName || masters.drivers[0]?.name || '',
+        memoNo: editData.memoNo || '',
+      });
+
+      const items = (editData.items || []).map((item, idx) => ({
+        ...item,
+        id: item.inwardItemId || item.id,
+        inwardItemId: item.inwardItemId || item.id,
+        srNo: idx + 1,
+        lrNo: String(item.lrNo ?? ''),
+        inwardDate: item.inwardDate || item.date || getTodayDateString(),
+        date: item.inwardDate || item.date || getTodayDateString(),
+        pkg: Number(item.pkg) || 1,
+        invoiceNo: item.invoiceNo || '',
+        ctTo: item.ctTo || masters.stations[0]?.name || '',
+        deliveryPersonName:
+          item.deliveryPersonName ||
+          editData.deliveryPersonName ||
+          masters.deliveryPersons[0]?.name ||
+          '',
+        consignorName: item.consignorName || '',
+        consigneeName: item.consigneeName || '',
+        toPayAmount: Number(item.toPayAmount) || 0,
+        tbbAmount: Number(item.tbbAmount) || 0,
+        paidAmount: Number(item.paidAmount) || 0,
+      }));
+      setSelectedItems(items);
+    } else if (location.state?.selectedPendingItems && location.state.selectedPendingItems.length > 0) {
       const items = location.state.selectedPendingItems.map((item, idx) => ({
         ...item,
         srNo: idx + 1,
@@ -342,16 +398,25 @@ export const OutwardCreate = () => {
     }
 
     try {
-      handleCreateOutward(headerData, finalItems, user?.displayName || 'Operator');
-      setSuccess(`Outward Receipt #${headerData.outwardNo} saved successfully! Status updated to DELIVERED.`);
+      if (editingOutwardId) {
+        handleUpdateFullOutward(editingOutwardId, headerData, finalItems, user?.displayName || 'Operator');
+        setSuccess(`Outward Receipt #${headerData.outwardNo} updated successfully!`);
+      } else {
+        handleCreateOutward(headerData, finalItems, user?.displayName || 'Operator');
+        setSuccess(`Outward Receipt #${headerData.outwardNo} saved successfully! Status updated to DELIVERED.`);
+      }
 
       if (shouldPrint) {
         setTimeout(() => window.print(), 500);
       }
 
       setTimeout(() => {
-        navigate('/all-entries', { state: { tab: 'outward_headers' } });
-      }, 1200);
+        if (location.state?.returnPath) {
+          navigate(location.state.returnPath);
+        } else {
+          navigate('/all-entries', { state: { tab: location.state?.returnTab || 'outward_headers' } });
+        }
+      }, 1000);
     } catch (err) {
       setError(err.message || 'Failed to save Outward transaction.');
     }
@@ -362,8 +427,14 @@ export const OutwardCreate = () => {
       {/* Top Header Title & Back Navigation */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 pb-3">
         <div>
-          <h2 className="text-xl font-black text-slate-900 tracking-tight">Outward Details</h2>
-          <p className="text-xs text-slate-500 font-medium">Record outward dispatch manifest and delivery entries</p>
+          <h2 className="text-xl font-black text-slate-900 tracking-tight">
+            {editingOutwardId ? `Edit Outward Details (#${headerData.outwardNo})` : 'Outward Details'}
+          </h2>
+          <p className="text-xs text-slate-500 font-medium">
+            {editingOutwardId
+              ? 'Update outward dispatch manifest and delivery entries'
+              : 'Record outward dispatch manifest and delivery entries'}
+          </p>
         </div>
 
         <button
