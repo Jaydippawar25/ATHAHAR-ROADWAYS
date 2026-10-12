@@ -13,19 +13,26 @@ export const getAllOutwardItems = () => {
 
 export const createOutward = (headerData, selectedPendingItems, currentUser = 'Operator') => {
   if (!selectedPendingItems || selectedPendingItems.length === 0) {
-    throw new Error('Outward transaction must include at least one selected Pending LR.');
+    throw new Error('Outward transaction must include at least one LR.');
   }
 
   const outwards = getAllOutwards();
   const outwardItems = getAllOutwardItems();
   const inwardItems = getStoredItem(STORAGE_KEYS.INWARD_ITEMS);
+  const isCrossOutward = Boolean(headerData.isCrossOutward);
 
-  // Verify all selected LRs are still pending
-  const selectedIds = new Set(selectedPendingItems.map((item) => item.id));
-  for (const item of selectedPendingItems) {
-    const existing = inwardItems.find((invItem) => invItem.id === item.id);
-    if (!existing || existing.status !== STATUS.PENDING) {
-      throw new Error(`LR No. "${item.lrNo}" is no longer in PENDING stock.`);
+  // Verify all selected LRs are still pending (for standard Outward from Godown)
+  const selectedIds = new Set(selectedPendingItems.map((item) => item.id).filter(Boolean));
+  const selectedLRs = new Set(
+    selectedPendingItems.map((item) => String(item.lrNo ?? '').trim().toLowerCase()).filter(Boolean)
+  );
+
+  if (!isCrossOutward) {
+    for (const item of selectedPendingItems) {
+      const existing = inwardItems.find((invItem) => invItem.id === item.id);
+      if (!existing || existing.status !== STATUS.PENDING) {
+        throw new Error(`LR No. "${item.lrNo}" is no longer in PENDING stock.`);
+      }
     }
   }
 
@@ -35,6 +42,9 @@ export const createOutward = (headerData, selectedPendingItems, currentUser = 'O
   const totalTbb = selectedPendingItems.reduce((acc, curr) => acc + (Number(curr.tbbAmount) || 0), 0);
   const totalPaid = selectedPendingItems.reduce((acc, curr) => acc + (Number(curr.paidAmount) || 0), 0);
 
+  const consignorName = Array.from(new Set(selectedPendingItems.map((i) => i.consignorName).filter(Boolean))).join(', ');
+  const consigneeName = Array.from(new Set(selectedPendingItems.map((i) => i.consigneeName).filter(Boolean))).join(', ');
+
   const newOutwardHeader = {
     id: outwardId,
     outwardNo: headerData.outwardNo || `OUT-${outwards.length + 8000}`,
@@ -42,9 +52,13 @@ export const createOutward = (headerData, selectedPendingItems, currentUser = 'O
     transporterName: headerData.transporterName || '',
     vehicleNo: headerData.vehicleNo,
     driverName: headerData.driverName,
+    ownerName: headerData.ownerName || '',
     deliveryPersonName: headerData.deliveryPersonName || '',
     from: headerData.from || headerData.fromStation || 'SANGLI',
     memoNo: headerData.memoNo,
+    consignorName,
+    consigneeName,
+    isCrossOutward,
     totalQty,
     totalToPay,
     totalTbb,
@@ -58,9 +72,15 @@ export const createOutward = (headerData, selectedPendingItems, currentUser = 'O
     outwardId,
     outwardNo: newOutwardHeader.outwardNo,
     outwardDate: headerData.date,
+    vehicleNo: newOutwardHeader.vehicleNo,
+    driverName: newOutwardHeader.driverName,
+    ownerName: newOutwardHeader.ownerName,
+    from: newOutwardHeader.from,
+    memoNo: newOutwardHeader.memoNo,
+    isCrossOutward,
     inwardItemId: item.id,
-    lrNo: item.lrNo,
-    inwardDate: item.date || item.inwardDate,
+    lrNo: String(item.lrNo ?? '').trim(),
+    inwardDate: item.date || item.inwardDate || headerData.date,
     pkg: Number(item.pkg) || 0,
     invoiceNo: item.invoiceNo || '',
     ctTo: item.ctTo || '',
@@ -75,9 +95,10 @@ export const createOutward = (headerData, selectedPendingItems, currentUser = 'O
     deliveredBy: currentUser,
   }));
 
-  // Update status in inwardItems collection
+  // Update status in inwardItems collection if matching item exists
   const updatedInwardItems = inwardItems.map((item) => {
-    if (selectedIds.has(item.id)) {
+    const lrKey = String(item.lrNo ?? '').trim().toLowerCase();
+    if (selectedIds.has(item.id) || (isCrossOutward && lrKey && selectedLRs.has(lrKey))) {
       return {
         ...item,
         status: STATUS.DELIVERED,
@@ -369,6 +390,8 @@ export const updateFullOutward = (outwardId, headerData, selectedPendingItems, c
   const consignorName = Array.from(new Set(selectedPendingItems.map((i) => i.consignorName).filter(Boolean))).join(', ');
   const consigneeName = Array.from(new Set(selectedPendingItems.map((i) => i.consigneeName).filter(Boolean))).join(', ');
 
+  const isCrossOutward = Boolean(headerData.isCrossOutward ?? existingHeader?.isCrossOutward);
+
   const updatedHeaderFields = {
     id: resolvedOutwardId,
     outwardNo: headerData.outwardNo || existingHeader?.outwardNo || `OUT-${outwards.length + 8000}`,
@@ -376,11 +399,13 @@ export const updateFullOutward = (outwardId, headerData, selectedPendingItems, c
     transporterName: headerData.transporterName || existingHeader?.transporterName || '',
     vehicleNo: headerData.vehicleNo,
     driverName: headerData.driverName,
+    ownerName: headerData.ownerName ?? existingHeader?.ownerName ?? '',
     deliveryPersonName: headerData.deliveryPersonName || '',
     from: headerData.from || headerData.fromStation || 'SANGLI',
     memoNo: headerData.memoNo || '',
     consignorName,
     consigneeName,
+    isCrossOutward,
     totalQty,
     totalToPay,
     totalTbb,
@@ -418,8 +443,10 @@ export const updateFullOutward = (outwardId, headerData, selectedPendingItems, c
       outwardDate: headerData.date,
       vehicleNo: updatedHeaderFields.vehicleNo,
       driverName: updatedHeaderFields.driverName,
+      ownerName: updatedHeaderFields.ownerName,
       from: updatedHeaderFields.from,
       memoNo: updatedHeaderFields.memoNo,
+      isCrossOutward,
       inwardItemId: item.inwardItemId || matchedOld?.inwardItemId || item.id,
       lrNo: String(item.lrNo ?? '').trim(),
       inwardDate: item.inwardDate || item.date,

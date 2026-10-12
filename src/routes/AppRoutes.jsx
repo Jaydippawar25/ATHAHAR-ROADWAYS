@@ -5,6 +5,7 @@ import { Dashboard } from '../pages/Dashboard';
 import { InwardCreate } from '../pages/Inward/InwardCreate';
 import { PendingStock } from '../pages/PendingStock/PendingStock';
 import { OutwardCreate } from '../pages/Outward/OutwardCreate';
+import { CrossOutwardCreate } from '../pages/Outward/CrossOutwardCreate';
 import { AllEntries } from '../pages/AllEntries/AllEntries';
 import { Masters } from '../pages/Masters/Masters';
 import { Reports } from '../pages/Reports/Reports';
@@ -68,6 +69,14 @@ export const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <OutwardCreate />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/cross-outward"
+        element={
+          <ProtectedRoute>
+            <CrossOutwardCreate />
           </ProtectedRoute>
         }
       />

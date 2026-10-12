@@ -179,7 +179,7 @@ export const AllEntries = () => {
       const items = outwardItems.filter(
         (item) => item.outwardId === row.id || item.outwardNo === row.outwardNo
       );
-      navigate('/outward', {
+      navigate(row.isCrossOutward ? '/cross-outward' : '/outward', {
         state: {
           editOutward: { ...row, items },
           returnTab: activeTab,
@@ -194,7 +194,8 @@ export const AllEntries = () => {
             (item) => item.outwardId === parentOutward.id || item.outwardNo === parentOutward.outwardNo
           )
         : [row];
-      navigate('/outward', {
+      const isCross = Boolean(parentOutward?.isCrossOutward || row.isCrossOutward);
+      navigate(isCross ? '/cross-outward' : '/outward', {
         state: {
           editOutward: {
             ...(parentOutward || row),
