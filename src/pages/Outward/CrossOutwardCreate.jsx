@@ -885,38 +885,20 @@ export const CrossOutwardCreate = () => {
               />
             </div>
 
-            {/* TOTAL + Add/Update Button */}
-            <div className="col-span-2 sm:col-span-4 lg:col-span-3 flex items-end gap-2">
-              <div className="flex-1">
-                <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">
-                  TOTAL:
-                </label>
-                <input
-                  type="text"
-                  readOnly
-                  value={itemTotal.toFixed(2)}
-                  className="w-full px-2.5 py-1.5 bg-slate-200 border border-slate-300 rounded text-xs font-extrabold text-right text-slate-900"
-                />
-              </div>
-
-              <button
-                type="submit"
-                className="px-3 py-1.5 bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs rounded shadow-xs flex items-center cursor-pointer shrink-0"
-              >
-                <Plus className="w-3.5 h-3.5 mr-1" />
-                {editingIndex !== null ? 'Update' : 'Add'}
-              </button>
-
-              {editingIndex !== null && (
-                <button
-                  type="button"
-                  onClick={() => resetItemForm(lrItems.length + 1)}
-                  title="Cancel Edit"
-                  className="px-2 py-1.5 bg-slate-300 hover:bg-slate-400 text-slate-800 font-bold text-xs rounded cursor-pointer"
-                >
-                  <RotateCcw className="w-3.5 h-3.5" />
-                </button>
-              )}
+            {/* TOTAL */}
+            <div className="col-span-2 sm:col-span-4 lg:col-span-3">
+              <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">
+                TOTAL:
+              </label>
+              <input
+                ref={(el) => (fieldRefs.current[10] = el)}
+                onKeyDown={(e) => handleKeyDown(e, 10)}
+                type="text"
+                readOnly
+                tabIndex={0}
+                value={itemTotal.toFixed(2)}
+                className="w-full px-2.5 py-1.5 bg-slate-200 border border-slate-300 rounded text-xs font-extrabold text-right text-slate-900 focus:outline-none focus:border-sky-600 cursor-pointer"
+              />
             </div>
           </div>
         </form>
