@@ -387,7 +387,7 @@ export const CrossOutwardCreate = () => {
           finalItems,
           user?.name || 'Operator'
         );
-        setSuccess(`Cross Outward Entry #${headerData.outwardNo} updated successfully!`);
+        setSuccess(`Cross Stock Out Entry #${headerData.outwardNo} updated successfully!`);
         setTimeout(() => {
           navigate('/all-entries', {
             state: { tab: location.state?.returnTab || 'outward_headers' },
@@ -400,7 +400,7 @@ export const CrossOutwardCreate = () => {
           user?.name || 'Operator'
         );
 
-        setSuccess('Cross Outward Entry saved successfully!');
+        setSuccess('Cross Stock Out Entry saved successfully!');
         const nextNo = `OUT-${Math.floor(1000 + Math.random() * 9000)}`;
         setHeaderData((prev) => ({
           ...prev,
@@ -411,7 +411,7 @@ export const CrossOutwardCreate = () => {
         resetItemForm(1);
       }
     } catch (err) {
-      setError(err.message || 'Failed to save Cross Outward entry.');
+      setError(err.message || 'Failed to save Cross Stock Out entry.');
     }
   };
 
@@ -429,7 +429,7 @@ export const CrossOutwardCreate = () => {
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-lg font-extrabold text-slate-900 tracking-tight uppercase">
-                {editingOutwardId ? `Edit Cross Outward #${headerData.outwardNo}` : 'Cross Outward Details'}
+                {editingOutwardId ? `Edit Cross Stock Out #${headerData.outwardNo}` : 'Cross Stock Out Details'}
               </h1>
               {editingOutwardId && (
                 <span className="px-2 py-0.5 text-[10px] font-extrabold uppercase bg-amber-100 text-amber-800 border border-amber-300 rounded">
@@ -439,8 +439,8 @@ export const CrossOutwardCreate = () => {
             </div>
             <p className="text-xs text-slate-500">
               {editingOutwardId
-                ? 'Modify Cross Outward header or LR rows and click Update Outward'
-                : 'Direct Cross Outward Dispatch & LR Entry Screen'}
+                ? 'Modify Cross Stock Out header or LR rows and click Update Outward'
+                : 'Direct Cross Stock Out Dispatch & LR Entry Screen'}
             </p>
           </div>
         </div>
@@ -1052,7 +1052,7 @@ export const CrossOutwardCreate = () => {
               const totalFreight =
                 (Number(summary.toPay) || 0) + (Number(summary.tbb) || 0) + (Number(summary.paid) || 0);
               printRecordDetails({
-                title: `Cross Outward Receipt Details #${headerData.outwardNo}`,
+                title: `Cross Stock Out Receipt Details #${headerData.outwardNo}`,
                 fields: [
                   { label: 'Outward No.', value: headerData.outwardNo },
                   { label: 'Date', value: formatDate(headerData.date) },

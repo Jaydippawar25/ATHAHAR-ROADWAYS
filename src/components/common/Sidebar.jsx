@@ -34,7 +34,7 @@ export const Sidebar = () => {
       badge: pendingStock.length > 0 ? pendingStock.length : null,
     },
     { label: 'Outward', path: '/outward', icon: ArrowUpRight },
-    { label: 'Cross Outward', path: '/cross-outward', icon: Shuffle },
+    { label: 'Cross Stock Out', path: '/cross-outward', icon: Shuffle },
     { label: 'All Entries', path: '/all-entries', icon: ArrowLeftRight },
     { label: 'Reports', path: '/reports', icon: FileText },
     { label: 'Masters', path: '/masters', icon: Database },
