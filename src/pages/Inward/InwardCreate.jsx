@@ -308,10 +308,9 @@ export const InwardCreate = () => {
         <button
           type="button"
           onClick={() => navigate('/inward/list')}
-          className="inline-flex items-center space-x-2 bg-sky-600 hover:bg-sky-700 text-white font-bold px-4 py-2 rounded-lg text-xs shadow-sm transition-all self-end sm:self-auto cursor-pointer"
+          className="inline-flex items-center bg-sky-600 hover:bg-sky-700 text-white font-bold px-4 py-2 rounded-lg text-xs shadow-sm transition-all self-end sm:self-auto cursor-pointer"
         >
-          <ArrowLeft className="w-4 h-4" />
-          <span>Back to INWARD</span>
+          <span>Show All Inward</span>
         </button>
       </div>
 
