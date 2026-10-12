@@ -199,6 +199,12 @@ export const OutwardCreate = () => {
   const handleHeaderChange = (e) => {
     const { name, value } = e.target;
     setHeaderData((prev) => ({ ...prev, [name]: value }));
+    if (name === 'deliveryPersonName') {
+      setItemForm((prev) => ({ ...prev, deliveryPersonName: value }));
+      setSelectedItems((prev) =>
+        prev.map((item) => ({ ...item, deliveryPersonName: value }))
+      );
+    }
   };
 
   const handleItemChange = (e) => {
@@ -246,6 +252,12 @@ export const OutwardCreate = () => {
     // Auto-select newly created master item
     if (quickAddModal.isHeader) {
       setHeaderData((prev) => ({ ...prev, [quickAddModal.targetField]: val }));
+      if (quickAddModal.targetField === 'deliveryPersonName') {
+        setItemForm((prev) => ({ ...prev, deliveryPersonName: val }));
+        setSelectedItems((prev) =>
+          prev.map((item) => ({ ...item, deliveryPersonName: val }))
+        );
+      }
     } else {
       setItemForm((prev) => ({ ...prev, [quickAddModal.targetField]: val }));
     }
@@ -283,6 +295,7 @@ export const OutwardCreate = () => {
     const newItem = {
       ...(existingItem || {}),
       id: existingItem?.id || `out-item-${Date.now()}`,
+      inwardItemId: existingItem?.inwardItemId || existingItem?.id,
       srNo: existingItem?.srNo ?? selectedItems.length + 1,
       lrNo: cleanLR,
       inwardDate: itemForm.date || getTodayDateString(),
@@ -290,7 +303,7 @@ export const OutwardCreate = () => {
       pkg: Number(itemForm.pkg) || 1,
       invoiceNo: itemForm.invoiceNo || '',
       ctTo: itemForm.ctTo || masters.stations[0]?.name || '',
-      deliveryPersonName: itemForm.deliveryPersonName || masters.deliveryPersons[0]?.name || '',
+      deliveryPersonName: itemForm.deliveryPersonName || headerData.deliveryPersonName || masters.deliveryPersons[0]?.name || '',
       consignorName: itemForm.consignorName || '',
       consigneeName: itemForm.consigneeName || '',
       toPayAmount: Number(itemForm.toPayAmount) || 0,
@@ -298,14 +311,29 @@ export const OutwardCreate = () => {
       paidAmount: Number(itemForm.paidAmount) || 0,
     };
 
+    let nextItems;
     if (editingIndex !== null && editingIndex < selectedItems.length) {
-      const updated = [...selectedItems];
-      updated[editingIndex] = newItem;
-      setSelectedItems(updated);
+      nextItems = [...selectedItems];
+      nextItems[editingIndex] = newItem;
+      setSelectedItems(nextItems);
       setEditingIndex(null);
     } else {
-      setSelectedItems((prev) => [...prev, newItem]);
+      nextItems = [...selectedItems, newItem];
+      setSelectedItems(nextItems);
       setEditingIndex(null);
+    }
+
+    if ((editingOutwardId || editOutwardData) && nextItems.length > 0) {
+      try {
+        handleUpdateFullOutward(
+          editingOutwardId || editOutwardData?.outwardNo,
+          headerData,
+          nextItems,
+          user?.displayName || 'Operator'
+        );
+      } catch (err) {
+        // Ignore transient validation error until final save
+      }
     }
 
     resetForm();
@@ -373,7 +401,24 @@ export const OutwardCreate = () => {
 
     let finalItems = [...selectedItems];
     const cleanLR = String(itemForm?.lrNo ?? '').trim();
-    if (finalItems.length === 0 && cleanLR) {
+    if (editingIndex !== null && finalItems[editingIndex] && cleanLR) {
+      const existingItem = finalItems[editingIndex];
+      finalItems[editingIndex] = {
+        ...existingItem,
+        lrNo: cleanLR,
+        inwardDate: itemForm.date || existingItem.inwardDate || existingItem.date,
+        date: itemForm.date || existingItem.date || existingItem.inwardDate,
+        pkg: Number(itemForm.pkg) || 1,
+        invoiceNo: itemForm.invoiceNo || '',
+        ctTo: itemForm.ctTo || existingItem.ctTo,
+        deliveryPersonName: itemForm.deliveryPersonName || headerData.deliveryPersonName || existingItem.deliveryPersonName,
+        consignorName: itemForm.consignorName || '',
+        consigneeName: itemForm.consigneeName || '',
+        toPayAmount: Number(itemForm.toPayAmount) || 0,
+        tbbAmount: Number(itemForm.tbbAmount) || 0,
+        paidAmount: Number(itemForm.paidAmount) || 0,
+      };
+    } else if (finalItems.length === 0 && cleanLR) {
       finalItems.push({
         id: `out-item-${Date.now()}`,
         srNo: 1,
@@ -383,7 +428,7 @@ export const OutwardCreate = () => {
         pkg: Number(itemForm.pkg) || 1,
         invoiceNo: itemForm.invoiceNo || '',
         ctTo: itemForm.ctTo,
-        deliveryPersonName: itemForm.deliveryPersonName,
+        deliveryPersonName: itemForm.deliveryPersonName || headerData.deliveryPersonName,
         consignorName: itemForm.consignorName,
         consigneeName: itemForm.consigneeName,
         toPayAmount: Number(itemForm.toPayAmount) || 0,
@@ -398,8 +443,13 @@ export const OutwardCreate = () => {
     }
 
     try {
-      if (editingOutwardId) {
-        handleUpdateFullOutward(editingOutwardId, headerData, finalItems, user?.displayName || 'Operator');
+      if (editingOutwardId || editOutwardData) {
+        handleUpdateFullOutward(
+          editingOutwardId || editOutwardData?.outwardNo,
+          headerData,
+          finalItems,
+          user?.displayName || 'Operator'
+        );
         setSuccess(`Outward Receipt #${headerData.outwardNo} updated successfully!`);
       } else {
         handleCreateOutward(headerData, finalItems, user?.displayName || 'Operator');
@@ -407,7 +457,7 @@ export const OutwardCreate = () => {
       }
 
       if (shouldPrint) {
-        setTimeout(() => window.print(), 500);
+        setTimeout(() => window.print(), 300);
       }
 
       setTimeout(() => {
@@ -416,7 +466,7 @@ export const OutwardCreate = () => {
         } else {
           navigate('/all-entries', { state: { tab: location.state?.returnTab || 'outward_headers' } });
         }
-      }, 1000);
+      }, 300);
     } catch (err) {
       setError(err.message || 'Failed to save Outward transaction.');
     }

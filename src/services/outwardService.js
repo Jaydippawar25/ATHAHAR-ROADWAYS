@@ -177,6 +177,7 @@ export const deleteOutwardItem = (outwardItemId) => {
 export const updateOutwardHeader = (outwardId, updatedFields) => {
   let outwards = getAllOutwards();
   let outwardItems = getAllOutwardItems();
+  let inwardItems = getStoredItem(STORAGE_KEYS.INWARD_ITEMS);
 
   outwards = outwards.map((out) =>
     out.id === outwardId ? { ...out, ...updatedFields } : out
@@ -190,6 +191,18 @@ export const updateOutwardHeader = (outwardId, updatedFields) => {
         memoNo: updatedFields.memoNo ?? item.memoNo,
         from: updatedFields.from ?? item.from,
         outwardDate: updatedFields.date ?? item.outwardDate,
+        deliveryPersonName: updatedFields.deliveryPersonName ?? item.deliveryPersonName,
+      };
+    }
+    return item;
+  });
+
+  inwardItems = inwardItems.map((item) => {
+    if (item.outwardId === outwardId) {
+      return {
+        ...item,
+        outwardDate: updatedFields.date ?? item.outwardDate,
+        deliveryPersonName: updatedFields.deliveryPersonName ?? item.deliveryPersonName,
       };
     }
     return item;
@@ -197,12 +210,17 @@ export const updateOutwardHeader = (outwardId, updatedFields) => {
 
   setStoredItem(STORAGE_KEYS.OUTWARDS, outwards);
   setStoredItem(STORAGE_KEYS.OUTWARD_ITEMS, outwardItems);
+  setStoredItem(STORAGE_KEYS.INWARD_ITEMS, inwardItems);
   return true;
 };
 
 export const updateOutwardItem = (itemId, updatedFields) => {
   let outwardItems = getAllOutwardItems();
   let outwards = getAllOutwards();
+  let inwardItems = getStoredItem(STORAGE_KEYS.INWARD_ITEMS);
+  let inwards = getStoredItem(STORAGE_KEYS.INWARDS);
+
+  const oldItem = outwardItems.find((item) => item.id === itemId);
 
   outwardItems = outwardItems.map((item) => {
     if (item.id === itemId) {
@@ -211,6 +229,8 @@ export const updateOutwardItem = (itemId, updatedFields) => {
         ...updatedFields,
         pkg: updatedFields.pkg !== undefined ? Number(updatedFields.pkg) : item.pkg,
         toPayAmount: updatedFields.toPayAmount !== undefined ? Number(updatedFields.toPayAmount) : item.toPayAmount,
+        tbbAmount: updatedFields.tbbAmount !== undefined ? Number(updatedFields.tbbAmount) : item.tbbAmount,
+        paidAmount: updatedFields.paidAmount !== undefined ? Number(updatedFields.paidAmount) : item.paidAmount,
       };
     }
     return item;
@@ -219,10 +239,62 @@ export const updateOutwardItem = (itemId, updatedFields) => {
   setStoredItem(STORAGE_KEYS.OUTWARD_ITEMS, outwardItems);
 
   const targetItem = outwardItems.find((item) => item.id === itemId);
-  if (targetItem && targetItem.outwardId) {
-    const parentItems = outwardItems.filter((item) => item.outwardId === targetItem.outwardId);
+
+  if (targetItem) {
+    // Sync to inwardItems
+    inwardItems = inwardItems.map((inwItem) => {
+      if (
+        inwItem.id === targetItem.inwardItemId ||
+        inwItem.id === targetItem.id ||
+        (oldItem && String(inwItem.lrNo).trim().toLowerCase() === String(oldItem.lrNo).trim().toLowerCase())
+      ) {
+        return {
+          ...inwItem,
+          lrNo: targetItem.lrNo,
+          pkg: targetItem.pkg,
+          invoiceNo: targetItem.invoiceNo,
+          ctTo: targetItem.ctTo,
+          consignorName: targetItem.consignorName,
+          consigneeName: targetItem.consigneeName,
+          toPayAmount: targetItem.toPayAmount,
+          tbbAmount: targetItem.tbbAmount,
+          paidAmount: targetItem.paidAmount,
+          deliveryPersonName: targetItem.deliveryPersonName,
+        };
+      }
+      return inwItem;
+    });
+    setStoredItem(STORAGE_KEYS.INWARD_ITEMS, inwardItems);
+
+    // Recalculate parent inwards totals
+    inwards = inwards.map((inv) => {
+      const parentItems = inwardItems.filter(
+        (i) => i.inwardId === inv.id || i.inwardNo === inv.inwardNo
+      );
+      if (parentItems.length === 0) return inv;
+      const consignorName = Array.from(new Set(parentItems.map((i) => i.consignorName).filter(Boolean))).join(', ');
+      const consigneeName = Array.from(new Set(parentItems.map((i) => i.consigneeName).filter(Boolean))).join(', ');
+      return {
+        ...inv,
+        consignorName,
+        consigneeName,
+        totalQty: parentItems.reduce((acc, curr) => acc + (Number(curr.pkg) || 0), 0),
+        totalToPay: parentItems.reduce((acc, curr) => acc + (Number(curr.toPayAmount) || 0), 0),
+        totalTbb: parentItems.reduce((acc, curr) => acc + (Number(curr.tbbAmount) || 0), 0),
+        totalPaid: parentItems.reduce((acc, curr) => acc + (Number(curr.paidAmount) || 0), 0),
+      };
+    });
+    setStoredItem(STORAGE_KEYS.INWARDS, inwards);
+  }
+
+  if (targetItem && (targetItem.outwardId || targetItem.outwardNo)) {
+    const parentItems = outwardItems.filter(
+      (item) =>
+        (targetItem.outwardId && item.outwardId === targetItem.outwardId) ||
+        (targetItem.outwardNo && item.outwardNo === targetItem.outwardNo)
+    );
     outwards = outwards.map((out) => {
-      if (out.id === targetItem.outwardId) {
+      if (out.id === targetItem.outwardId || out.outwardNo === targetItem.outwardNo) {
         return {
           ...out,
           totalQty: parentItems.reduce((acc, curr) => acc + (Number(curr.pkg) || 0), 0),
@@ -247,17 +319,40 @@ export const updateFullOutward = (outwardId, headerData, selectedPendingItems, c
   let outwards = getAllOutwards();
   let outwardItems = getAllOutwardItems();
   let inwardItems = getStoredItem(STORAGE_KEYS.INWARD_ITEMS);
+  let inwards = getStoredItem(STORAGE_KEYS.INWARDS);
 
-  const existingHeader = outwards.find((out) => out.id === outwardId || out.outwardNo === headerData.outwardNo);
-  const resolvedOutwardId = existingHeader ? existingHeader.id : outwardId;
+  const existingHeader = outwards.find(
+    (out) =>
+      out.id === outwardId ||
+      (headerData.outwardNo && out.outwardNo === headerData.outwardNo)
+  );
+  const resolvedOutwardId = existingHeader ? existingHeader.id : outwardId || `out-${Date.now()}`;
 
-  // First revert any inwardItems previously belonging to this outward back to PENDING
-  const oldOutwardItems = outwardItems.filter((item) => item.outwardId === resolvedOutwardId);
+  // Find previous outward items belonging to this outward
+  const oldOutwardItems = outwardItems.filter(
+    (item) =>
+      item.outwardId === resolvedOutwardId ||
+      (existingHeader && item.outwardNo === existingHeader.outwardNo) ||
+      (headerData.outwardNo && item.outwardNo === headerData.outwardNo)
+  );
+  const oldOutwardItemIds = new Set(oldOutwardItems.map((i) => i.id));
   const oldInwardIds = new Set(oldOutwardItems.map((item) => item.inwardItemId || item.id));
 
+  // Track original LR numbers by inwardItemId / id so renamed LRs still match inwardItems
+  const oldLrByInwardId = new Map();
+  oldOutwardItems.forEach((old) => {
+    if (old.inwardItemId) oldLrByInwardId.set(old.inwardItemId, old.lrNo);
+    if (old.id) oldLrByInwardId.set(old.id, old.lrNo);
+  });
+
+  // First revert any inwardItems previously belonging to this outward back to PENDING
   inwardItems = inwardItems.map((item) => {
-    if (oldInwardIds.has(item.id) || item.outwardId === resolvedOutwardId) {
-      const { deliveredAt, outwardId: oId, outwardNo, ...rest } = item;
+    if (
+      oldInwardIds.has(item.id) ||
+      item.outwardId === resolvedOutwardId ||
+      (existingHeader && item.outwardNo === existingHeader.outwardNo)
+    ) {
+      const { deliveredAt, outwardId: oId, outwardNo, outwardDate, deliveryPersonName, ...rest } = item;
       return {
         ...rest,
         status: STATUS.PENDING,
@@ -271,8 +366,12 @@ export const updateFullOutward = (outwardId, headerData, selectedPendingItems, c
   const totalTbb = selectedPendingItems.reduce((acc, curr) => acc + (Number(curr.tbbAmount) || 0), 0);
   const totalPaid = selectedPendingItems.reduce((acc, curr) => acc + (Number(curr.paidAmount) || 0), 0);
 
+  const consignorName = Array.from(new Set(selectedPendingItems.map((i) => i.consignorName).filter(Boolean))).join(', ');
+  const consigneeName = Array.from(new Set(selectedPendingItems.map((i) => i.consigneeName).filter(Boolean))).join(', ');
+
   const updatedHeaderFields = {
-    outwardNo: headerData.outwardNo || existingHeader?.outwardNo,
+    id: resolvedOutwardId,
+    outwardNo: headerData.outwardNo || existingHeader?.outwardNo || `OUT-${outwards.length + 8000}`,
     date: headerData.date,
     transporterName: headerData.transporterName || existingHeader?.transporterName || '',
     vehicleNo: headerData.vehicleNo,
@@ -280,6 +379,8 @@ export const updateFullOutward = (outwardId, headerData, selectedPendingItems, c
     deliveryPersonName: headerData.deliveryPersonName || '',
     from: headerData.from || headerData.fromStation || 'SANGLI',
     memoNo: headerData.memoNo || '',
+    consignorName,
+    consigneeName,
     totalQty,
     totalToPay,
     totalTbb,
@@ -288,22 +389,39 @@ export const updateFullOutward = (outwardId, headerData, selectedPendingItems, c
     updatedBy: currentUser,
   };
 
-  outwards = outwards.map((out) =>
-    out.id === resolvedOutwardId ? { ...out, ...updatedHeaderFields } : out
-  );
+  if (existingHeader) {
+    outwards = outwards.map((out) =>
+      out.id === resolvedOutwardId ? { ...out, ...updatedHeaderFields } : out
+    );
+  } else {
+    outwards.unshift({
+      ...updatedHeaderFields,
+      createdAt: new Date().toISOString(),
+      createdBy: currentUser,
+    });
+  }
 
   const newOutwardItemsList = selectedPendingItems.map((item, index) => {
-    const matchedOld = oldOutwardItems.find(
-      (old) => old.id === item.id || old.inwardItemId === (item.inwardItemId || item.id) || old.lrNo === item.lrNo
-    );
+    const matchedOld =
+      oldOutwardItems.find(
+        (old) =>
+          old.id === item.id ||
+          (old.inwardItemId && old.inwardItemId === (item.inwardItemId || item.id)) ||
+          String(old.lrNo ?? '').trim().toLowerCase() === String(item.lrNo ?? '').trim().toLowerCase()
+      ) || (oldOutwardItems.length === selectedPendingItems.length ? oldOutwardItems[index] : null);
+
     return {
       ...(matchedOld || {}),
       id: matchedOld?.id || `out-item-${Date.now()}-${index}`,
       outwardId: resolvedOutwardId,
       outwardNo: updatedHeaderFields.outwardNo,
       outwardDate: headerData.date,
+      vehicleNo: updatedHeaderFields.vehicleNo,
+      driverName: updatedHeaderFields.driverName,
+      from: updatedHeaderFields.from,
+      memoNo: updatedHeaderFields.memoNo,
       inwardItemId: item.inwardItemId || matchedOld?.inwardItemId || item.id,
-      lrNo: item.lrNo,
+      lrNo: String(item.lrNo ?? '').trim(),
       inwardDate: item.inwardDate || item.date,
       pkg: Number(item.pkg) || 0,
       invoiceNo: item.invoiceNo || '',
@@ -325,6 +443,9 @@ export const updateFullOutward = (outwardId, headerData, selectedPendingItems, c
   const selectedByLrNo = new Map();
   newOutwardItemsList.forEach((outItem) => {
     if (outItem.inwardItemId) selectedByInwardId.set(outItem.inwardItemId, outItem);
+    if (outItem.id) selectedByInwardId.set(outItem.id, outItem);
+    const oldLr = oldLrByInwardId.get(outItem.inwardItemId) || oldLrByInwardId.get(outItem.id);
+    if (oldLr) selectedByLrNo.set(String(oldLr).trim().toLowerCase(), outItem);
     if (outItem.lrNo) selectedByLrNo.set(String(outItem.lrNo).trim().toLowerCase(), outItem);
   });
 
@@ -336,6 +457,8 @@ export const updateFullOutward = (outwardId, headerData, selectedPendingItems, c
       return {
         ...item,
         lrNo: matchedOut.lrNo,
+        inwardDate: matchedOut.inwardDate || item.inwardDate || item.date,
+        date: matchedOut.inwardDate || item.date || item.inwardDate,
         pkg: matchedOut.pkg,
         invoiceNo: matchedOut.invoiceNo,
         ctTo: matchedOut.ctTo,
@@ -348,17 +471,45 @@ export const updateFullOutward = (outwardId, headerData, selectedPendingItems, c
         deliveredAt: matchedOut.deliveredAt,
         outwardId: resolvedOutwardId,
         outwardNo: updatedHeaderFields.outwardNo,
+        outwardDate: headerData.date,
+        deliveryPersonName: matchedOut.deliveryPersonName,
       };
     }
     return item;
   });
 
-  const otherOutwardItems = outwardItems.filter((item) => item.outwardId !== resolvedOutwardId);
+  // Recalculate parent inwards totals so Inward Receipts tab also stays in sync
+  inwards = inwards.map((inv) => {
+    const parentItems = inwardItems.filter(
+      (i) => i.inwardId === inv.id || i.inwardNo === inv.inwardNo
+    );
+    if (parentItems.length === 0) return inv;
+    const inwConsignors = Array.from(new Set(parentItems.map((i) => i.consignorName).filter(Boolean))).join(', ');
+    const inwConsignees = Array.from(new Set(parentItems.map((i) => i.consigneeName).filter(Boolean))).join(', ');
+    return {
+      ...inv,
+      consignorName: inwConsignors || inv.consignorName,
+      consigneeName: inwConsignees || inv.consigneeName,
+      totalQty: parentItems.reduce((acc, curr) => acc + (Number(curr.pkg) || 0), 0),
+      totalToPay: parentItems.reduce((acc, curr) => acc + (Number(curr.toPayAmount) || 0), 0),
+      totalTbb: parentItems.reduce((acc, curr) => acc + (Number(curr.tbbAmount) || 0), 0),
+      totalPaid: parentItems.reduce((acc, curr) => acc + (Number(curr.paidAmount) || 0), 0),
+    };
+  });
+
+  const newOutwardIds = new Set(newOutwardItemsList.map((i) => i.id));
+  const otherOutwardItems = outwardItems.filter(
+    (item) =>
+      item.outwardId !== resolvedOutwardId &&
+      !oldOutwardItemIds.has(item.id) &&
+      !newOutwardIds.has(item.id)
+  );
   const updatedOutwardItems = [...newOutwardItemsList, ...otherOutwardItems];
 
   setStoredItem(STORAGE_KEYS.OUTWARDS, outwards);
   setStoredItem(STORAGE_KEYS.OUTWARD_ITEMS, updatedOutwardItems);
   setStoredItem(STORAGE_KEYS.INWARD_ITEMS, inwardItems);
+  setStoredItem(STORAGE_KEYS.INWARDS, inwards);
 
   return outwards.find((out) => out.id === resolvedOutwardId);
 };

@@ -261,7 +261,11 @@ export const InwardCreate = () => {
       return;
     }
 
+    const existingStaged =
+      editingIndex !== null && stagedItems[editingIndex] ? stagedItems[editingIndex] : {};
+
     const newItem = {
+      ...existingStaged,
       srNo:
         editingIndex !== null && stagedItems[editingIndex]
           ? stagedItems[editingIndex].srNo
@@ -278,14 +282,24 @@ export const InwardCreate = () => {
       paidAmount: Number(itemForm.paidAmount) || 0,
     };
 
+    let nextItems;
     if (editingIndex !== null && editingIndex < stagedItems.length) {
-      const updated = [...stagedItems];
-      updated[editingIndex] = newItem;
-      setStagedItems(updated);
+      nextItems = [...stagedItems];
+      nextItems[editingIndex] = newItem;
+      setStagedItems(nextItems);
       setEditingIndex(null);
     } else {
-      setStagedItems((prev) => [...prev, newItem]);
+      nextItems = [...stagedItems, newItem];
+      setStagedItems(nextItems);
       setEditingIndex(null);
+    }
+
+    if (editingInwardId && nextItems.length > 0) {
+      try {
+        handleUpdateFullInward(editingInwardId, headerData, nextItems, user?.displayName || 'Operator');
+      } catch (err) {
+        // Ignore transient validation error until final save
+      }
     }
 
     resetForm();
@@ -294,7 +308,10 @@ export const InwardCreate = () => {
 
   // Aggregate Totals across staged items (plus active form if filled)
   const currentLrNo = String(itemForm?.lrNo ?? '').trim();
+  const existingPreviewBase =
+    editingIndex !== null && stagedItems[editingIndex] ? stagedItems[editingIndex] : {};
   const currentFormPreviewItem = {
+    ...existingPreviewBase,
     srNo:
       editingIndex !== null && stagedItems[editingIndex]
         ? stagedItems[editingIndex].srNo
@@ -383,8 +400,13 @@ export const InwardCreate = () => {
     }
 
     try {
-      if (editingInwardId) {
-        handleUpdateFullInward(editingInwardId, headerData, finalItems, user?.displayName || 'Operator');
+      if (editingInwardId || editInwardData) {
+        handleUpdateFullInward(
+          editingInwardId || editInwardData?.inwardNo,
+          headerData,
+          finalItems,
+          user?.displayName || 'Operator'
+        );
         setSuccess(`Inward Receipt #${headerData.inwardNo} updated successfully!`);
       } else {
         handleCreateInward(headerData, finalItems, user?.displayName || 'Operator');
@@ -392,7 +414,7 @@ export const InwardCreate = () => {
       }
 
       if (shouldPrint) {
-        setTimeout(() => window.print(), 500);
+        setTimeout(() => window.print(), 300);
       }
 
       setTimeout(() => {
@@ -401,7 +423,7 @@ export const InwardCreate = () => {
         } else {
           navigate('/all-entries', { state: { tab: location.state?.returnTab || 'inward_headers' } });
         }
-      }, 1000);
+      }, 300);
     } catch (err) {
       setError(err.message || 'Failed to save Inward transaction.');
     }

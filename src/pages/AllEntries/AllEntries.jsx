@@ -244,27 +244,35 @@ export const AllEntries = () => {
     setDeleteCategory(null);
   };
 
-  // Enrich inwards with consignor and consignee names derived from items
+  // Enrich inwards with consignor and consignee names and live totals derived from items
   const enrichedInwards = inwards.map((inw) => {
     const items = inwardItems.filter((item) => item.inwardId === inw.id || item.inwardNo === inw.inwardNo);
     const consignors = Array.from(new Set(items.map((i) => i.consignorName).filter(Boolean))).join(', ');
     const consignees = Array.from(new Set(items.map((i) => i.consigneeName).filter(Boolean))).join(', ');
     return {
       ...inw,
-      consignorName: inw.consignorName || consignors || '-',
-      consigneeName: inw.consigneeName || consignees || '-',
+      consignorName: consignors || inw.consignorName || '-',
+      consigneeName: consignees || inw.consigneeName || '-',
+      totalQty: items.length > 0 ? items.reduce((acc, curr) => acc + (Number(curr.pkg) || 0), 0) : inw.totalQty,
+      totalToPay: items.length > 0 ? items.reduce((acc, curr) => acc + (Number(curr.toPayAmount) || 0), 0) : inw.totalToPay,
+      totalTbb: items.length > 0 ? items.reduce((acc, curr) => acc + (Number(curr.tbbAmount) || 0), 0) : inw.totalTbb,
+      totalPaid: items.length > 0 ? items.reduce((acc, curr) => acc + (Number(curr.paidAmount) || 0), 0) : inw.totalPaid,
     };
   });
 
-  // Enrich outwards with consignor and consignee names derived from items
+  // Enrich outwards with consignor and consignee names and live totals derived from items
   const enrichedOutwards = outwards.map((out) => {
     const items = outwardItems.filter((item) => item.outwardId === out.id || item.outwardNo === out.outwardNo);
     const consignors = Array.from(new Set(items.map((i) => i.consignorName).filter(Boolean))).join(', ');
     const consignees = Array.from(new Set(items.map((i) => i.consigneeName).filter(Boolean))).join(', ');
     return {
       ...out,
-      consignorName: out.consignorName || consignors || '-',
-      consigneeName: out.consigneeName || consignees || '-',
+      consignorName: consignors || out.consignorName || '-',
+      consigneeName: consignees || out.consigneeName || '-',
+      totalQty: items.length > 0 ? items.reduce((acc, curr) => acc + (Number(curr.pkg) || 0), 0) : out.totalQty,
+      totalToPay: items.length > 0 ? items.reduce((acc, curr) => acc + (Number(curr.toPayAmount) || 0), 0) : out.totalToPay,
+      totalTbb: items.length > 0 ? items.reduce((acc, curr) => acc + (Number(curr.tbbAmount) || 0), 0) : out.totalTbb,
+      totalPaid: items.length > 0 ? items.reduce((acc, curr) => acc + (Number(curr.paidAmount) || 0), 0) : out.totalPaid,
     };
   });
 
