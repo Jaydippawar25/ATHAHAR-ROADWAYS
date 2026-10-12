@@ -193,18 +193,34 @@ export const AllEntries = () => {
     {
       label: 'LR No.',
       key: 'lrNo',
-      render: (row) => <span className="font-extrabold text-sky-800">{row.lrNo}</span>,
+      render: (row) => <span className="font-extrabold text-sky-800 whitespace-nowrap">{row.lrNo}</span>,
     },
     { label: 'Status', key: 'status', type: 'status' },
     { label: 'Inward Date', key: 'inwardDate', type: 'date' },
     { label: 'Outward Date', key: 'outwardDate', type: 'date' },
-    { label: 'Inward No.', key: 'inwardNo' },
-    { label: 'Outward No.', key: 'outwardNo' },
+    {
+      label: 'Inward No.',
+      key: 'inwardNo',
+      render: (row) => (
+        <span className="whitespace-nowrap block" title={row.inwardNo}>
+          {row.inwardNo || '-'}
+        </span>
+      ),
+    },
+    {
+      label: 'Outward No.',
+      key: 'outwardNo',
+      render: (row) => (
+        <span className="whitespace-nowrap block" title={row.outwardNo}>
+          {row.outwardNo || '-'}
+        </span>
+      ),
+    },
     {
       label: 'CONSIGNER',
       key: 'consignorName',
       render: (row) => (
-        <span className="font-semibold text-slate-800 max-w-[100px] truncate block" title={row.consignorName}>
+        <span className="font-semibold text-slate-800 max-w-[75px] truncate block" title={row.consignorName}>
           {row.consignorName || '-'}
         </span>
       ),
@@ -213,7 +229,7 @@ export const AllEntries = () => {
       label: 'CONSIGNEE',
       key: 'consigneeName',
       render: (row) => (
-        <span className="font-semibold text-slate-800 max-w-[100px] truncate block" title={row.consigneeName}>
+        <span className="font-semibold text-slate-800 max-w-[75px] truncate block" title={row.consigneeName}>
           {row.consigneeName || '-'}
         </span>
       ),
@@ -222,7 +238,7 @@ export const AllEntries = () => {
       label: 'CT To',
       key: 'ctTo',
       render: (row) => (
-        <span className="max-w-[75px] truncate block" title={row.ctTo}>
+        <span className="max-w-[65px] truncate block" title={row.ctTo}>
           {row.ctTo || '-'}
         </span>
       ),
@@ -231,7 +247,7 @@ export const AllEntries = () => {
       label: 'Delivery Person',
       key: 'deliveryPersonName',
       render: (row) => (
-        <span className="max-w-[90px] truncate block" title={row.deliveryPersonName}>
+        <span className="max-w-[75px] truncate block" title={row.deliveryPersonName}>
           {row.deliveryPersonName || '-'}
         </span>
       ),
@@ -244,31 +260,31 @@ export const AllEntries = () => {
       label: 'Actions',
       key: 'actions',
       render: (row) => (
-        <div className="flex items-center space-x-0.5">
+        <div className="flex items-center justify-center space-x-0.5">
           <button
             onClick={() => handleStartView(row, row.recordCategory || 'inward_item')}
-            className="p-1 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded transition-colors cursor-pointer"
+            className="p-0.5 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded transition-colors cursor-pointer"
             title="View Entry"
           >
             <Eye className="w-4 h-4" />
           </button>
           <button
             onClick={() => handleExportRowExcel(row, row.recordCategory || 'inward_item')}
-            className="p-1 text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 rounded transition-colors cursor-pointer"
+            className="p-0.5 text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 rounded transition-colors cursor-pointer"
             title="Export Excel"
           >
             <FileSpreadsheet className="w-4 h-4" />
           </button>
           <button
             onClick={() => handleStartEdit(row, row.recordCategory || 'inward_item')}
-            className="p-1 text-sky-600 hover:text-sky-800 hover:bg-sky-50 rounded transition-colors cursor-pointer"
+            className="p-0.5 text-sky-600 hover:text-sky-800 hover:bg-sky-50 rounded transition-colors cursor-pointer"
             title="Edit Entry"
           >
             <Pencil className="w-4 h-4" />
           </button>
           <button
             onClick={() => handleStartDelete(row, row.recordCategory || 'inward_item')}
-            className="p-1 text-rose-600 hover:text-rose-800 hover:bg-rose-50 rounded transition-colors cursor-pointer"
+            className="p-0.5 text-rose-600 hover:text-rose-800 hover:bg-rose-50 rounded transition-colors cursor-pointer"
             title="Delete Entry"
           >
             <Trash2 className="w-4 h-4" />
@@ -279,13 +295,21 @@ export const AllEntries = () => {
   ];
 
   const inwardHeaderColumns = [
-    { label: 'Inward No.', key: 'inwardNo' },
+    {
+      label: 'Inward No.',
+      key: 'inwardNo',
+      render: (row) => (
+        <span className="font-bold text-slate-900 whitespace-nowrap block" title={row.inwardNo}>
+          {row.inwardNo || '-'}
+        </span>
+      ),
+    },
     { label: 'Date', key: 'date', type: 'date' },
     {
       label: 'CONSIGNER',
       key: 'consignorName',
       render: (row) => (
-        <span className="font-semibold text-slate-800 max-w-[90px] truncate block" title={row.consignorName}>
+        <span className="font-semibold text-slate-800 max-w-[85px] truncate block" title={row.consignorName}>
           {row.consignorName || '-'}
         </span>
       ),
@@ -294,7 +318,7 @@ export const AllEntries = () => {
       label: 'CONSIGNEE',
       key: 'consigneeName',
       render: (row) => (
-        <span className="font-semibold text-slate-800 max-w-[90px] truncate block" title={row.consigneeName}>
+        <span className="font-semibold text-slate-800 max-w-[85px] truncate block" title={row.consigneeName}>
           {row.consigneeName || '-'}
         </span>
       ),
@@ -303,7 +327,7 @@ export const AllEntries = () => {
       label: 'Vehicle No.',
       key: 'vehicleNo',
       render: (row) => (
-        <span className="max-w-[85px] truncate block" title={row.vehicleNo}>
+        <span className="whitespace-nowrap block" title={row.vehicleNo}>
           {row.vehicleNo || '-'}
         </span>
       ),
@@ -312,7 +336,7 @@ export const AllEntries = () => {
       label: 'Vehicle Owner',
       key: 'ownerName',
       render: (row) => (
-        <span className="max-w-[85px] truncate block" title={row.ownerName}>
+        <span className="max-w-[80px] truncate block" title={row.ownerName}>
           {row.ownerName || '-'}
         </span>
       ),
@@ -321,7 +345,7 @@ export const AllEntries = () => {
       label: 'From',
       key: 'from',
       render: (row) => (
-        <span className="max-w-[70px] truncate block" title={row.from}>
+        <span className="max-w-[65px] truncate block" title={row.from}>
           {row.from || '-'}
         </span>
       ),
@@ -330,7 +354,7 @@ export const AllEntries = () => {
       label: 'Memo No.',
       key: 'memoNo',
       render: (row) => (
-        <span className="max-w-[65px] truncate block" title={row.memoNo}>
+        <span className="max-w-[60px] truncate block" title={row.memoNo}>
           {row.memoNo || '-'}
         </span>
       ),
@@ -343,31 +367,31 @@ export const AllEntries = () => {
       label: 'Actions',
       key: 'actions',
       render: (row) => (
-        <div className="flex items-center space-x-0.5">
+        <div className="flex items-center justify-center space-x-0.5">
           <button
             onClick={() => handleStartView(row, 'inward_header')}
-            className="p-1 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded transition-colors cursor-pointer"
+            className="p-0.5 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded transition-colors cursor-pointer"
             title="View Receipt"
           >
             <Eye className="w-4 h-4" />
           </button>
           <button
             onClick={() => handleExportRowExcel(row, 'inward_header')}
-            className="p-1 text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 rounded transition-colors cursor-pointer"
+            className="p-0.5 text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 rounded transition-colors cursor-pointer"
             title="Export Excel"
           >
             <FileSpreadsheet className="w-4 h-4" />
           </button>
           <button
             onClick={() => handleStartEdit(row, 'inward_header')}
-            className="p-1 text-sky-600 hover:text-sky-800 hover:bg-sky-50 rounded transition-colors cursor-pointer"
+            className="p-0.5 text-sky-600 hover:text-sky-800 hover:bg-sky-50 rounded transition-colors cursor-pointer"
             title="Edit Receipt"
           >
             <Pencil className="w-4 h-4" />
           </button>
           <button
             onClick={() => handleStartDelete(row, 'inward_header')}
-            className="p-1 text-rose-600 hover:text-rose-800 hover:bg-rose-50 rounded transition-colors cursor-pointer"
+            className="p-0.5 text-rose-600 hover:text-rose-800 hover:bg-rose-50 rounded transition-colors cursor-pointer"
             title="Delete Receipt"
           >
             <Trash2 className="w-4 h-4" />
@@ -378,13 +402,21 @@ export const AllEntries = () => {
   ];
 
   const outwardHeaderColumns = [
-    { label: 'Outward No.', key: 'outwardNo' },
+    {
+      label: 'Outward No.',
+      key: 'outwardNo',
+      render: (row) => (
+        <span className="font-bold text-slate-900 whitespace-nowrap block" title={row.outwardNo}>
+          {row.outwardNo || '-'}
+        </span>
+      ),
+    },
     { label: 'Date', key: 'date', type: 'date' },
     {
       label: 'CONSIGNER',
       key: 'consignorName',
       render: (row) => (
-        <span className="font-semibold text-slate-800 max-w-[90px] truncate block" title={row.consignorName}>
+        <span className="font-semibold text-slate-800 max-w-[85px] truncate block" title={row.consignorName}>
           {row.consignorName || '-'}
         </span>
       ),
@@ -393,7 +425,7 @@ export const AllEntries = () => {
       label: 'CONSIGNEE',
       key: 'consigneeName',
       render: (row) => (
-        <span className="font-semibold text-slate-800 max-w-[90px] truncate block" title={row.consigneeName}>
+        <span className="font-semibold text-slate-800 max-w-[85px] truncate block" title={row.consigneeName}>
           {row.consigneeName || '-'}
         </span>
       ),
@@ -402,7 +434,7 @@ export const AllEntries = () => {
       label: 'Vehicle No.',
       key: 'vehicleNo',
       render: (row) => (
-        <span className="max-w-[85px] truncate block" title={row.vehicleNo}>
+        <span className="whitespace-nowrap block" title={row.vehicleNo}>
           {row.vehicleNo || '-'}
         </span>
       ),
@@ -411,7 +443,7 @@ export const AllEntries = () => {
       label: 'Driver Name',
       key: 'driverName',
       render: (row) => (
-        <span className="max-w-[85px] truncate block" title={row.driverName}>
+        <span className="max-w-[80px] truncate block" title={row.driverName}>
           {row.driverName || '-'}
         </span>
       ),
@@ -420,7 +452,7 @@ export const AllEntries = () => {
       label: 'From',
       key: 'from',
       render: (row) => (
-        <span className="max-w-[70px] truncate block" title={row.from}>
+        <span className="max-w-[65px] truncate block" title={row.from}>
           {row.from || '-'}
         </span>
       ),
@@ -429,7 +461,7 @@ export const AllEntries = () => {
       label: 'Memo No.',
       key: 'memoNo',
       render: (row) => (
-        <span className="max-w-[65px] truncate block" title={row.memoNo}>
+        <span className="max-w-[60px] truncate block" title={row.memoNo}>
           {row.memoNo || '-'}
         </span>
       ),
@@ -442,31 +474,31 @@ export const AllEntries = () => {
       label: 'Actions',
       key: 'actions',
       render: (row) => (
-        <div className="flex items-center space-x-0.5">
+        <div className="flex items-center justify-center space-x-0.5">
           <button
             onClick={() => handleStartView(row, 'outward_header')}
-            className="p-1 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded transition-colors cursor-pointer"
+            className="p-0.5 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded transition-colors cursor-pointer"
             title="View Outward Receipt"
           >
             <Eye className="w-4 h-4" />
           </button>
           <button
             onClick={() => handleExportRowExcel(row, 'outward_header')}
-            className="p-1 text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 rounded transition-colors cursor-pointer"
+            className="p-0.5 text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 rounded transition-colors cursor-pointer"
             title="Export Excel"
           >
             <FileSpreadsheet className="w-4 h-4" />
           </button>
           <button
             onClick={() => handleStartEdit(row, 'outward_header')}
-            className="p-1 text-sky-600 hover:text-sky-800 hover:bg-sky-50 rounded transition-colors cursor-pointer"
+            className="p-0.5 text-sky-600 hover:text-sky-800 hover:bg-sky-50 rounded transition-colors cursor-pointer"
             title="Edit Outward Receipt"
           >
             <Pencil className="w-4 h-4" />
           </button>
           <button
             onClick={() => handleStartDelete(row, 'outward_header')}
-            className="p-1 text-rose-600 hover:text-rose-800 hover:bg-rose-50 rounded transition-colors cursor-pointer"
+            className="p-0.5 text-rose-600 hover:text-rose-800 hover:bg-rose-50 rounded transition-colors cursor-pointer"
             title="Delete Outward Receipt"
           >
             <Trash2 className="w-4 h-4" />
