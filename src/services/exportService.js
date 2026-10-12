@@ -23,33 +23,190 @@ export const exportToExcel = (data, filename = 'export', columns = []) => {
   XLSX.writeFile(workbook, `${filename}_${new Date().toISOString().split('T')[0]}.xlsx`);
 };
 
-export const exportToPDF = (title, columns, data, filename = 'report') => {
-  const doc = new jsPDF();
-  const validColumns = columns.filter((col) => col.key !== 'actions' && col.label !== 'Actions');
-  
-  doc.setFontSize(16);
-  doc.text('ATHAHAR ROADWAYS', 14, 15);
-  doc.setFontSize(12);
-  doc.text(title, 14, 22);
-  doc.setFontSize(9);
-  doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 28);
+const formatPdfCurrency = (amount) => {
+  const num = Number(amount) || 0;
+  return `Rs. ${num.toLocaleString('en-IN', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+};
 
-  const tableHeaders = validColumns.map((col) => col.label);
-  const tableRows = data.map((row) =>
+export const exportToPDF = (title, columns, data, filename = 'report') => {
+  const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const marginX = 12;
+
+  const validColumns = columns.filter((col) => col.key !== 'actions' && col.label !== 'Actions');
+
+  // Header Section
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(18);
+  doc.setTextColor(15, 23, 42);
+  doc.text('ATHAHAR ROADWAYS', marginX, 14);
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8.5);
+  doc.setTextColor(71, 85, 105);
+  doc.text(
+    'NEXT TO PARVATI CRANE, VAKHAR BHAG, SANGLI-416416  |  MOB: 9370229449 / 9850329449',
+    marginX,
+    19.5
+  );
+
+  // Right-aligned Report Title & Metadata
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(13);
+  doc.setTextColor(2, 132, 199);
+  doc.text(title.toUpperCase(), pageWidth - marginX, 14, { align: 'right' });
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8.5);
+  doc.setTextColor(100, 116, 139);
+  doc.text(
+    `Generated on: ${new Date().toLocaleString()}  |  Total Records: ${data?.length || 0}`,
+    pageWidth - marginX,
+    19.5,
+    { align: 'right' }
+  );
+
+  // Divider Line
+  doc.setDrawColor(15, 23, 42);
+  doc.setLineWidth(0.5);
+  doc.line(marginX, 23, pageWidth - marginX, 23);
+
+  const tableHeaders = validColumns.map((col) => String(col.label).toUpperCase());
+
+  const tableRows = (data || []).map((row) =>
     validColumns.map((col) => {
       const val = row[col.key];
-      if (col.type === 'currency') return formatCurrency(val);
+      if (col.type === 'currency') return formatPdfCurrency(val);
       if (col.type === 'date') return formatDate(val);
-      return val ?? '-';
+      if (val === undefined || val === null || val === '') return '-';
+      return String(val);
     })
   );
+
+  // Build Grand Total Footer Row
+  const hasTotals = validColumns.some(
+    (col) => col.type === 'currency' || col.key === 'pkg' || col.key === 'totalQty'
+  );
+  const footRow = hasTotals
+    ? [
+        validColumns.map((col, idx) => {
+          if (idx === 0) return 'TOTAL';
+          if (col.key === 'pkg' || col.key === 'totalQty') {
+            const sumPkg = (data || []).reduce((sum, r) => sum + (Number(r[col.key]) || 0), 0);
+            return String(sumPkg);
+          }
+          if (col.type === 'currency') {
+            const sumAmt = (data || []).reduce((sum, r) => sum + (Number(r[col.key]) || 0), 0);
+            return formatPdfCurrency(sumAmt);
+          }
+          return '';
+        }),
+      ]
+    : undefined;
+
+  // Dynamic Column Alignment & Width Rules
+  const columnStyles = {};
+  const noWrapKeys = new Set([
+    'lrNo',
+    'inwardNo',
+    'outwardNo',
+    'vehicleNo',
+    'memoNo',
+    'invoiceNo',
+    'status',
+    'daysPending',
+  ]);
+
+  validColumns.forEach((col, index) => {
+    if (col.type === 'currency') {
+      columnStyles[index] = { halign: 'right', fontStyle: 'bold', cellWidth: 'wrap' };
+    } else if (col.type === 'date') {
+      columnStyles[index] = { halign: 'center', cellWidth: 'wrap' };
+    } else if (col.key === 'pkg' || col.key === 'totalQty') {
+      columnStyles[index] = { halign: 'center', fontStyle: 'bold', cellWidth: 'wrap' };
+    } else if (col.key === 'status') {
+      columnStyles[index] = { halign: 'center', fontStyle: 'bold', cellWidth: 'wrap' };
+    } else if (noWrapKeys.has(col.key)) {
+      columnStyles[index] = { cellWidth: 'wrap' };
+    } else {
+      columnStyles[index] = { cellWidth: 'auto' };
+    }
+  });
 
   doc.autoTable({
     head: [tableHeaders],
     body: tableRows,
-    startY: 32,
-    styles: { fontSize: 8 },
-    headStyles: { fillColor: [2, 132, 199] },
+    foot: footRow,
+    startY: 27,
+    margin: { left: marginX, right: marginX, bottom: 14 },
+    theme: 'grid',
+    styles: {
+      font: 'helvetica',
+      fontSize: 8.5,
+      textColor: [30, 41, 59],
+      lineColor: [203, 213, 225],
+      lineWidth: 0.2,
+      valign: 'middle',
+      cellPadding: { top: 2.8, right: 2.5, bottom: 2.8, left: 2.5 },
+      overflow: 'linebreak',
+    },
+    headStyles: {
+      fillColor: [15, 23, 42],
+      textColor: [255, 255, 255],
+      fontStyle: 'bold',
+      fontSize: 8,
+      valign: 'middle',
+      cellPadding: { top: 3.2, right: 2.5, bottom: 3.2, left: 2.5 },
+    },
+    alternateRowStyles: {
+      fillColor: [248, 250, 252],
+    },
+    footStyles: {
+      fillColor: [241, 245, 249],
+      textColor: [15, 23, 42],
+      fontStyle: 'bold',
+      fontSize: 8.5,
+      lineColor: [148, 163, 184],
+      lineWidth: 0.3,
+    },
+    columnStyles,
+    willDrawCell: (hookData) => {
+      if (hookData.section === 'head' || hookData.section === 'foot') {
+        const col = validColumns[hookData.column.index];
+        if (col?.type === 'currency') {
+          hookData.cell.styles.halign = 'right';
+        } else if (
+          col?.type === 'date' ||
+          col?.key === 'pkg' ||
+          col?.key === 'totalQty' ||
+          col?.key === 'status'
+        ) {
+          hookData.cell.styles.halign = 'center';
+        }
+      }
+    },
+    didDrawPage: () => {
+      const pageCount = doc.internal.getNumberOfPages();
+      const currentPage = doc.internal.getCurrentPageInfo().pageNumber;
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8);
+      doc.setTextColor(148, 163, 184);
+      doc.text(
+        'ATHAHAR ROADWAYS — Transport Management System',
+        marginX,
+        pageHeight - 6
+      );
+      doc.text(
+        `Page ${currentPage} of ${pageCount}`,
+        pageWidth - marginX,
+        pageHeight - 6,
+        { align: 'right' }
+      );
+    },
   });
 
   doc.save(`${filename}_${new Date().toISOString().split('T')[0]}.pdf`);
