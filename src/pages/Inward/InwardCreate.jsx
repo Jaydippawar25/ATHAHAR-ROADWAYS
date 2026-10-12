@@ -7,11 +7,12 @@ import { Save, Printer, ArrowLeft, AlertCircle, Plus, Trash2, Edit2, RotateCcw, 
 import { getTodayDateString, formatDate } from '../../utils/dateUtils';
 import { formatCurrency } from '../../utils/numberUtils';
 import { printRecordDetails } from '../../services/exportService';
+import { getNextInwardNo } from '../../services/inwardService';
 
 export const InwardCreate = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { masters, handleCreateInward, handleUpdateFullInward, handleAddMaster } = useApp();
+  const { masters, inwards, handleCreateInward, handleUpdateFullInward, handleAddMaster } = useApp();
   const { user } = useAuth();
 
   const editInwardData = location.state?.editInward || null;
@@ -19,7 +20,7 @@ export const InwardCreate = () => {
 
   // HEADER DETAILS (Transporter, Vehicle, Driver, Memo, From Station, Owner)
   const [headerData, setHeaderData] = useState({
-    inwardNo: `INW-${Math.floor(1000 + Math.random() * 9000)}`,
+    inwardNo: getNextInwardNo(inwards),
     date: getTodayDateString(),
     transporterName: masters.transporters[0]?.name || '',
     fromStation: masters.stations[1]?.name || masters.stations[0]?.name || '',

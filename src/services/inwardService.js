@@ -7,6 +7,18 @@ export const getAllInwards = () => {
   return getStoredItem(STORAGE_KEYS.INWARDS);
 };
 
+export const getNextInwardNo = (inwardsList) => {
+  const list = inwardsList || getAllInwards();
+  const serialNums = list
+    .map((item) => {
+      const match = String(item.inwardNo ?? '').match(/(\d+)$/);
+      return match ? parseInt(match[1], 10) : NaN;
+    })
+    .filter((num) => !isNaN(num) && num > 0 && num < 1000);
+  const nextNum = serialNums.length > 0 ? Math.max(...serialNums) + 1 : 1;
+  return `INW-${String(nextNum).padStart(2, '0')}`;
+};
+
 export const getAllInwardItems = () => {
   return getStoredItem(STORAGE_KEYS.INWARD_ITEMS);
 };
@@ -60,7 +72,7 @@ export const createInward = (headerData, lrItems, currentUser = 'Operator') => {
 
   const newInwardHeader = {
     id: inwardId,
-    inwardNo: headerData.inwardNo || `INW-${inwards.length + 9000}`,
+    inwardNo: headerData.inwardNo || getNextInwardNo(inwards),
     date: headerData.date,
     transporterName: headerData.transporterName || 'ATHAHAR ROADWAYS MAIN',
     vehicleNo: headerData.vehicleNo || 'MH-04-FK-1234',

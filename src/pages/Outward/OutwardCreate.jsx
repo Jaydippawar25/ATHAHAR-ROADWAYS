@@ -7,11 +7,12 @@ import { Save, Printer, ArrowLeft, AlertCircle, Plus, Trash2, Edit2, RotateCcw, 
 import { getTodayDateString, formatDate } from '../../utils/dateUtils';
 import { formatCurrency } from '../../utils/numberUtils';
 import { printRecordDetails } from '../../services/exportService';
+import { getNextOutwardNo } from '../../services/outwardService';
 
 export const OutwardCreate = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { masters, pendingStock, handleCreateOutward, handleUpdateFullOutward, handleAddMaster } = useApp();
+  const { masters, outwards, pendingStock, handleCreateOutward, handleUpdateFullOutward, handleAddMaster } = useApp();
   const { user } = useAuth();
 
   const editOutwardData = location.state?.editOutward || null;
@@ -19,7 +20,7 @@ export const OutwardCreate = () => {
 
   // HEADER DETAILS (Outward Memo Header)
   const [headerData, setHeaderData] = useState({
-    outwardNo: `OUT-${Math.floor(1000 + Math.random() * 9000)}`,
+    outwardNo: getNextOutwardNo(outwards),
     date: getTodayDateString(),
     transporterName: masters.transporters[0]?.name || '',
     fromStation: masters.stations[0]?.name || 'SANGLI',

@@ -7,11 +7,12 @@ import { Save, Printer, ArrowLeft, AlertCircle, Plus, Trash2, Edit2, RotateCcw, 
 import { getTodayDateString, formatDate } from '../../utils/dateUtils';
 import { formatCurrency } from '../../utils/numberUtils';
 import { printRecordDetails } from '../../services/exportService';
+import { getNextOutwardNo } from '../../services/outwardService';
 
 export const CrossOutwardCreate = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { masters, handleCreateOutward, handleUpdateFullOutward, handleAddMaster } = useApp();
+  const { masters, outwards, handleCreateOutward, handleUpdateFullOutward, handleAddMaster } = useApp();
   const { user } = useAuth();
 
   const editOutwardData = location.state?.editOutward || null;
@@ -19,7 +20,7 @@ export const CrossOutwardCreate = () => {
 
   // HEADER DETAILS (8 fields matching screenshot)
   const [headerData, setHeaderData] = useState({
-    outwardNo: `OUT-${Math.floor(1000 + Math.random() * 9000)}`,
+    outwardNo: getNextOutwardNo(outwards),
     date: getTodayDateString(),
     transporterName: masters.transporters[0]?.name || '',
     fromStation: masters.stations[0]?.name || 'SANGLI',
@@ -89,7 +90,7 @@ export const CrossOutwardCreate = () => {
     if (location.state?.editOutward) {
       const edit = location.state.editOutward;
       setHeaderData({
-        outwardNo: edit.outwardNo || `OUT-${Math.floor(1000 + Math.random() * 9000)}`,
+        outwardNo: edit.outwardNo || getNextOutwardNo(outwards),
         date: edit.date || edit.outwardDate || getTodayDateString(),
         transporterName: edit.transporterName || masters.transporters[0]?.name || '',
         fromStation: edit.from || edit.fromStation || masters.stations[0]?.name || 'SANGLI',
@@ -401,7 +402,7 @@ export const CrossOutwardCreate = () => {
         );
 
         setSuccess('Cross Stock Out Entry saved successfully!');
-        const nextNo = `OUT-${Math.floor(1000 + Math.random() * 9000)}`;
+        const nextNo = getNextOutwardNo();
         setHeaderData((prev) => ({
           ...prev,
           outwardNo: nextNo,
