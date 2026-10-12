@@ -216,16 +216,18 @@ export const OutwardCreate = () => {
     if (e) e.preventDefault();
     setError('');
 
-    const cleanLR = String(itemForm.lrNo).trim();
+    const cleanLR = String(itemForm?.lrNo ?? '').trim();
     if (!cleanLR) {
       setError('Please enter a valid LR No.');
       focusLRNoInput();
       return;
     }
 
+    const existingItem = editingIndex !== null ? selectedItems[editingIndex] : null;
     const newItem = {
-      id: `out-item-${Date.now()}`,
-      srNo: editingIndex !== null ? selectedItems[editingIndex].srNo : selectedItems.length + 1,
+      ...(existingItem || {}),
+      id: existingItem?.id || `out-item-${Date.now()}`,
+      srNo: existingItem?.srNo ?? selectedItems.length + 1,
       lrNo: cleanLR,
       inwardDate: itemForm.date || getTodayDateString(),
       date: itemForm.date || getTodayDateString(),
@@ -240,17 +242,17 @@ export const OutwardCreate = () => {
       paidAmount: Number(itemForm.paidAmount) || 0,
     };
 
-    if (editingIndex !== null) {
+    if (editingIndex !== null && editingIndex < selectedItems.length) {
       const updated = [...selectedItems];
       updated[editingIndex] = newItem;
       setSelectedItems(updated);
       setEditingIndex(null);
     } else {
       setSelectedItems((prev) => [...prev, newItem]);
+      setEditingIndex(null);
     }
 
     resetForm();
-    focusLRNoInput();
   };
 
   const resetForm = () => {
@@ -273,15 +275,33 @@ export const OutwardCreate = () => {
 
   const handleEditItem = (index) => {
     const item = selectedItems[index];
-    setItemForm({ ...item });
+    if (!item) return;
+    setItemForm({
+      srNo: item.srNo ?? index + 1,
+      lrNo: String(item.lrNo ?? ''),
+      date: item.inwardDate || item.date || getTodayDateString(),
+      pkg: item.pkg !== undefined && item.pkg !== null ? String(item.pkg) : '',
+      invoiceNo: String(item.invoiceNo ?? ''),
+      ctTo: item.ctTo || masters.stations[0]?.name || '',
+      deliveryPersonName: item.deliveryPersonName || headerData.deliveryPersonName || masters.deliveryPersons[0]?.name || '',
+      consignorName: String(item.consignorName ?? ''),
+      consigneeName: String(item.consigneeName ?? ''),
+      toPayAmount: item.toPayAmount ? String(item.toPayAmount) : '',
+      tbbAmount: item.tbbAmount ? String(item.tbbAmount) : '',
+      paidAmount: item.paidAmount ? String(item.paidAmount) : '',
+    });
     setEditingIndex(index);
-    focusLRNoInput();
   };
 
   const handleDeleteItem = (index) => {
     const filtered = selectedItems.filter((_, idx) => idx !== index);
     const renumbered = filtered.map((item, idx) => ({ ...item, srNo: idx + 1 }));
     setSelectedItems(renumbered);
+    if (editingIndex === index) {
+      resetForm();
+    } else if (editingIndex !== null && index < editingIndex) {
+      setEditingIndex(editingIndex - 1);
+    }
   };
 
   // Aggregate Summary Totals
@@ -296,11 +316,12 @@ export const OutwardCreate = () => {
     setSuccess('');
 
     let finalItems = [...selectedItems];
-    if (finalItems.length === 0 && itemForm.lrNo.trim()) {
+    const cleanLR = String(itemForm?.lrNo ?? '').trim();
+    if (finalItems.length === 0 && cleanLR) {
       finalItems.push({
         id: `out-item-${Date.now()}`,
         srNo: 1,
-        lrNo: itemForm.lrNo.trim(),
+        lrNo: cleanLR,
         inwardDate: itemForm.date,
         date: itemForm.date,
         pkg: Number(itemForm.pkg) || 1,
@@ -820,6 +841,145 @@ export const OutwardCreate = () => {
           </div>
         </div>
       </div>
+
+      {/* EDIT DISPATCH LR MODAL */}
+      <Modal
+        isOpen={editingIndex !== null}
+        onClose={() => resetForm()}
+        title={`Edit Dispatch LR #${itemForm.lrNo || ''}`}
+      >
+        <form onSubmit={handleAddOrUpdateLR} className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase mb-1">LR No. *</label>
+              <input
+                type="text"
+                name="lrNo"
+                value={itemForm.lrNo}
+                onChange={handleItemChange}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm font-bold text-sky-700"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase mb-1">PKG Qty *</label>
+              <input
+                type="text"
+                inputMode="numeric"
+                name="pkg"
+                value={itemForm.pkg}
+                onChange={handleItemChange}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm font-bold"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Invoice No.</label>
+              <input
+                type="text"
+                name="invoiceNo"
+                value={itemForm.invoiceNo}
+                onChange={handleItemChange}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase mb-1">CT To (Station)</label>
+              <input
+                type="text"
+                name="ctTo"
+                value={itemForm.ctTo}
+                onChange={handleItemChange}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Delivery Person</label>
+              <select
+                name="deliveryPersonName"
+                value={itemForm.deliveryPersonName}
+                onChange={handleItemChange}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm font-semibold"
+              >
+                {masters.deliveryPersons.map((dp) => (
+                  <option key={dp.id} value={dp.name}>
+                    {dp.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Consignor</label>
+              <input
+                type="text"
+                name="consignorName"
+                value={itemForm.consignorName}
+                onChange={handleItemChange}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Consignee</label>
+              <input
+                type="text"
+                name="consigneeName"
+                value={itemForm.consigneeName}
+                onChange={handleItemChange}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-amber-700 uppercase mb-1">To Pay (₹)</label>
+              <input
+                type="text"
+                inputMode="decimal"
+                name="toPayAmount"
+                value={itemForm.toPayAmount}
+                onChange={handleItemChange}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm font-bold text-amber-800"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-sky-700 uppercase mb-1">T.B.B (₹)</label>
+              <input
+                type="text"
+                inputMode="decimal"
+                name="tbbAmount"
+                value={itemForm.tbbAmount}
+                onChange={handleItemChange}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm font-bold text-sky-800"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-emerald-700 uppercase mb-1">Paid (₹)</label>
+              <input
+                type="text"
+                inputMode="decimal"
+                name="paidAmount"
+                value={itemForm.paidAmount}
+                onChange={handleItemChange}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm font-bold text-emerald-800"
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end space-x-2 pt-3 border-t border-slate-200">
+            <button
+              type="button"
+              onClick={() => resetForm()}
+              className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg text-xs cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-5 py-2 bg-sky-600 hover:bg-sky-700 text-white font-bold rounded-lg text-xs shadow cursor-pointer"
+            >
+              Update LR
+            </button>
+          </div>
+        </form>
+      </Modal>
 
       {/* QUICK ADD MODAL FOR [...] BUTTONS */}
       <Modal

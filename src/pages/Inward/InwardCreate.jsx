@@ -183,7 +183,7 @@ export const InwardCreate = () => {
     if (e) e.preventDefault();
     setError('');
 
-    const cleanLR = String(itemForm.lrNo).trim();
+    const cleanLR = String(itemForm?.lrNo ?? '').trim();
     if (!cleanLR) {
       setError('Please enter a valid LR No.');
       focusLRNoInput();
@@ -191,7 +191,10 @@ export const InwardCreate = () => {
     }
 
     const newItem = {
-      srNo: editingIndex !== null ? stagedItems[editingIndex].srNo : stagedItems.length + 1,
+      srNo:
+        editingIndex !== null && stagedItems[editingIndex]
+          ? stagedItems[editingIndex].srNo
+          : stagedItems.length + 1,
       lrNo: cleanLR,
       date: itemForm.date || getTodayDateString(),
       pkg: Number(itemForm.pkg) || 1,
@@ -204,49 +207,92 @@ export const InwardCreate = () => {
       paidAmount: Number(itemForm.paidAmount) || 0,
     };
 
-    if (editingIndex !== null) {
+    if (editingIndex !== null && editingIndex < stagedItems.length) {
       const updated = [...stagedItems];
       updated[editingIndex] = newItem;
       setStagedItems(updated);
       setEditingIndex(null);
     } else {
       setStagedItems((prev) => [...prev, newItem]);
+      setEditingIndex(null);
     }
 
     resetForm();
     focusLRNoInput();
   };
 
+  // Aggregate Totals across staged items (plus active form if filled)
+  const currentLrNo = String(itemForm?.lrNo ?? '').trim();
+  const currentFormPreviewItem = {
+    srNo:
+      editingIndex !== null && stagedItems[editingIndex]
+        ? stagedItems[editingIndex].srNo
+        : stagedItems.length + 1,
+    lrNo: currentLrNo,
+    date: itemForm?.date || getTodayDateString(),
+    pkg: Number(itemForm?.pkg) || 1,
+    invoiceNo: itemForm?.invoiceNo || '',
+    ctTo: itemForm?.ctTo || masters.stations[0]?.name || '',
+    consignorName: itemForm?.consignorName || '',
+    consigneeName: itemForm?.consigneeName || '',
+    toPayAmount: Number(itemForm?.toPayAmount) || 0,
+    tbbAmount: Number(itemForm?.tbbAmount) || 0,
+    paidAmount: Number(itemForm?.paidAmount) || 0,
+  };
+
+  const allLRs = [...stagedItems];
+  if (editingIndex !== null && allLRs[editingIndex]) {
+    if (currentLrNo) {
+      allLRs[editingIndex] = currentFormPreviewItem;
+    }
+  } else if (stagedItems.length === 0 && currentLrNo) {
+    allLRs.push(currentFormPreviewItem);
+  }
+
   const handleEditStagedItem = (index) => {
-    const item = stagedItems[index];
-    setItemForm({ ...item });
+    const item = stagedItems[index] || allLRs[index];
+    if (!item) {
+      focusLRNoInput();
+      return;
+    }
+
+    // If the LR was only a live preview (not yet added to stagedItems), stage it first so editing works seamlessly
+    if (!stagedItems[index]) {
+      setStagedItems((prev) => [...prev, { ...item, srNo: prev.length + 1 }]);
+    }
+
+    setItemForm({
+      srNo: item.srNo ?? index + 1,
+      lrNo: String(item.lrNo ?? ''),
+      date: item.date || getTodayDateString(),
+      pkg: item.pkg !== undefined && item.pkg !== null ? String(item.pkg) : '',
+      invoiceNo: String(item.invoiceNo ?? ''),
+      ctTo: item.ctTo || masters.stations[0]?.name || '',
+      consignorName: String(item.consignorName ?? ''),
+      consigneeName: String(item.consigneeName ?? ''),
+      toPayAmount: item.toPayAmount ? String(item.toPayAmount) : '',
+      tbbAmount: item.tbbAmount ? String(item.tbbAmount) : '',
+      paidAmount: item.paidAmount ? String(item.paidAmount) : '',
+    });
     setEditingIndex(index);
     focusLRNoInput();
   };
 
   const handleDeleteStagedItem = (index) => {
+    if (!stagedItems[index]) {
+      resetForm();
+      focusLRNoInput();
+      return;
+    }
     const filtered = stagedItems.filter((_, idx) => idx !== index);
     const renumbered = filtered.map((item, idx) => ({ ...item, srNo: idx + 1 }));
     setStagedItems(renumbered);
+    if (editingIndex === index) {
+      resetForm();
+    } else if (editingIndex !== null && index < editingIndex) {
+      setEditingIndex(editingIndex - 1);
+    }
   };
-
-  // Aggregate Totals across staged items (plus active form if filled)
-  const allLRs = [...stagedItems];
-  if (stagedItems.length === 0 && itemForm.lrNo.trim()) {
-    allLRs.push({
-      srNo: 1,
-      lrNo: itemForm.lrNo.trim(),
-      date: itemForm.date,
-      pkg: Number(itemForm.pkg) || 1,
-      invoiceNo: itemForm.invoiceNo || '',
-      ctTo: itemForm.ctTo,
-      consignorName: itemForm.consignorName,
-      consigneeName: itemForm.consigneeName,
-      toPayAmount: Number(itemForm.toPayAmount) || 0,
-      tbbAmount: Number(itemForm.tbbAmount) || 0,
-      paidAmount: Number(itemForm.paidAmount) || 0,
-    });
-  }
 
   const totalQty = allLRs.reduce((sum, item) => sum + (Number(item.pkg) || 0), 0);
   const totalToPay = allLRs.reduce((sum, item) => sum + (Number(item.toPayAmount) || 0), 0);
@@ -258,22 +304,7 @@ export const InwardCreate = () => {
     setError('');
     setSuccess('');
 
-    let finalItems = [...stagedItems];
-    if (finalItems.length === 0 && itemForm.lrNo.trim()) {
-      finalItems.push({
-        srNo: 1,
-        lrNo: itemForm.lrNo.trim(),
-        date: itemForm.date,
-        pkg: Number(itemForm.pkg) || 1,
-        invoiceNo: itemForm.invoiceNo || '',
-        ctTo: itemForm.ctTo,
-        consignorName: itemForm.consignorName,
-        consigneeName: itemForm.consigneeName,
-        toPayAmount: Number(itemForm.toPayAmount) || 0,
-        tbbAmount: Number(itemForm.tbbAmount) || 0,
-        paidAmount: Number(itemForm.paidAmount) || 0,
-      });
-    }
+    let finalItems = [...allLRs];
 
     if (finalItems.length === 0) {
       setError('Please enter at least one LR No. before saving.');
@@ -534,7 +565,13 @@ export const InwardCreate = () => {
               type="text"
               readOnly
               tabIndex={-1}
-              value={editingIndex !== null ? stagedItems[editingIndex].srNo : stagedItems.length + 1}
+              value={
+                editingIndex !== null && stagedItems[editingIndex]
+                  ? stagedItems[editingIndex].srNo
+                  : editingIndex !== null
+                  ? editingIndex + 1
+                  : stagedItems.length + 1
+              }
               className="w-full px-2 py-1.5 bg-slate-200 border border-slate-300 rounded text-xs font-bold text-center text-slate-600"
             />
           </div>
