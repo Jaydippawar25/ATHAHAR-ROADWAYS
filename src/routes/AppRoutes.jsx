@@ -2,7 +2,6 @@ import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { Login } from '../pages/Login';
 import { Dashboard } from '../pages/Dashboard';
-import { InwardList } from '../pages/Inward/InwardList';
 import { InwardCreate } from '../pages/Inward/InwardCreate';
 import { PendingStock } from '../pages/PendingStock/PendingStock';
 import { OutwardList } from '../pages/Outward/OutwardList';
@@ -35,11 +34,7 @@ export const AppRoutes = () => {
       />
       <Route
         path="/inward/list"
-        element={
-          <ProtectedRoute>
-            <InwardList />
-          </ProtectedRoute>
-        }
+        element={<Navigate to="/all-entries" state={{ tab: 'inward_headers' }} replace />}
       />
       <Route
         path="/inward/new"

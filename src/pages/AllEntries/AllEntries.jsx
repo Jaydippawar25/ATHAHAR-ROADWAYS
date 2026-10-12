@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import {
   ArrowLeftRight,
   ArrowDownLeft,
@@ -22,6 +22,7 @@ import { formatDate } from '../../utils/dateUtils';
 import { formatCurrency } from '../../utils/numberUtils';
 
 export const AllEntries = () => {
+  const location = useLocation();
   const {
     inwards,
     inwardItems,
@@ -39,7 +40,13 @@ export const AllEntries = () => {
   } = useApp();
 
   // Active view tab: 'all_lrs' | 'inward_headers' | 'outward_headers'
-  const [activeTab, setActiveTab] = useState('all_lrs');
+  const [activeTab, setActiveTab] = useState(location.state?.tab || 'all_lrs');
+
+  useEffect(() => {
+    if (location.state?.tab) {
+      setActiveTab(location.state.tab);
+    }
+  }, [location.state?.tab]);
 
   // Modal states for view, edit & delete
   const [viewingRecord, setViewingRecord] = useState(null);

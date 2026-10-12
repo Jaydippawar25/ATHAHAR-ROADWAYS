@@ -289,7 +289,7 @@ export const InwardCreate = () => {
       }
 
       setTimeout(() => {
-        navigate('/inward/list');
+        navigate('/all-entries', { state: { tab: 'inward_headers' } });
       }, 1200);
     } catch (err) {
       setError(err.message || 'Failed to save Inward transaction.');
@@ -307,7 +307,7 @@ export const InwardCreate = () => {
 
         <button
           type="button"
-          onClick={() => navigate('/inward/list')}
+          onClick={() => navigate('/all-entries', { state: { tab: 'inward_headers' } })}
           className="inline-flex items-center bg-sky-600 hover:bg-sky-700 text-white font-bold px-4 py-2 rounded-lg text-xs shadow-sm transition-all self-end sm:self-auto cursor-pointer"
         >
           <span>Show All Inward</span>
@@ -843,7 +843,7 @@ export const InwardCreate = () => {
 
           <button
             type="button"
-            onClick={() => navigate('/inward/list')}
+            onClick={() => navigate('/all-entries', { state: { tab: 'inward_headers' } })}
             className="inline-flex items-center space-x-1.5 px-4 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-lg text-xs shadow-sm transition-all cursor-pointer"
           >
             <X className="w-4 h-4" />
