@@ -4,7 +4,6 @@ import { Login } from '../pages/Login';
 import { Dashboard } from '../pages/Dashboard';
 import { InwardCreate } from '../pages/Inward/InwardCreate';
 import { PendingStock } from '../pages/PendingStock/PendingStock';
-import { OutwardList } from '../pages/Outward/OutwardList';
 import { OutwardCreate } from '../pages/Outward/OutwardCreate';
 import { AllEntries } from '../pages/AllEntries/AllEntries';
 import { Masters } from '../pages/Masters/Masters';
@@ -62,11 +61,7 @@ export const AppRoutes = () => {
       />
       <Route
         path="/outward/list"
-        element={
-          <ProtectedRoute>
-            <OutwardList />
-          </ProtectedRoute>
-        }
+        element={<Navigate to="/all-entries" state={{ tab: 'outward_headers' }} replace />}
       />
       <Route
         path="/outward/new"
