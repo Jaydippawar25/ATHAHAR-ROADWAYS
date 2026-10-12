@@ -704,15 +704,6 @@ export const AllEntries = () => {
         </span>
       ),
     },
-    {
-      label: 'Memo No.',
-      key: 'memoNo',
-      render: (row) => (
-        <span className="max-w-[55px] truncate block" title={row.memoNo}>
-          {row.memoNo || '-'}
-        </span>
-      ),
-    },
     { label: 'PKG', key: 'totalQty' },
     { label: 'TO PAY', key: 'totalToPay', type: 'currency' },
     { label: 'T.B.B', key: 'totalTbb', type: 'currency' },

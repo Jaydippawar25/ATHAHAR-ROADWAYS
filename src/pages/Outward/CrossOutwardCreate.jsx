@@ -583,20 +583,6 @@ export const CrossOutwardCreate = () => {
             </div>
           </div>
 
-          {/* MEMO NO */}
-          <div>
-            <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">
-              Memo No.
-            </label>
-            <input
-              type="text"
-              value={headerData.memoNo}
-              onChange={(e) => handleHeaderChange('memoNo', e.target.value)}
-              placeholder="Ex. M-202"
-              className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded text-xs font-semibold text-slate-900 focus:outline-none focus:border-sky-600"
-            />
-          </div>
-
           {/* DRIVER NAME + [...] */}
           <div>
             <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">
@@ -1034,7 +1020,6 @@ export const CrossOutwardCreate = () => {
                   { label: 'Transporter', value: headerData.transporterName || '-' },
                   { label: 'From Station', value: headerData.fromStation || '-' },
                   { label: 'Vehicle No.', value: headerData.vehicleNo || '-' },
-                  { label: 'Memo No.', value: headerData.memoNo || '-' },
                   { label: 'Driver Name', value: headerData.driverName || '-' },
                   { label: 'Vehicle Owner', value: headerData.ownerName || '-' },
                   { label: 'Total PKG', value: `${summary.pkg || 0} Pkgs` },
