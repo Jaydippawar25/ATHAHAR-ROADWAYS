@@ -471,7 +471,6 @@ export const OutwardCreate = () => {
           { label: 'Delivery Person', value: headerData.deliveryPersonName || '-' },
           { label: 'Driver Name', value: headerData.driverName || '-' },
           { label: 'From Station', value: headerData.fromStation || '-' },
-          { label: 'Memo No.', value: headerData.memoNo || '-' },
           {
             label: 'Total Freight',
             value: formatCurrency(printToPay + printTbb + printPaid),
@@ -716,20 +715,6 @@ export const OutwardCreate = () => {
                 ...
               </button>
             </div>
-          </div>
-
-          <div>
-            <label className="block text-[11px] font-black text-slate-700 uppercase mb-1">
-              MEMO NO.
-            </label>
-            <input
-              type="text"
-              name="memoNo"
-              value={headerData.memoNo}
-              onChange={handleHeaderChange}
-              placeholder="MEMO NO."
-              className="w-full px-2.5 py-1.5 border border-slate-300 bg-white rounded text-xs font-bold text-slate-800 focus:ring-1 focus:ring-sky-500 uppercase"
-            />
           </div>
         </div>
       </fieldset>
