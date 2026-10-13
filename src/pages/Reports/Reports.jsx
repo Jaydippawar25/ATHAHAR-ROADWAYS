@@ -9,7 +9,7 @@ import { formatDate } from '../../utils/dateUtils';
 import { formatCurrency } from '../../utils/numberUtils';
 
 export const Reports = () => {
-  const { inwardItems, pendingStock, outwardItems } = useApp();
+  const { inwards, inwardItems, pendingStock, outwardItems } = useApp();
   const [reportType, setReportType] = useState('inward'); // 'inward' | 'pending' | 'delivered'
   const [viewingRecord, setViewingRecord] = useState(null);
 
@@ -25,7 +25,7 @@ export const Reports = () => {
         { label: 'LR No.', value: row.lrNo },
         { label: 'Inward Date', value: formatDate(row.inwardDate || row.date) },
         { label: 'Outward Date', value: formatDate(row.outwardDate) },
-        { label: 'Invoice No.', value: row.invoiceNo || '-' },
+        { label: 'Memo No.', value: row.memoNo || '-' },
         { label: 'CT To', value: row.ctTo || '-' },
         { label: 'Status', value: row.status },
         { label: 'Consignor', value: row.consignorName || '-' },
@@ -42,7 +42,7 @@ export const Reports = () => {
     { label: 'LR No.', key: 'lrNo', render: (row) => <span className="font-extrabold text-sky-800">{row.lrNo}</span> },
     { label: 'Inward Date', key: 'inwardDate', type: 'date' },
     { label: 'Outward Date', key: 'outwardDate', type: 'date' },
-    { label: 'Invoice No.', key: 'invoiceNo' },
+    { label: 'Memo No.', key: 'memoNo' },
     { label: 'CT To', key: 'ctTo' },
     { label: 'Consignor', key: 'consignorName' },
     { label: 'Consignee', key: 'consigneeName' },
@@ -68,16 +68,26 @@ export const Reports = () => {
     },
   ];
 
-  let currentData = inwardItems;
+  let rawData = inwardItems;
   let reportTitle = 'All Inward Items Report';
 
   if (reportType === 'pending') {
-    currentData = pendingStock;
+    rawData = pendingStock;
     reportTitle = 'Pending Stock Register';
   } else if (reportType === 'delivered') {
-    currentData = outwardItems;
+    rawData = outwardItems;
     reportTitle = 'Completed Deliveries Report';
   }
+
+  const currentData = rawData.map((item) => {
+    if (item.memoNo) return item;
+    const parentInw = inwards?.find((inw) => inw.id === item.inwardId || inw.inwardNo === item.inwardNo);
+    const matchingInwItem = inwardItems?.find((inwItem) => inwItem.lrNo === item.lrNo);
+    return {
+      ...item,
+      memoNo: item.memoNo || matchingInwItem?.memoNo || parentInw?.memoNo || '-',
+    };
+  });
 
   return (
     <div className="space-y-6">
@@ -149,8 +159,8 @@ export const Reports = () => {
                 <span className="font-bold text-slate-800">{formatDate(viewingRecord.outwardDate)}</span>
               </div>
               <div>
-                <span className="text-slate-400 font-bold uppercase block text-[10px]">Invoice No.</span>
-                <span className="font-bold text-slate-800">{viewingRecord.invoiceNo || '-'}</span>
+                <span className="text-slate-400 font-bold uppercase block text-[10px]">Memo No.</span>
+                <span className="font-bold text-slate-800">{viewingRecord.memoNo || '-'}</span>
               </div>
               <div>
                 <span className="text-slate-400 font-bold uppercase block text-[10px]">CT To</span>
