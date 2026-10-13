@@ -33,7 +33,6 @@ export const PendingStock = () => {
         { label: 'Inward No.', value: row.inwardNo || '-' },
         { label: 'Inward Date', value: formatDate(row.inwardDate || row.date) },
         { label: 'Memo No.', value: row.memoNo || '-' },
-        { label: 'Invoice No.', value: row.invoiceNo || '-' },
         { label: 'Status', value: row.status },
         { label: 'CT To', value: row.ctTo || '-' },
         { label: 'Consignor', value: row.consignorName || '-' },
@@ -94,7 +93,6 @@ export const PendingStock = () => {
     { label: 'Inward Date', key: 'inwardDate', type: 'date' },
     { label: 'Inward No.', key: 'inwardNo' },
     { label: 'Memo No.', key: 'memoNo' },
-    { label: 'Invoice No.', key: 'invoiceNo' },
     { label: 'CT To', key: 'ctTo' },
     { label: 'Consignor', key: 'consignorName' },
     { label: 'Consignee', key: 'consigneeName' },
@@ -187,7 +185,7 @@ export const PendingStock = () => {
         selectedIds={selectedIds}
         onSelectRow={handleSelectRow}
         onSelectAll={handleSelectAll}
-        searchPlaceholder="Search Pending LR No, Invoice, Consignor, Consignee..."
+        searchPlaceholder="Search Pending LR No, Memo No, Consignor, Consignee..."
         onExportExcel={(data) => exportToExcel(data, 'Pending_Stock_Report', pendingColumns)}
         onExportPDF={(data) => exportToPDF('Pending Stock Register', pendingColumns, data, 'Pending_Stock_Report')}
       />
@@ -217,10 +215,6 @@ export const PendingStock = () => {
               <div>
                 <span className="text-slate-400 font-bold uppercase block text-[10px]">Memo No.</span>
                 <span className="font-bold text-slate-800">{viewingRecord.memoNo || '-'}</span>
-              </div>
-              <div>
-                <span className="text-slate-400 font-bold uppercase block text-[10px]">Invoice No.</span>
-                <span className="font-bold text-slate-800">{viewingRecord.invoiceNo || '-'}</span>
               </div>
               <div>
                 <span className="text-slate-400 font-bold uppercase block text-[10px]">Status</span>
@@ -314,11 +308,11 @@ export const PendingStock = () => {
               />
             </div>
             <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Invoice No.</label>
+              <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Memo No.</label>
               <input
                 type="text"
-                value={editFormData.invoiceNo || ''}
-                onChange={(e) => setEditFormData({ ...editFormData, invoiceNo: e.target.value })}
+                value={editFormData.memoNo || ''}
+                onChange={(e) => setEditFormData({ ...editFormData, memoNo: e.target.value })}
                 className="w-full px-3 py-2 border rounded-lg text-sm"
               />
             </div>

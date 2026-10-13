@@ -145,7 +145,7 @@ export const AllEntries = () => {
           { label: 'CT To', value: row.ctTo || '-' },
           { label: 'Consigner', value: row.consignorName || '-' },
           { label: 'Consignee', value: row.consigneeName || '-' },
-          { label: 'Invoice No.', value: row.invoiceNo || '-' },
+          { label: 'Memo No.', value: row.memoNo || '-' },
           { label: 'To Pay', value: formatCurrency(row.toPayAmount) },
           { label: 'T.B.B', value: formatCurrency(row.tbbAmount) },
           { label: 'Paid', value: formatCurrency(row.paidAmount) },
@@ -308,8 +308,10 @@ export const AllEntries = () => {
 
   // First add all Inward items
   inwardItems.forEach((item) => {
+    const parentInw = inwards.find((inw) => inw.id === item.inwardId || inw.inwardNo === item.inwardNo);
     allLREntriesMap.set(item.lrNo, {
       ...item,
+      memoNo: item.memoNo || parentInw?.memoNo || '-',
       inwardDate: item.date || item.inwardDate || '-',
       outwardDate: '-',
       outwardNo: '-',
@@ -321,9 +323,11 @@ export const AllEntries = () => {
   // Merge Outward delivered items
   outwardItems.forEach((item) => {
     const existing = allLREntriesMap.get(item.lrNo) || {};
+    const parentInw = inwards.find((inw) => inw.id === item.inwardId || inw.inwardNo === item.inwardNo);
     allLREntriesMap.set(item.lrNo, {
       ...existing,
       ...item,
+      memoNo: existing.memoNo && existing.memoNo !== '-' ? existing.memoNo : item.memoNo || parentInw?.memoNo || '-',
       inwardDate: existing.inwardDate || item.inwardDate || item.date || '-',
       outwardDate: item.outwardDate || item.date || '-',
       outwardNo: item.outwardNo || '-',
@@ -1065,8 +1069,8 @@ export const AllEntries = () => {
                   <span className="font-bold text-slate-800">{viewingRecord.consigneeName || '-'}</span>
                 </div>
                 <div>
-                  <span className="text-slate-400 font-bold uppercase block text-[10px]">Invoice No.</span>
-                  <span className="font-bold text-slate-800">{viewingRecord.invoiceNo || '-'}</span>
+                  <span className="text-slate-400 font-bold uppercase block text-[10px]">Memo No.</span>
+                  <span className="font-bold text-slate-800">{viewingRecord.memoNo || '-'}</span>
                 </div>
                 <div>
                   <span className="text-slate-400 font-bold uppercase block text-[10px]">To Pay</span>
@@ -1192,11 +1196,11 @@ export const AllEntries = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-600 mb-1 uppercase font-bold">Invoice No.</label>
+                  <label className="block text-slate-600 mb-1 uppercase font-bold">Memo No.</label>
                   <input
                     type="text"
-                    value={editFormData.invoiceNo || ''}
-                    onChange={(e) => setEditFormData({ ...editFormData, invoiceNo: e.target.value })}
+                    value={editFormData.memoNo || ''}
+                    onChange={(e) => setEditFormData({ ...editFormData, memoNo: e.target.value })}
                     className="w-full p-2 border border-slate-300 rounded"
                   />
                 </div>
