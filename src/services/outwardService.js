@@ -121,19 +121,62 @@ export const createOutward = (headerData, selectedPendingItems, currentUser = 'O
     deliveredBy: currentUser,
   }));
 
-  // Update status in inwardItems collection if matching item exists
+  // Update status and edited amounts in inwardItems collection
+  let inwards = getStoredItem(STORAGE_KEYS.INWARDS);
   const updatedInwardItems = inwardItems.map((item) => {
     const lrKey = String(item.lrNo ?? '').trim().toLowerCase();
-    if (selectedIds.has(item.id) || (isCrossOutward && lrKey && selectedLRs.has(lrKey))) {
+    const matchedPending = selectedPendingItems.find(
+      (p) =>
+        p.id === item.id ||
+        (p.inwardItemId && p.inwardItemId === item.id) ||
+        (String(p.lrNo ?? '').trim().toLowerCase() === lrKey)
+    );
+
+    if (matchedPending) {
       return {
         ...item,
+        lrNo: matchedPending.lrNo ? String(matchedPending.lrNo).trim() : item.lrNo,
+        toPayAmount: Number(matchedPending.toPayAmount) || 0,
+        tbbAmount: Number(matchedPending.tbbAmount) || 0,
+        paidAmount: Number(matchedPending.paidAmount) || 0,
+        pkg: Number(matchedPending.pkg) || item.pkg,
+        invoiceNo: matchedPending.invoiceNo ?? item.invoiceNo,
+        ctTo: matchedPending.ctTo ?? item.ctTo,
+        consignorName: matchedPending.consignorName ?? item.consignorName,
+        consigneeName: matchedPending.consigneeName ?? item.consigneeName,
+        deliveryPersonName:
+          headerData.deliveryPersonName ||
+          matchedPending.deliveryPersonName ||
+          item.deliveryPersonName ||
+          '-',
         status: STATUS.DELIVERED,
         deliveredAt: new Date().toISOString(),
+        deliveredBy: currentUser,
         outwardId,
         outwardNo: newOutwardHeader.outwardNo,
+        outwardDate: headerData.date,
       };
     }
     return item;
+  });
+
+  // Also recalculate parent inwards totals so Inward Receipts tab and Accounting stay in sync
+  inwards = inwards.map((inv) => {
+    const parentItems = updatedInwardItems.filter(
+      (i) => i.inwardId === inv.id || i.inwardNo === inv.inwardNo
+    );
+    if (parentItems.length === 0) return inv;
+    const inwConsignors = Array.from(new Set(parentItems.map((i) => i.consignorName).filter(Boolean))).join(', ');
+    const inwConsignees = Array.from(new Set(parentItems.map((i) => i.consigneeName).filter(Boolean))).join(', ');
+    return {
+      ...inv,
+      consignorName: inwConsignors || inv.consignorName,
+      consigneeName: inwConsignees || inv.consigneeName,
+      totalQty: parentItems.reduce((acc, curr) => acc + (Number(curr.pkg) || 0), 0),
+      totalToPay: parentItems.reduce((acc, curr) => acc + (Number(curr.toPayAmount) || 0), 0),
+      totalTbb: parentItems.reduce((acc, curr) => acc + (Number(curr.tbbAmount) || 0), 0),
+      totalPaid: parentItems.reduce((acc, curr) => acc + (Number(curr.paidAmount) || 0), 0),
+    };
   });
 
   outwards.unshift(newOutwardHeader);
@@ -142,6 +185,7 @@ export const createOutward = (headerData, selectedPendingItems, currentUser = 'O
   setStoredItem(STORAGE_KEYS.OUTWARDS, outwards);
   setStoredItem(STORAGE_KEYS.OUTWARD_ITEMS, updatedOutwardItems);
   setStoredItem(STORAGE_KEYS.INWARD_ITEMS, updatedInwardItems);
+  setStoredItem(STORAGE_KEYS.INWARDS, inwards);
 
   return newOutwardHeader;
 };

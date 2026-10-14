@@ -275,10 +275,27 @@ export const OutwardCreate = () => {
       const newItem = {
         ...item,
         srNo: selectedItems.length + 1,
+        toPayAmount: item.toPayAmount !== undefined && item.toPayAmount !== null ? item.toPayAmount : 0,
+        tbbAmount: item.tbbAmount !== undefined && item.tbbAmount !== null ? item.tbbAmount : 0,
+        paidAmount: item.paidAmount !== undefined && item.paidAmount !== null ? item.paidAmount : 0,
         deliveryPersonName: headerData.deliveryPersonName || masters.deliveryPersons[0]?.name || 'SANTOSH SAI RAM PALUS',
       };
       setSelectedItems((prev) => [...prev, newItem]);
     }
+  };
+
+  // Direct inline change for To Pay, TBB, Paid amounts on selected items
+  const handleDirectItemAmountChange = (index, field, value) => {
+    setSelectedItems((prev) => {
+      const next = [...prev];
+      if (next[index]) {
+        next[index] = {
+          ...next[index],
+          [field]: value,
+        };
+      }
+      return next;
+    });
   };
 
   // Manual Add or Update LR item
@@ -372,9 +389,9 @@ export const OutwardCreate = () => {
       deliveryPersonName: item.deliveryPersonName || headerData.deliveryPersonName || masters.deliveryPersons[0]?.name || '',
       consignorName: String(item.consignorName ?? ''),
       consigneeName: String(item.consigneeName ?? ''),
-      toPayAmount: item.toPayAmount ? String(item.toPayAmount) : '',
-      tbbAmount: item.tbbAmount ? String(item.tbbAmount) : '',
-      paidAmount: item.paidAmount ? String(item.paidAmount) : '',
+      toPayAmount: item.toPayAmount !== undefined && item.toPayAmount !== null && item.toPayAmount !== '' ? String(item.toPayAmount) : '',
+      tbbAmount: item.tbbAmount !== undefined && item.tbbAmount !== null && item.tbbAmount !== '' ? String(item.tbbAmount) : '',
+      paidAmount: item.paidAmount !== undefined && item.paidAmount !== null && item.paidAmount !== '' ? String(item.paidAmount) : '',
     });
     setEditingIndex(index);
   };
@@ -401,7 +418,14 @@ export const OutwardCreate = () => {
     setError('');
     setSuccess('');
 
-    let finalItems = [...selectedItems];
+    let finalItems = selectedItems.map((item) => ({
+      ...item,
+      pkg: Number(item.pkg) || 0,
+      toPayAmount: Number(item.toPayAmount) || 0,
+      tbbAmount: Number(item.tbbAmount) || 0,
+      paidAmount: Number(item.paidAmount) || 0,
+    }));
+
     const cleanLR = String(itemForm?.lrNo ?? '').trim();
     if (editingIndex !== null && finalItems[editingIndex] && cleanLR) {
       const existingItem = finalItems[editingIndex];
@@ -444,12 +468,20 @@ export const OutwardCreate = () => {
       return;
     }
 
+    const submitHeader = {
+      ...headerData,
+      totalQty: finalItems.reduce((sum, item) => sum + (Number(item.pkg) || 0), 0),
+      totalToPay: finalItems.reduce((sum, item) => sum + (Number(item.toPayAmount) || 0), 0),
+      totalTbb: finalItems.reduce((sum, item) => sum + (Number(item.tbbAmount) || 0), 0),
+      totalPaid: finalItems.reduce((sum, item) => sum + (Number(item.paidAmount) || 0), 0),
+    };
+
     if (shouldPrint) {
       if (editingOutwardId || editOutwardData) {
         try {
           handleUpdateFullOutward(
             editingOutwardId || editOutwardData?.outwardNo,
-            headerData,
+            submitHeader,
             finalItems,
             user?.displayName || 'Operator'
           );
@@ -463,14 +495,14 @@ export const OutwardCreate = () => {
       const printPaid = finalItems.reduce((sum, item) => sum + (Number(item.paidAmount) || 0), 0);
 
       printRecordDetails({
-        title: `Outward Receipt Details #${headerData.outwardNo}`,
+        title: `Outward Receipt Details #${submitHeader.outwardNo}`,
         fields: [
-          { label: 'Outward No.', value: headerData.outwardNo },
-          { label: 'Date', value: formatDate(headerData.date) },
-          { label: 'Vehicle No.', value: headerData.vehicleNo || '-' },
-          { label: 'Delivery Person', value: headerData.deliveryPersonName || '-' },
-          { label: 'Driver Name', value: headerData.driverName || '-' },
-          { label: 'From Station', value: headerData.fromStation || '-' },
+          { label: 'Outward No.', value: submitHeader.outwardNo },
+          { label: 'Date', value: formatDate(submitHeader.date) },
+          { label: 'Vehicle No.', value: submitHeader.vehicleNo || '-' },
+          { label: 'Delivery Person', value: submitHeader.deliveryPersonName || '-' },
+          { label: 'Driver Name', value: submitHeader.driverName || '-' },
+          { label: 'From Station', value: submitHeader.fromStation || '-' },
           {
             label: 'Total Freight',
             value: formatCurrency(printToPay + printTbb + printPaid),
@@ -486,14 +518,14 @@ export const OutwardCreate = () => {
       if (editingOutwardId || editOutwardData) {
         handleUpdateFullOutward(
           editingOutwardId || editOutwardData?.outwardNo,
-          headerData,
+          submitHeader,
           finalItems,
           user?.displayName || 'Operator'
         );
-        setSuccess(`Outward Receipt #${headerData.outwardNo} updated successfully!`);
+        setSuccess(`Outward Receipt #${submitHeader.outwardNo} updated successfully!`);
       } else {
-        handleCreateOutward(headerData, finalItems, user?.displayName || 'Operator');
-        setSuccess(`Outward Receipt #${headerData.outwardNo} saved successfully! Status updated to DELIVERED.`);
+        handleCreateOutward(submitHeader, finalItems, user?.displayName || 'Operator');
+        setSuccess(`Outward Receipt #${submitHeader.outwardNo} saved successfully! Status updated to DELIVERED.`);
       }
 
       setTimeout(() => {
@@ -932,14 +964,53 @@ export const OutwardCreate = () => {
                       <td className="py-1.5 px-2.5 border-r border-slate-200 text-slate-700">
                         {item.consigneeName || '-'}
                       </td>
-                      <td className="py-1.5 px-2.5 border-r border-slate-200 text-right font-semibold text-slate-800">
-                        {Number(item.toPayAmount || 0).toFixed(2)}
+                      <td className="py-1 px-1.5 border-r border-slate-200 text-right">
+                        <input
+                          type="text"
+                          inputMode="decimal"
+                          value={item.toPayAmount !== undefined && item.toPayAmount !== null ? item.toPayAmount : ''}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (val === '' || /^\d*\.?\d*$/.test(val)) {
+                              handleDirectItemAmountChange(idx, 'toPayAmount', val);
+                            }
+                          }}
+                          className="w-20 px-1.5 py-1 text-right font-bold text-amber-900 bg-amber-50/60 border border-amber-300 rounded focus:bg-white focus:border-amber-600 focus:ring-1 focus:ring-amber-600 focus:outline-hidden text-xs"
+                          placeholder="0.00"
+                          title="Edit To Pay amount"
+                        />
                       </td>
-                      <td className="py-1.5 px-2.5 border-r border-slate-200 text-right font-semibold text-slate-800">
-                        {Number(item.tbbAmount || 0).toFixed(2)}
+                      <td className="py-1 px-1.5 border-r border-slate-200 text-right">
+                        <input
+                          type="text"
+                          inputMode="decimal"
+                          value={item.tbbAmount !== undefined && item.tbbAmount !== null ? item.tbbAmount : ''}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (val === '' || /^\d*\.?\d*$/.test(val)) {
+                              handleDirectItemAmountChange(idx, 'tbbAmount', val);
+                            }
+                          }}
+                          className="w-20 px-1.5 py-1 text-right font-bold text-sky-900 bg-sky-50/60 border border-sky-300 rounded focus:bg-white focus:border-sky-600 focus:ring-1 focus:ring-sky-600 focus:outline-hidden text-xs"
+                          placeholder="0.00"
+                          title="Edit TBB amount"
+                        />
                       </td>
-                      <td className="py-1.5 px-2.5 border-r border-slate-200 text-right font-semibold text-slate-800">
-                        {Number(item.paidAmount || 0).toFixed(2)}
+                      <td className="py-1 px-1.5 border-r border-slate-200 text-right">
+                        <input
+                          type="text"
+                          inputMode="decimal"
+                          value={item.paidAmount !== undefined && item.paidAmount !== null ? item.paidAmount : ''}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (val === '' || /^\d*\.?\d*$/.test(val)) {
+                              handleDirectItemAmountChange(idx, 'paidAmount', val);
+                            }
+                          }}
+                          className="w-20 px-1.5 py-1 text-right font-bold text-emerald-900 bg-emerald-50/60 border border-emerald-300 rounded focus:bg-white focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 focus:outline-hidden text-xs"
+                          placeholder="0.00"
+                          title="Edit Paid amount"
+                        />
                       </td>
                       <td className="py-1.5 px-2.5 text-center">
                         {editingIndex === idx ? (
