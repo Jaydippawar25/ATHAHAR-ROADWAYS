@@ -9,6 +9,7 @@ import { CrossOutwardCreate } from '../pages/Outward/CrossOutwardCreate';
 import { AllEntries } from '../pages/AllEntries/AllEntries';
 import { Masters } from '../pages/Masters/Masters';
 import { Reports } from '../pages/Reports/Reports';
+import { Accounting } from '../pages/Accounting/Accounting';
 import { Settings } from '../pages/Settings/Settings';
 import { ProtectedRoute } from './ProtectedRoute';
 
@@ -105,6 +106,14 @@ export const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <Reports />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/accounting"
+        element={
+          <ProtectedRoute>
+            <Accounting />
           </ProtectedRoute>
         }
       />

@@ -9,6 +9,7 @@ const STORAGE_KEYS = {
   OUTWARDS: 'athahar_outwards',
   OUTWARD_ITEMS: 'athahar_outward_items',
   AUDIT_LOGS: 'athahar_audit_logs',
+  ACCOUNTING_VOUCHERS: 'athahar_accounting_vouchers',
 };
 
 // Sync item to Cloud Firestore asynchronously

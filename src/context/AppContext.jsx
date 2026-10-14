@@ -21,6 +21,12 @@ import {
   updateOutwardItem,
   updateFullOutward,
 } from '../services/outwardService';
+import {
+  getAllVouchers,
+  createVoucher,
+  updateVoucher,
+  deleteVoucher,
+} from '../services/accountingService';
 
 const AppContext = createContext(null);
 
@@ -31,6 +37,7 @@ export const AppProvider = ({ children }) => {
   const [outwards, setOutwards] = useState(getAllOutwards());
   const [outwardItems, setOutwardItems] = useState(getAllOutwardItems());
   const [pendingStock, setPendingStock] = useState(getPendingStockItems());
+  const [vouchers, setVouchers] = useState(getAllVouchers());
 
   const refreshData = () => {
     setMasters(getMasters());
@@ -39,6 +46,7 @@ export const AppProvider = ({ children }) => {
     setOutwards(getAllOutwards());
     setOutwardItems(getAllOutwardItems());
     setPendingStock(getPendingStockItems());
+    setVouchers(getAllVouchers());
   };
 
   const handleCreateInward = (headerData, lrItems, username) => {
@@ -131,6 +139,24 @@ export const AppProvider = ({ children }) => {
     return res;
   };
 
+  const handleCreateVoucher = (voucherData, username) => {
+    const res = createVoucher(voucherData, username);
+    refreshData();
+    return res;
+  };
+
+  const handleUpdateVoucher = (id, fields) => {
+    const res = updateVoucher(id, fields);
+    refreshData();
+    return res;
+  };
+
+  const handleDeleteVoucher = (id) => {
+    const res = deleteVoucher(id);
+    refreshData();
+    return res;
+  };
+
   return (
     <AppContext.Provider
       value={{
@@ -140,6 +166,7 @@ export const AppProvider = ({ children }) => {
         outwards,
         outwardItems,
         pendingStock,
+        vouchers,
         refreshData,
         handleCreateInward,
         handleUpdateFullInward,
@@ -156,6 +183,9 @@ export const AppProvider = ({ children }) => {
         handleAddMaster,
         handleUpdateMaster,
         handleDeleteMaster,
+        handleCreateVoucher,
+        handleUpdateVoucher,
+        handleDeleteVoucher,
       }}
     >
       {children}

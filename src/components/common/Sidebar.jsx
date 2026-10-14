@@ -8,6 +8,7 @@ import {
   Shuffle,
   ArrowLeftRight,
   FileText,
+  Wallet,
   Database,
   Settings,
   Truck,
@@ -37,6 +38,7 @@ export const Sidebar = () => {
     { label: 'Cross Stock Out', path: '/cross-outward', icon: Shuffle },
     { label: 'All Entries', path: '/all-entries', icon: ArrowLeftRight },
     { label: 'Reports', path: '/reports', icon: FileText },
+    { label: 'Accounting', path: '/accounting', icon: Wallet },
     { label: 'Masters', path: '/masters', icon: Database },
     { label: 'Settings', path: '/settings', icon: Settings },
   ];
