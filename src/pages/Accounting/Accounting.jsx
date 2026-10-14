@@ -310,32 +310,32 @@ export const Accounting = () => {
   return (
     <div className="space-y-6 text-slate-800 max-w-full">
       {/* Top Header Banner */}
-      <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 rounded-2xl p-6 text-white shadow-lg flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="space-y-1.5">
           <div className="flex items-center space-x-2 text-[11px] font-bold tracking-wider uppercase">
-            <span className="bg-emerald-500/20 text-emerald-300 px-2.5 py-0.5 rounded-full border border-emerald-500/30 backdrop-blur-xs flex items-center">
+            <span className="bg-emerald-50 text-emerald-700 px-2.5 py-0.5 rounded-full border border-emerald-200 flex items-center">
               <Calculator className="w-3.5 h-3.5 mr-1" />
               TRANSPORT FREIGHT ACCOUNTING
             </span>
-            <span className="text-slate-400">&bull; ATHAHAR ROADWAYS SANGLI</span>
+            <span className="text-slate-400 font-semibold">&bull; ATHAHAR ROADWAYS SANGLI</span>
           </div>
 
-          <h2 className="text-2xl sm:text-3xl font-black tracking-tight flex items-center space-x-3">
+          <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 flex items-center space-x-3">
             <span>Inward & Outward Money Calculation</span>
           </h2>
 
-          <p className="text-slate-300 text-xs sm:text-sm font-medium">
+          <p className="text-slate-500 text-xs sm:text-sm font-medium">
             Live calculation of Total Money Inward, Total Money Outward, and 20% Agency Commission
           </p>
         </div>
 
         {/* Commission Rate Configurator Pill */}
-        <div className="bg-white/10 border border-white/20 backdrop-blur-md px-4 py-3 rounded-xl flex items-center space-x-3 text-white self-start md:self-auto">
-          <div className="p-2 bg-amber-500 text-slate-950 rounded-lg font-black">
+        <div className="bg-slate-50 border border-slate-200 px-4 py-2.5 rounded-xl flex items-center space-x-3 self-start md:self-auto shadow-xs">
+          <div className="p-2 bg-amber-500 text-white rounded-lg font-black shadow-xs">
             <Percent className="w-5 h-5" />
           </div>
           <div>
-            <span className="text-[10px] uppercase font-bold text-slate-300 block">
+            <span className="text-[10px] uppercase font-bold text-slate-500 block">
               Agency Commission
             </span>
             <div className="flex items-center space-x-1.5">
@@ -345,9 +345,9 @@ export const Accounting = () => {
                 max="100"
                 value={commissionRate}
                 onChange={(e) => setCommissionRate(Number(e.target.value) || 0)}
-                className="w-16 px-2 py-0.5 bg-white text-slate-900 font-black text-sm rounded border border-amber-300 text-center"
+                className="w-16 px-2 py-0.5 bg-white text-slate-900 font-black text-sm rounded border border-slate-300 text-center focus:ring-2 focus:ring-amber-500 focus:outline-hidden"
               />
-              <span className="font-extrabold text-sm text-amber-300">%</span>
+              <span className="font-extrabold text-sm text-slate-700">%</span>
             </div>
           </div>
         </div>
@@ -394,21 +394,22 @@ export const Accounting = () => {
         </div>
 
         {/* Card 3: Commission (20%) */}
-        <div className="bg-gradient-to-br from-amber-500 to-amber-600 p-5 rounded-2xl text-slate-950 shadow-md relative overflow-hidden">
-          <div className="flex items-center justify-between mb-2 text-slate-950/80">
-            <span className="text-xs font-black uppercase tracking-wider">
+        <div className="bg-white p-5 rounded-2xl border-2 border-amber-200 shadow-sm relative overflow-hidden">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-black uppercase tracking-wider text-amber-800">
               COMMISSION ({commissionRate}%)
             </span>
-            <div className="p-2 bg-white/30 text-slate-950 rounded-xl">
+            <div className="p-2 bg-amber-100 text-amber-700 rounded-xl">
               <Percent className="w-5 h-5" />
             </div>
           </div>
-          <p className="text-2xl sm:text-3xl font-black text-slate-950">
+          <p className="text-2xl sm:text-3xl font-black text-amber-900">
             {formatCurrency(accountingSummary.totalCommission20)}
           </p>
-          <p className="text-[11px] font-bold text-slate-950/90 mt-2.5 pt-2 border-t border-slate-950/20">
-            Inward Comm: {formatCurrency(accountingSummary.inwardCommission)} &bull; Outward Comm: {formatCurrency(accountingSummary.outwardCommission)}
-          </p>
+          <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] font-bold text-slate-500">
+            <span>Inward: {formatCurrency(accountingSummary.inwardCommission)}</span>
+            <span>Outward: {formatCurrency(accountingSummary.outwardCommission)}</span>
+          </div>
         </div>
 
         {/* Card 4: Total Turnover */}
