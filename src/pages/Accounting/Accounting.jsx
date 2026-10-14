@@ -1,88 +1,44 @@
 import React, { useState, useMemo } from 'react';
 import { useApp } from '../../context/AppContext';
-import { useAuth } from '../../context/AuthContext';
 import {
   Wallet,
   ArrowDownLeft,
   ArrowUpRight,
   TrendingUp,
-  TrendingDown,
-  DollarSign,
-  Plus,
-  Printer,
+  Percent,
+  Layers,
   FileSpreadsheet,
   FileText,
-  Pencil,
-  Trash2,
+  Printer,
   Eye,
-  AlertTriangle,
-  Receipt,
-  Layers,
-  Building2,
-  Truck,
   CheckCircle2,
-  Clock,
+  Calendar,
+  Calculator,
+  DollarSign,
+  ArrowLeftRight,
 } from 'lucide-react';
 import { DataTable } from '../../components/common/DataTable';
 import { Modal } from '../../components/common/Modal';
-import { StatusBadge } from '../../components/common/StatusBadge';
 import { exportToExcel, exportToPDF, printRecordDetails } from '../../services/exportService';
-import {
-  EXPENSE_CATEGORIES,
-  INCOME_CATEGORIES,
-  PAYMENT_MODES,
-  getNextVoucherNo,
-} from '../../services/accountingService';
 import { formatDate } from '../../utils/dateUtils';
 import { formatCurrency } from '../../utils/numberUtils';
 
 export const Accounting = () => {
-  const { user } = useAuth();
-  const {
-    inwardItems,
-    outwardItems,
-    pendingStock,
-    vouchers = [],
-    masters,
-    handleCreateVoucher,
-    handleUpdateVoucher,
-    handleDeleteVoucher,
-  } = useApp();
+  const { inwards, inwardItems, outwards, outwardItems } = useApp();
 
-  // Active Tab: 'cash_book' | 'expenses' | 'topay_ledger' | 'tbb_ledger' | 'party_ledger'
-  const [activeTab, setActiveTab] = useState('cash_book');
+  // Active view tab: 'all_accounting' | 'inward_money' | 'outward_money' | 'commission_summary'
+  const [activeTab, setActiveTab] = useState('all_accounting');
 
-  // Date Range Filter: 'all' | 'today' | 'week' | 'month'
+  // Configurable commission percentage (defaulted to 20% as requested)
+  const [commissionRate, setCommissionRate] = useState(20);
+
+  // Date filter: 'all' | 'today' | 'week' | 'month'
   const [dateFilter, setDateFilter] = useState('all');
 
-  // Voucher Form Modal State
-  const [voucherModal, setVoucherModal] = useState({
-    isOpen: false,
-    mode: 'create', // 'create' | 'edit'
-    id: null,
-  });
+  // Modal view state
+  const [viewingRecord, setViewingRecord] = useState(null);
 
-  const [voucherForm, setVoucherForm] = useState({
-    voucherNo: '',
-    date: new Date().toISOString().split('T')[0],
-    type: 'EXPENSE',
-    category: EXPENSE_CATEGORIES[0],
-    partyName: '',
-    vehicleNo: '',
-    lrNo: '',
-    amount: '',
-    paymentMode: 'CASH',
-    referenceNo: '',
-    notes: '',
-  });
-
-  // View & Delete Modal States
-  const [viewingVoucher, setViewingVoucher] = useState(null);
-  const [deleteVoucherTarget, setDeleteVoucherTarget] = useState(null);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-
-  // Filter helper for date
+  // Filter helper for dates
   const isDateInFilter = (dateStr) => {
     if (!dateStr || dateFilter === 'all') return true;
     const d = new Date(dateStr);
@@ -102,361 +58,230 @@ export const Accounting = () => {
     return true;
   };
 
-  // Financial Calculations
-  const financialSummary = useMemo(() => {
-    // 1. Total Freight Billed across all Inward LRs
-    const totalToPayBilled = inwardItems.reduce((acc, curr) => acc + (Number(curr.toPayAmount) || 0), 0);
-    const totalTbbBilled = inwardItems.reduce((acc, curr) => acc + (Number(curr.tbbAmount) || 0), 0);
-    const totalPaidBilled = inwardItems.reduce((acc, curr) => acc + (Number(curr.paidAmount) || 0), 0);
-    const totalBilled = totalToPayBilled + totalTbbBilled + totalPaidBilled;
+  const commMultiplier = (Number(commissionRate) || 0) / 100;
 
-    // 2. To-Pay Collected: delivered LRs that were To-Pay
-    const toPayCollected = outwardItems.reduce((acc, curr) => acc + (Number(curr.toPayAmount) || 0), 0);
-    // To-Pay Pending: undelivered stock in godown
-    const toPayPending = pendingStock.reduce((acc, curr) => acc + (Number(curr.toPayAmount) || 0), 0);
+  // 1. Enrich Inward receipts with live items totals and 20% Commission
+  const enrichedInwards = useMemo(() => {
+    return inwards
+      .filter((inw) => isDateInFilter(inw.date))
+      .map((inw) => {
+        const items = inwardItems.filter(
+          (item) => item.inwardId === inw.id || item.inwardNo === inw.inwardNo
+        );
+        const totalQty =
+          items.length > 0
+            ? items.reduce((acc, curr) => acc + (Number(curr.pkg) || 0), 0)
+            : Number(inw.totalQty) || 0;
+        const totalToPay =
+          items.length > 0
+            ? items.reduce((acc, curr) => acc + (Number(curr.toPayAmount) || 0), 0)
+            : Number(inw.totalToPay) || 0;
+        const totalTbb =
+          items.length > 0
+            ? items.reduce((acc, curr) => acc + (Number(curr.tbbAmount) || 0), 0)
+            : Number(inw.totalTbb) || 0;
+        const totalPaid =
+          items.length > 0
+            ? items.reduce((acc, curr) => acc + (Number(curr.paidAmount) || 0), 0)
+            : Number(inw.totalPaid) || 0;
 
-    // 3. Paid Freight upfront collected at booking
-    const paidCollected = totalPaidBilled;
+        const totalMoney = totalToPay + totalTbb + totalPaid;
+        const commissionAmount = totalMoney * commMultiplier;
+        const netAmount = totalMoney - commissionAmount;
 
-    // 4. Voucher Incomes & Expenses
-    const voucherExpenses = vouchers
-      .filter((v) => v.type === 'EXPENSE')
-      .reduce((acc, curr) => acc + (Number(curr.amount) || 0), 0);
-
-    const voucherDirectIncome = vouchers
-      .filter((v) => v.type === 'INCOME')
-      .reduce((acc, curr) => acc + (Number(curr.amount) || 0), 0);
-
-    // Total Cash Inflow = Paid freight + To-Pay freight collected on delivery + Direct voucher incomes
-    const totalCashInflow = paidCollected + toPayCollected + voucherDirectIncome;
-
-    // Total Cash Outflow = Operational expenses recorded via vouchers
-    const totalCashOutflow = voucherExpenses;
-
-    // Net Cash Balance / Profit
-    const netCashBalance = totalCashInflow - totalCashOutflow;
-
-    // Total Outstanding Receivables = Pending To-Pay + Unsettled T.B.B.
-    const totalReceivables = toPayPending + totalTbbBilled;
-
-    return {
-      totalBilled,
-      totalToPayBilled,
-      totalTbbBilled,
-      totalPaidBilled,
-      toPayCollected,
-      toPayPending,
-      paidCollected,
-      voucherExpenses,
-      voucherDirectIncome,
-      totalCashInflow,
-      totalCashOutflow,
-      netCashBalance,
-      totalReceivables,
-    };
-  }, [inwardItems, outwardItems, pendingStock, vouchers]);
-
-  // Combined Cash Book Register (Incomes from deliveries/paid freight + vouchers)
-  const cashBookEntries = useMemo(() => {
-    const list = [];
-
-    // Add Paid Freight transactions
-    inwardItems.forEach((item) => {
-      if (Number(item.paidAmount) > 0 && isDateInFilter(item.inwardDate || item.date)) {
-        list.push({
-          id: `inw-paid-${item.id || item.lrNo}`,
-          date: item.inwardDate || item.date,
-          type: 'INCOME',
-          category: 'Paid Freight Collection',
-          refNo: item.lrNo || '-',
-          lrNo: item.lrNo || '-',
-          partyName: item.consignorName || item.consigneeName || 'Cash Party',
-          amount: Number(item.paidAmount) || 0,
-          paymentMode: 'CASH',
-          notes: `Booking upfront freight collection for LR #${item.lrNo}`,
-        });
-      }
-    });
-
-    // Add Delivered To-Pay Freight collections
-    outwardItems.forEach((item) => {
-      if (Number(item.toPayAmount) > 0 && isDateInFilter(item.outwardDate || item.date)) {
-        list.push({
-          id: `out-topay-${item.id || item.lrNo}`,
-          date: item.outwardDate || item.date,
-          type: 'INCOME',
-          category: 'To-Pay Freight Collection',
-          refNo: item.lrNo || '-',
-          lrNo: item.lrNo || '-',
-          partyName: item.consigneeName || 'Consignee',
-          amount: Number(item.toPayAmount) || 0,
-          paymentMode: 'CASH',
-          notes: `Delivery collection from consignee on Outward #${item.outwardNo || '-'}`,
-        });
-      }
-    });
-
-    // Add Vouchers (Expenses & Direct Incomes)
-    vouchers.forEach((vch) => {
-      if (isDateInFilter(vch.date)) {
-        list.push({
-          id: vch.id,
-          date: vch.date,
-          type: vch.type,
-          category: vch.category,
-          refNo: vch.lrNo || vch.voucherNo,
-          lrNo: vch.lrNo || vch.voucherNo,
-          partyName: vch.partyName,
-          amount: Number(vch.amount) || 0,
-          paymentMode: vch.paymentMode,
-          notes: vch.notes || vch.referenceNo || '-',
-          isVoucher: true,
-          rawVoucher: vch,
-        });
-      }
-    });
-
-    // Sort chronologically descending
-    list.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
-
-    return list;
-  }, [inwardItems, outwardItems, vouchers, dateFilter]);
-
-  // To-Pay Ledger Items
-  const toPayLedger = useMemo(() => {
-    return inwardItems
-      .filter((item) => Number(item.toPayAmount) > 0 && isDateInFilter(item.date))
-      .map((item) => {
-        const isDelivered = outwardItems.some((out) => out.lrNo === item.lrNo);
         return {
-          ...item,
-          collectionStatus: isDelivered ? 'COLLECTED' : 'PENDING IN GODOWN',
+          ...inw,
+          id: inw.id || `inw-${inw.inwardNo}`,
+          type: 'INWARD',
+          receiptNo: inw.inwardNo,
+          totalQty,
+          totalToPay,
+          totalTbb,
+          totalPaid,
+          totalMoney,
+          commissionRate,
+          commissionAmount,
+          netAmount,
+          items,
         };
       });
-  }, [inwardItems, outwardItems, dateFilter]);
+  }, [inwards, inwardItems, dateFilter, commMultiplier, commissionRate]);
 
-  // T.B.B. Ledger Items
-  const tbbLedger = useMemo(() => {
-    return inwardItems
-      .filter((item) => Number(item.tbbAmount) > 0 && isDateInFilter(item.date))
-      .map((item) => ({
-        ...item,
-        billingParty: item.consignorName || item.consigneeName || 'Credit Account',
-      }));
-  }, [inwardItems, dateFilter]);
+  // 2. Enrich Outward receipts with live items totals and 20% Commission
+  const enrichedOutwards = useMemo(() => {
+    return outwards
+      .filter((out) => isDateInFilter(out.date))
+      .map((out) => {
+        const items = outwardItems.filter(
+          (item) => item.outwardId === out.id || item.outwardNo === out.outwardNo
+        );
+        const totalQty =
+          items.length > 0
+            ? items.reduce((acc, curr) => acc + (Number(curr.pkg) || 0), 0)
+            : Number(out.totalQty) || 0;
+        const totalToPay =
+          items.length > 0
+            ? items.reduce((acc, curr) => acc + (Number(curr.toPayAmount) || 0), 0)
+            : Number(out.totalToPay) || 0;
+        const totalTbb =
+          items.length > 0
+            ? items.reduce((acc, curr) => acc + (Number(curr.tbbAmount) || 0), 0)
+            : Number(out.totalTbb) || 0;
+        const totalPaid =
+          items.length > 0
+            ? items.reduce((acc, curr) => acc + (Number(curr.paidAmount) || 0), 0)
+            : Number(out.totalPaid) || 0;
 
-  // Party-wise Summary Ledger
-  const partyLedger = useMemo(() => {
-    const partyMap = new Map();
+        const totalMoney = totalToPay + totalTbb + totalPaid;
+        const commissionAmount = totalMoney * commMultiplier;
+        const netAmount = totalMoney - commissionAmount;
 
-    inwardItems.forEach((item) => {
-      const parties = [item.consignorName, item.consigneeName].filter(Boolean);
-      parties.forEach((name) => {
-        const key = name.trim().toUpperCase();
-        if (!partyMap.has(key)) {
-          partyMap.set(key, {
-            partyName: key,
-            totalLRs: 0,
-            totalPkg: 0,
-            toPayFreight: 0,
-            tbbFreight: 0,
-            paidFreight: 0,
-            totalFreight: 0,
-          });
-        }
-        const record = partyMap.get(key);
-        record.totalLRs += 1;
-        record.totalPkg += Number(item.pkg) || 0;
-        record.toPayFreight += Number(item.toPayAmount) || 0;
-        record.tbbFreight += Number(item.tbbAmount) || 0;
-        record.paidFreight += Number(item.paidAmount) || 0;
-        record.totalFreight = record.toPayFreight + record.tbbFreight + record.paidFreight;
+        return {
+          ...out,
+          id: out.id || `out-${out.outwardNo}`,
+          type: out.isCrossOutward ? 'STOCK OUT' : 'OUTWARD',
+          receiptNo: out.outwardNo,
+          totalQty,
+          totalToPay,
+          totalTbb,
+          totalPaid,
+          totalMoney,
+          commissionRate,
+          commissionAmount,
+          netAmount,
+          items,
+        };
       });
-    });
+  }, [outwards, outwardItems, dateFilter, commMultiplier, commissionRate]);
 
-    return Array.from(partyMap.values()).sort((a, b) => b.totalFreight - a.totalFreight);
-  }, [inwardItems]);
+  // 3. Combined Inward & Outward Transactions
+  const allTransactions = useMemo(() => {
+    const combined = [...enrichedInwards, ...enrichedOutwards];
+    combined.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+    return combined;
+  }, [enrichedInwards, enrichedOutwards]);
 
-  // Filtered Expense Vouchers
-  const filteredVouchers = useMemo(() => {
-    return vouchers.filter((v) => isDateInFilter(v.date));
-  }, [vouchers, dateFilter]);
+  // 4. Financial KPI Totals
+  const accountingSummary = useMemo(() => {
+    // Inward Calculations
+    const inwardMoneyTotal = enrichedInwards.reduce((acc, curr) => acc + curr.totalMoney, 0);
+    const inwardToPay = enrichedInwards.reduce((acc, curr) => acc + curr.totalToPay, 0);
+    const inwardTbb = enrichedInwards.reduce((acc, curr) => acc + curr.totalTbb, 0);
+    const inwardPaid = enrichedInwards.reduce((acc, curr) => acc + curr.totalPaid, 0);
+    const inwardCommission = inwardMoneyTotal * commMultiplier;
 
-  // Open Create Voucher Modal
-  const handleOpenCreateVoucher = (type = 'EXPENSE') => {
-    const nextNo = getNextVoucherNo(vouchers);
-    setVoucherForm({
-      voucherNo: nextNo,
-      date: new Date().toISOString().split('T')[0],
-      type,
-      category: type === 'EXPENSE' ? EXPENSE_CATEGORIES[0] : INCOME_CATEGORIES[0],
-      partyName: '',
-      vehicleNo: masters?.vehicles[0]?.vehicleNo || '',
-      lrNo: '',
-      amount: '',
-      paymentMode: 'CASH',
-      referenceNo: '',
-      notes: '',
-    });
-    setVoucherModal({ isOpen: true, mode: 'create', id: null });
-    setError('');
-  };
+    // Outward Calculations
+    const outwardMoneyTotal = enrichedOutwards.reduce((acc, curr) => acc + curr.totalMoney, 0);
+    const outwardToPay = enrichedOutwards.reduce((acc, curr) => acc + curr.totalToPay, 0);
+    const outwardTbb = enrichedOutwards.reduce((acc, curr) => acc + curr.totalTbb, 0);
+    const outwardPaid = enrichedOutwards.reduce((acc, curr) => acc + curr.totalPaid, 0);
+    const outwardCommission = outwardMoneyTotal * commMultiplier;
 
-  // Open Edit Voucher Modal
-  const handleOpenEditVoucher = (vch) => {
-    setVoucherForm({
-      voucherNo: vch.voucherNo,
-      date: vch.date,
-      type: vch.type,
-      category: vch.category,
-      partyName: vch.partyName,
-      vehicleNo: vch.vehicleNo || '',
-      lrNo: vch.lrNo || '',
-      amount: vch.amount,
-      paymentMode: vch.paymentMode,
-      referenceNo: vch.referenceNo || '',
-      notes: vch.notes || '',
-    });
-    setVoucherModal({ isOpen: true, mode: 'edit', id: vch.id });
-    setError('');
-  };
+    // Combined Totals
+    const totalFreightHandled = inwardMoneyTotal + outwardMoneyTotal;
+    const totalCommission20 = inwardCommission + outwardCommission;
+    const netDifference = inwardMoneyTotal - outwardMoneyTotal;
 
-  // Save Voucher Form
-  const handleSaveVoucher = (e) => {
-    e.preventDefault();
-    setError('');
-    setSuccess('');
+    return {
+      inwardMoneyTotal,
+      inwardToPay,
+      inwardTbb,
+      inwardPaid,
+      inwardCommission,
+      outwardMoneyTotal,
+      outwardToPay,
+      outwardTbb,
+      outwardPaid,
+      outwardCommission,
+      totalFreightHandled,
+      totalCommission20,
+      netDifference,
+    };
+  }, [enrichedInwards, enrichedOutwards, commMultiplier]);
 
-    if (!voucherForm.amount || Number(voucherForm.amount) <= 0) {
-      setError('Please enter a valid amount greater than 0.');
-      return;
-    }
-
-    try {
-      if (voucherModal.mode === 'create') {
-        handleCreateVoucher(voucherForm, user?.name || 'Operator');
-        setSuccess(`Voucher #${voucherForm.voucherNo} created successfully!`);
-      } else {
-        handleUpdateVoucher(voucherModal.id, voucherForm);
-        setSuccess(`Voucher #${voucherForm.voucherNo} updated successfully!`);
-      }
-      setVoucherModal({ isOpen: false, mode: 'create', id: null });
-    } catch (err) {
-      setError(err.message || 'Failed to save voucher.');
-    }
-  };
-
-  // Confirm Delete Voucher
-  const handleConfirmDeleteVoucher = () => {
-    if (deleteVoucherTarget) {
-      handleDeleteVoucher(deleteVoucherTarget.id);
-      setDeleteVoucherTarget(null);
-      setSuccess('Voucher deleted successfully.');
-    }
-  };
-
-  // Print Voucher Details
-  const handlePrintVoucher = (vch) => {
+  // Print Details Handler
+  const handlePrintAccountingStatement = (row) => {
     printRecordDetails({
-      title: `${vch.type === 'EXPENSE' ? 'Expense Payment Voucher' : 'Receipt Voucher'} #${vch.voucherNo}`,
+      title: `${row.type} Accounting Receipt #${row.receiptNo}`,
       fields: [
-        { label: 'Voucher No.', value: vch.voucherNo },
-        { label: 'Date', value: formatDate(vch.date) },
-        { label: 'Voucher Type', value: vch.type },
-        { label: 'Category', value: vch.category },
-        { label: vch.type === 'EXPENSE' ? 'Paid To' : 'Received From', value: vch.partyName || '-' },
-        { label: 'Vehicle No.', value: vch.vehicleNo || '-' },
-        { label: 'Related LR No.', value: vch.lrNo || '-' },
-        { label: 'Payment Mode', value: vch.paymentMode },
-        { label: 'Ref / Cheque No.', value: vch.referenceNo || '-' },
-        { label: 'Amount', value: formatCurrency(vch.amount) },
-        { label: 'Remarks / Notes', value: vch.notes || '-' },
+        { label: 'Receipt Type', value: row.type },
+        { label: 'Receipt No.', value: row.receiptNo },
+        { label: 'Date', value: formatDate(row.date) },
+        { label: 'Vehicle No.', value: row.vehicleNo || '-' },
+        { label: 'Driver / Transporter', value: row.driverName || row.transporterName || '-' },
+        { label: 'Total Packages', value: `${row.totalQty || 0} Pkgs` },
+        { label: 'To Pay Amount', value: formatCurrency(row.totalToPay) },
+        { label: 'T.B.B Amount', value: formatCurrency(row.totalTbb) },
+        { label: 'Paid Amount', value: formatCurrency(row.totalPaid) },
+        { label: 'Total Freight Money', value: formatCurrency(row.totalMoney) },
+        { label: `Commission (${commissionRate}%)`, value: formatCurrency(row.commissionAmount) },
+        { label: 'Net Payable / Balance', value: formatCurrency(row.netAmount) },
       ],
+      items: row.items,
     });
   };
 
-  // Table Column Definitions
-  const cashBookColumns = [
+  // Table Columns Definition
+  const accountingColumns = [
     { label: 'Date', key: 'date', type: 'date' },
     {
       label: 'Type',
       key: 'type',
       render: (row) => (
         <span
-          className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-black ${
-            row.type === 'INCOME'
-              ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
-              : 'bg-rose-100 text-rose-800 border border-rose-300'
+          className={`inline-flex items-center px-2.5 py-0.5 rounded text-[11px] font-black ${
+            row.type === 'INWARD'
+              ? 'bg-sky-100 text-sky-800 border border-sky-300'
+              : row.type === 'STOCK OUT'
+              ? 'bg-purple-100 text-purple-800 border border-purple-300'
+              : 'bg-emerald-100 text-emerald-800 border border-emerald-300'
           }`}
         >
-          {row.type === 'INCOME' ? (
-            <ArrowDownLeft className="w-3 h-3 mr-1 text-emerald-600" />
+          {row.type === 'INWARD' ? (
+            <ArrowDownLeft className="w-3 h-3 mr-1 text-sky-600" />
           ) : (
-            <ArrowUpRight className="w-3 h-3 mr-1 text-rose-600" />
+            <ArrowUpRight className="w-3 h-3 mr-1 text-emerald-600" />
           )}
           {row.type}
         </span>
       ),
     },
     {
-      label: 'LR No.',
-      key: 'lrNo',
-      render: (row) => <span className="font-extrabold text-slate-900">{row.lrNo || row.refNo || '-'}</span>,
+      label: 'Receipt No.',
+      key: 'receiptNo',
+      render: (row) => <span className="font-extrabold text-slate-900">{row.receiptNo}</span>,
     },
-    { label: 'Category', key: 'category' },
-    { label: 'Party / Description', key: 'partyName' },
-    {
-      label: 'Payment Mode',
-      key: 'paymentMode',
-      render: (row) => (
-        <span className="text-[10px] font-bold px-1.5 py-0.5 bg-slate-100 border border-slate-300 rounded text-slate-700">
-          {row.paymentMode}
-        </span>
-      ),
-    },
-    {
-      label: 'Amount (₹)',
-      key: 'amount',
-      render: (row) => (
-        <span
-          className={`font-black text-xs ${
-            row.type === 'INCOME' ? 'text-emerald-700' : 'text-rose-700'
-          }`}
-        >
-          {row.type === 'INCOME' ? '+ ' : '- '}
-          {formatCurrency(row.amount)}
-        </span>
-      ),
-    },
-  ];
-
-  const voucherColumns = [
-    {
-      label: 'Voucher No.',
-      key: 'voucherNo',
-      render: (row) => <span className="font-black text-sky-800">{row.voucherNo}</span>,
-    },
-    { label: 'Date', key: 'date', type: 'date' },
-    {
-      label: 'Category',
-      key: 'category',
-      render: (row) => <span className="font-bold text-slate-800">{row.category}</span>,
-    },
-    { label: 'Paid To', key: 'partyName' },
     { label: 'Vehicle No.', key: 'vehicleNo', render: (row) => row.vehicleNo || '-' },
+    { label: 'PKG', key: 'totalQty' },
+    { label: 'To Pay', key: 'totalToPay', type: 'currency' },
+    { label: 'T.B.B', key: 'totalTbb', type: 'currency' },
+    { label: 'Paid', key: 'totalPaid', type: 'currency' },
     {
-      label: 'Mode',
-      key: 'paymentMode',
+      label: 'Total Money',
+      key: 'totalMoney',
       render: (row) => (
-        <span className="text-[10px] font-bold px-1.5 py-0.5 bg-slate-100 border border-slate-300 rounded text-slate-700">
-          {row.paymentMode}
+        <span className="font-black text-slate-900 text-xs">
+          {formatCurrency(row.totalMoney)}
         </span>
       ),
     },
     {
-      label: 'Amount',
-      key: 'amount',
-      render: (row) => <span className="font-black text-rose-700">{formatCurrency(row.amount)}</span>,
+      label: `COMMISSION (${commissionRate}%)`,
+      key: 'commissionAmount',
+      render: (row) => (
+        <span className="font-black text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+          {formatCurrency(row.commissionAmount)}
+        </span>
+      ),
+    },
+    {
+      label: 'Net Balance',
+      key: 'netAmount',
+      render: (row) => (
+        <span className="font-bold text-slate-700">
+          {formatCurrency(row.netAmount)}
+        </span>
+      ),
     },
     {
       label: 'Actions',
@@ -464,127 +289,20 @@ export const Accounting = () => {
       render: (row) => (
         <div className="flex items-center justify-center space-x-1">
           <button
-            onClick={() => handlePrintVoucher(row)}
-            className="p-1 text-indigo-600 hover:bg-indigo-50 rounded transition-colors cursor-pointer"
-            title="Print Voucher"
-          >
-            <Printer className="w-3.5 h-3.5" />
-          </button>
-          <button
-            onClick={() => {
-              setViewingVoucher(row);
-            }}
-            className="p-1 text-sky-600 hover:bg-sky-50 rounded transition-colors cursor-pointer"
-            title="View Voucher"
+            onClick={() => setViewingRecord(row)}
+            className="p-1 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded transition-colors cursor-pointer"
+            title="View Money & Commission Details"
           >
             <Eye className="w-3.5 h-3.5" />
           </button>
           <button
-            onClick={() => handleOpenEditVoucher(row)}
-            className="p-1 text-emerald-600 hover:bg-emerald-50 rounded transition-colors cursor-pointer"
-            title="Edit Voucher"
+            onClick={() => handlePrintAccountingStatement(row)}
+            className="p-1 text-sky-600 hover:text-sky-800 hover:bg-sky-50 rounded transition-colors cursor-pointer"
+            title="Print Statement"
           >
-            <Pencil className="w-3.5 h-3.5" />
-          </button>
-          <button
-            onClick={() => setDeleteVoucherTarget(row)}
-            className="p-1 text-rose-600 hover:bg-rose-50 rounded transition-colors cursor-pointer"
-            title="Delete Voucher"
-          >
-            <Trash2 className="w-3.5 h-3.5" />
+            <Printer className="w-3.5 h-3.5" />
           </button>
         </div>
-      ),
-    },
-  ];
-
-  const toPayColumns = [
-    {
-      label: 'LR No.',
-      key: 'lrNo',
-      render: (row) => <span className="font-extrabold text-sky-800">{row.lrNo}</span>,
-    },
-    { label: 'Date', key: 'date', type: 'date' },
-    { label: 'Consigner', key: 'consignorName' },
-    { label: 'Consignee', key: 'consigneeName' },
-    { label: 'CT To', key: 'ctTo' },
-    { label: 'PKG', key: 'pkg' },
-    {
-      label: 'To Pay Amount',
-      key: 'toPayAmount',
-      render: (row) => <span className="font-black text-amber-700">{formatCurrency(row.toPayAmount)}</span>,
-    },
-    {
-      label: 'Collection Status',
-      key: 'collectionStatus',
-      render: (row) => (
-        <span
-          className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold ${
-            row.collectionStatus === 'COLLECTED'
-              ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
-              : 'bg-amber-100 text-amber-800 border border-amber-300'
-          }`}
-        >
-          {row.collectionStatus}
-        </span>
-      ),
-    },
-  ];
-
-  const tbbColumns = [
-    {
-      label: 'LR No.',
-      key: 'lrNo',
-      render: (row) => <span className="font-extrabold text-sky-800">{row.lrNo}</span>,
-    },
-    { label: 'Date', key: 'date', type: 'date' },
-    { label: 'Billing Party', key: 'billingParty' },
-    { label: 'CT To', key: 'ctTo' },
-    { label: 'PKG', key: 'pkg' },
-    {
-      label: 'T.B.B Freight',
-      key: 'tbbAmount',
-      render: (row) => <span className="font-black text-sky-700">{formatCurrency(row.tbbAmount)}</span>,
-    },
-    {
-      label: 'Billing Status',
-      key: 'status',
-      render: () => (
-        <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-800 border border-purple-300">
-          TO BE BILLED
-        </span>
-      ),
-    },
-  ];
-
-  const partyColumns = [
-    {
-      label: 'Party Name',
-      key: 'partyName',
-      render: (row) => <span className="font-black text-slate-900">{row.partyName}</span>,
-    },
-    { label: 'Total LRs', key: 'totalLRs' },
-    { label: 'Total Packages', key: 'totalPkg' },
-    {
-      label: 'To Pay Freight',
-      key: 'toPayFreight',
-      render: (row) => formatCurrency(row.toPayFreight),
-    },
-    {
-      label: 'T.B.B Freight',
-      key: 'tbbFreight',
-      render: (row) => formatCurrency(row.tbbFreight),
-    },
-    {
-      label: 'Paid Freight',
-      key: 'paidFreight',
-      render: (row) => formatCurrency(row.paidFreight),
-    },
-    {
-      label: 'Total Freight Billed',
-      key: 'totalFreight',
-      render: (row) => (
-        <span className="font-black text-indigo-700">{formatCurrency(row.totalFreight)}</span>
       ),
     },
   ];
@@ -596,163 +314,173 @@ export const Accounting = () => {
         <div className="space-y-1.5">
           <div className="flex items-center space-x-2 text-[11px] font-bold tracking-wider uppercase">
             <span className="bg-emerald-500/20 text-emerald-300 px-2.5 py-0.5 rounded-full border border-emerald-500/30 backdrop-blur-xs flex items-center">
-              <Wallet className="w-3.5 h-3.5 mr-1" />
-              FINANCIAL ACCOUNTS & CASH BOOK
+              <Calculator className="w-3.5 h-3.5 mr-1" />
+              TRANSPORT FREIGHT ACCOUNTING
             </span>
             <span className="text-slate-400">&bull; ATHAHAR ROADWAYS SANGLI</span>
           </div>
 
           <h2 className="text-2xl sm:text-3xl font-black tracking-tight flex items-center space-x-3">
-            <span>Transport Accounting & Ledger</span>
+            <span>Inward & Outward Money Calculation</span>
           </h2>
 
           <p className="text-slate-300 text-xs sm:text-sm font-medium">
-            Complete financial tracking of freight collections, To-Pay / TBB party accounts, cash book, and operational expense vouchers
+            Live calculation of Total Money Inward, Total Money Outward, and 20% Agency Commission
           </p>
         </div>
 
-        {/* Quick Action Buttons */}
-        <div className="flex flex-wrap items-center gap-2.5 flex-shrink-0">
-          <button
-            type="button"
-            onClick={() => handleOpenCreateVoucher('EXPENSE')}
-            className="inline-flex items-center space-x-1.5 bg-rose-600 hover:bg-rose-700 text-white font-extrabold px-4 py-2.5 rounded-xl text-xs shadow-md transition-all cursor-pointer"
-          >
-            <Plus className="w-4 h-4" />
-            <span>+ Add Expense Voucher</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => handleOpenCreateVoucher('INCOME')}
-            className="inline-flex items-center space-x-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold px-4 py-2.5 rounded-xl text-xs shadow-md transition-all cursor-pointer"
-          >
-            <Plus className="w-4 h-4" />
-            <span>+ Record Income / Receipt</span>
-          </button>
+        {/* Commission Rate Configurator Pill */}
+        <div className="bg-white/10 border border-white/20 backdrop-blur-md px-4 py-3 rounded-xl flex items-center space-x-3 text-white self-start md:self-auto">
+          <div className="p-2 bg-amber-500 text-slate-950 rounded-lg font-black">
+            <Percent className="w-5 h-5" />
+          </div>
+          <div>
+            <span className="text-[10px] uppercase font-bold text-slate-300 block">
+              Agency Commission
+            </span>
+            <div className="flex items-center space-x-1.5">
+              <input
+                type="number"
+                min="0"
+                max="100"
+                value={commissionRate}
+                onChange={(e) => setCommissionRate(Number(e.target.value) || 0)}
+                className="w-16 px-2 py-0.5 bg-white text-slate-900 font-black text-sm rounded border border-amber-300 text-center"
+              />
+              <span className="font-extrabold text-sm text-amber-300">%</span>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* KPI Financial Overview Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3.5">
-        {/* Total Billed Freight */}
-        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
-          <div className="flex items-center justify-between text-slate-500 mb-1">
-            <span className="text-[10px] font-extrabold uppercase tracking-wider">Total Freight Billed</span>
-            <Layers className="w-4 h-4 text-indigo-600" />
+      {/* Primary Financial Summary Cards (Inward Money, Outward Money, 20% Commission) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Card 1: Inward Money */}
+        <div className="bg-white p-5 rounded-2xl border-2 border-sky-100 shadow-sm relative overflow-hidden">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-black uppercase tracking-wider text-sky-800">
+              Total Money Inward
+            </span>
+            <div className="p-2 bg-sky-100 text-sky-700 rounded-xl">
+              <ArrowDownLeft className="w-5 h-5" />
+            </div>
           </div>
-          <p className="text-xl font-black text-slate-900">{formatCurrency(financialSummary.totalBilled)}</p>
-          <p className="text-[11px] text-slate-500 font-semibold mt-0.5">Across All Booked LRs</p>
+          <p className="text-2xl sm:text-3xl font-black text-sky-900">
+            {formatCurrency(accountingSummary.inwardMoneyTotal)}
+          </p>
+          <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] font-bold text-slate-500">
+            <span>To Pay: {formatCurrency(accountingSummary.inwardToPay)}</span>
+            <span>Paid: {formatCurrency(accountingSummary.inwardPaid)}</span>
+          </div>
         </div>
 
-        {/* Collected Freight Income */}
-        <div className="bg-white p-4 rounded-xl border border-emerald-200 shadow-2xs">
-          <div className="flex items-center justify-between text-emerald-700 mb-1">
-            <span className="text-[10px] font-extrabold uppercase tracking-wider">Total Cash Inflow</span>
-            <TrendingUp className="w-4 h-4 text-emerald-600" />
+        {/* Card 2: Outward Money */}
+        <div className="bg-white p-5 rounded-2xl border-2 border-emerald-100 shadow-sm relative overflow-hidden">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-black uppercase tracking-wider text-emerald-800">
+              Total Money Outward
+            </span>
+            <div className="p-2 bg-emerald-100 text-emerald-700 rounded-xl">
+              <ArrowUpRight className="w-5 h-5" />
+            </div>
           </div>
-          <p className="text-xl font-black text-emerald-700">{formatCurrency(financialSummary.totalCashInflow)}</p>
-          <p className="text-[11px] text-emerald-600 font-semibold mt-0.5">
-            Paid + Delivered To-Pay
+          <p className="text-2xl sm:text-3xl font-black text-emerald-900">
+            {formatCurrency(accountingSummary.outwardMoneyTotal)}
+          </p>
+          <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] font-bold text-slate-500">
+            <span>To Pay: {formatCurrency(accountingSummary.outwardToPay)}</span>
+            <span>Paid: {formatCurrency(accountingSummary.outwardPaid)}</span>
+          </div>
+        </div>
+
+        {/* Card 3: Commission (20%) */}
+        <div className="bg-gradient-to-br from-amber-500 to-amber-600 p-5 rounded-2xl text-slate-950 shadow-md relative overflow-hidden">
+          <div className="flex items-center justify-between mb-2 text-slate-950/80">
+            <span className="text-xs font-black uppercase tracking-wider">
+              COMMISSION ({commissionRate}%)
+            </span>
+            <div className="p-2 bg-white/30 text-slate-950 rounded-xl">
+              <Percent className="w-5 h-5" />
+            </div>
+          </div>
+          <p className="text-2xl sm:text-3xl font-black text-slate-950">
+            {formatCurrency(accountingSummary.totalCommission20)}
+          </p>
+          <p className="text-[11px] font-bold text-slate-950/90 mt-2.5 pt-2 border-t border-slate-950/20">
+            Inward Comm: {formatCurrency(accountingSummary.inwardCommission)} &bull; Outward Comm: {formatCurrency(accountingSummary.outwardCommission)}
           </p>
         </div>
 
-        {/* Total Operational Expenses */}
-        <div className="bg-white p-4 rounded-xl border border-rose-200 shadow-2xs">
-          <div className="flex items-center justify-between text-rose-700 mb-1">
-            <span className="text-[10px] font-extrabold uppercase tracking-wider">Total Expenses</span>
-            <TrendingDown className="w-4 h-4 text-rose-600" />
+        {/* Card 4: Total Turnover */}
+        <div className="bg-white p-5 rounded-2xl border-2 border-slate-200 shadow-sm relative overflow-hidden">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-black uppercase tracking-wider text-slate-700">
+              Total Freight Handled
+            </span>
+            <div className="p-2 bg-indigo-100 text-indigo-700 rounded-xl">
+              <Layers className="w-5 h-5" />
+            </div>
           </div>
-          <p className="text-xl font-black text-rose-700">{formatCurrency(financialSummary.totalCashOutflow)}</p>
-          <p className="text-[11px] text-rose-600 font-semibold mt-0.5">Fuel, Hamali, Driver, Toll</p>
-        </div>
-
-        {/* Net Cash Balance / Profit */}
-        <div className="bg-white p-4 rounded-xl border border-sky-200 shadow-2xs">
-          <div className="flex items-center justify-between text-sky-700 mb-1">
-            <span className="text-[10px] font-extrabold uppercase tracking-wider">Net Cash in Hand</span>
-            <Wallet className="w-4 h-4 text-sky-600" />
-          </div>
-          <p className="text-xl font-black text-sky-800">{formatCurrency(financialSummary.netCashBalance)}</p>
-          <p className="text-[11px] text-sky-600 font-semibold mt-0.5">Inflow minus Outflow</p>
-        </div>
-
-        {/* Total Outstanding Receivables */}
-        <div className="bg-white p-4 rounded-xl border border-amber-200 shadow-2xs">
-          <div className="flex items-center justify-between text-amber-700 mb-1">
-            <span className="text-[10px] font-extrabold uppercase tracking-wider">Total Outstanding</span>
-            <Clock className="w-4 h-4 text-amber-600" />
-          </div>
-          <p className="text-xl font-black text-amber-700">{formatCurrency(financialSummary.totalReceivables)}</p>
-          <p className="text-[11px] text-amber-600 font-semibold mt-0.5">
-            Godown To-Pay + T.B.B.
+          <p className="text-2xl sm:text-3xl font-black text-slate-900">
+            {formatCurrency(accountingSummary.totalFreightHandled)}
+          </p>
+          <p className="text-[11px] font-bold text-slate-500 mt-2.5 pt-2 border-t border-slate-100">
+            Net Difference (In - Out): {formatCurrency(accountingSummary.netDifference)}
           </p>
         </div>
       </div>
 
-      {/* Date Filter & Tab Controls */}
+      {/* Main Tabs Navigation & Date Filter */}
       <div className="space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-3">
-          {/* Main Accounting Tabs */}
+          {/* Tabs */}
           <div className="flex flex-wrap items-center gap-2">
             <button
-              onClick={() => setActiveTab('cash_book')}
+              onClick={() => setActiveTab('all_accounting')}
               className={`px-4 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center space-x-1.5 cursor-pointer ${
-                activeTab === 'cash_book'
+                activeTab === 'all_accounting'
                   ? 'bg-slate-900 text-white shadow-md'
                   : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
               }`}
             >
-              <Wallet className="w-4 h-4" />
-              <span>Cash Book Register ({cashBookEntries.length})</span>
+              <ArrowLeftRight className="w-4 h-4" />
+              <span>All Inward & Outward ({allTransactions.length})</span>
             </button>
 
             <button
-              onClick={() => setActiveTab('expenses')}
+              onClick={() => setActiveTab('inward_money')}
               className={`px-4 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center space-x-1.5 cursor-pointer ${
-                activeTab === 'expenses'
-                  ? 'bg-rose-600 text-white shadow-md'
+                activeTab === 'inward_money'
+                  ? 'bg-sky-600 text-white shadow-md'
                   : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
               }`}
             >
-              <Receipt className="w-4 h-4" />
-              <span>Expense Vouchers ({filteredVouchers.length})</span>
+              <ArrowDownLeft className="w-4 h-4" />
+              <span>Inward Money ({enrichedInwards.length})</span>
             </button>
 
             <button
-              onClick={() => setActiveTab('topay_ledger')}
+              onClick={() => setActiveTab('outward_money')}
               className={`px-4 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center space-x-1.5 cursor-pointer ${
-                activeTab === 'topay_ledger'
+                activeTab === 'outward_money'
+                  ? 'bg-emerald-600 text-white shadow-md'
+                  : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
+              }`}
+            >
+              <ArrowUpRight className="w-4 h-4" />
+              <span>Outward Money ({enrichedOutwards.length})</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('commission_summary')}
+              className={`px-4 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center space-x-1.5 cursor-pointer ${
+                activeTab === 'commission_summary'
                   ? 'bg-amber-600 text-white shadow-md'
                   : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
               }`}
             >
-              <TrendingUp className="w-4 h-4" />
-              <span>To-Pay Ledger ({toPayLedger.length})</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('tbb_ledger')}
-              className={`px-4 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center space-x-1.5 cursor-pointer ${
-                activeTab === 'tbb_ledger'
-                  ? 'bg-purple-600 text-white shadow-md'
-                  : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
-              }`}
-            >
-              <Building2 className="w-4 h-4" />
-              <span>T.B.B. Party Ledger ({tbbLedger.length})</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('party_ledger')}
-              className={`px-4 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center space-x-1.5 cursor-pointer ${
-                activeTab === 'party_ledger'
-                  ? 'bg-indigo-600 text-white shadow-md'
-                  : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
-              }`}
-            >
-              <Layers className="w-4 h-4" />
-              <span>Party-wise Summary ({partyLedger.length})</span>
+              <Percent className="w-4 h-4" />
+              <span>Commission Breakdown (20%)</span>
             </button>
           </div>
 
@@ -762,7 +490,9 @@ export const Accounting = () => {
             <button
               onClick={() => setDateFilter('all')}
               className={`px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${
-                dateFilter === 'all' ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-600 hover:text-slate-900'
+                dateFilter === 'all'
+                  ? 'bg-white text-slate-900 shadow-2xs'
+                  : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               All
@@ -770,7 +500,9 @@ export const Accounting = () => {
             <button
               onClick={() => setDateFilter('today')}
               className={`px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${
-                dateFilter === 'today' ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-600 hover:text-slate-900'
+                dateFilter === 'today'
+                  ? 'bg-white text-slate-900 shadow-2xs'
+                  : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               Today
@@ -778,7 +510,9 @@ export const Accounting = () => {
             <button
               onClick={() => setDateFilter('week')}
               className={`px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${
-                dateFilter === 'week' ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-600 hover:text-slate-900'
+                dateFilter === 'week'
+                  ? 'bg-white text-slate-900 shadow-2xs'
+                  : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               This Week
@@ -786,7 +520,9 @@ export const Accounting = () => {
             <button
               onClick={() => setDateFilter('month')}
               className={`px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${
-                dateFilter === 'month' ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-600 hover:text-slate-900'
+                dateFilter === 'month'
+                  ? 'bg-white text-slate-900 shadow-2xs'
+                  : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               This Month
@@ -794,396 +530,293 @@ export const Accounting = () => {
           </div>
         </div>
 
-        {/* Tab 1: Cash Book Register */}
-        {activeTab === 'cash_book' && (
+        {/* Tab 1: All Inward & Outward Transactions with 20% Commission */}
+        {activeTab === 'all_accounting' && (
           <DataTable
-            columns={cashBookColumns}
-            data={cashBookEntries}
-            searchPlaceholder="Search Cash Book by LR No., Category, Party Name..."
-            onExportExcel={(data) => exportToExcel(data, 'Cash_Book_Register', cashBookColumns)}
-            onExportPDF={(data) =>
-              exportToPDF('Cash Book Register', cashBookColumns, data, 'Cash_Book_Register')
-            }
-          />
-        )}
-
-        {/* Tab 2: Expense Vouchers */}
-        {activeTab === 'expenses' && (
-          <DataTable
-            columns={voucherColumns}
-            data={filteredVouchers}
-            searchPlaceholder="Search Expense Vouchers by Voucher No., Category, Paid To, Vehicle No..."
-            onExportExcel={(data) =>
-              exportToExcel(
-                data,
-                'Expense_Vouchers_Register',
-                voucherColumns.filter((c) => c.key !== 'actions')
-              )
-            }
+            columns={accountingColumns}
+            data={allTransactions}
+            searchPlaceholder="Search Inward & Outward Accounting by Receipt No, Vehicle No..."
+            onExportExcel={(data) => exportToExcel(data, 'Accounting_All_Transactions', accountingColumns)}
             onExportPDF={(data) =>
               exportToPDF(
-                'Expense Vouchers Register',
-                voucherColumns.filter((c) => c.key !== 'actions'),
+                'Inward and Outward Accounting Statement',
+                accountingColumns,
                 data,
-                'Expense_Vouchers_Register'
+                'Accounting_All_Transactions'
               )
             }
           />
         )}
 
-        {/* Tab 3: To-Pay Freight Ledger */}
-        {activeTab === 'topay_ledger' && (
+        {/* Tab 2: Inward Money */}
+        {activeTab === 'inward_money' && (
           <DataTable
-            columns={toPayColumns}
-            data={toPayLedger}
-            searchPlaceholder="Search To-Pay items by LR No., Consigner, Consignee, Station..."
-            onExportExcel={(data) => exportToExcel(data, 'ToPay_Freight_Ledger', toPayColumns)}
+            columns={accountingColumns}
+            data={enrichedInwards}
+            searchPlaceholder="Search Inward Money by Inward No, Vehicle No..."
+            onExportExcel={(data) => exportToExcel(data, 'Accounting_Inward_Money', accountingColumns)}
             onExportPDF={(data) =>
-              exportToPDF('To-Pay Freight Ledger', toPayColumns, data, 'ToPay_Freight_Ledger')
+              exportToPDF(
+                'Inward Money Accounting Statement',
+                accountingColumns,
+                data,
+                'Accounting_Inward_Money'
+              )
             }
           />
         )}
 
-        {/* Tab 4: T.B.B. Party Credit Ledger */}
-        {activeTab === 'tbb_ledger' && (
+        {/* Tab 3: Outward Money */}
+        {activeTab === 'outward_money' && (
           <DataTable
-            columns={tbbColumns}
-            data={tbbLedger}
-            searchPlaceholder="Search T.B.B. items by LR No., Billing Party, Station..."
-            onExportExcel={(data) => exportToExcel(data, 'TBB_Party_Ledger', tbbColumns)}
+            columns={accountingColumns}
+            data={enrichedOutwards}
+            searchPlaceholder="Search Outward Money by Outward No, Vehicle No..."
+            onExportExcel={(data) => exportToExcel(data, 'Accounting_Outward_Money', accountingColumns)}
             onExportPDF={(data) =>
-              exportToPDF('T.B.B. Party Credit Ledger', tbbColumns, data, 'TBB_Party_Ledger')
+              exportToPDF(
+                'Outward Money Accounting Statement',
+                accountingColumns,
+                data,
+                'Accounting_Outward_Money'
+              )
             }
           />
         )}
 
-        {/* Tab 5: Party-Wise Summary */}
-        {activeTab === 'party_ledger' && (
-          <DataTable
-            columns={partyColumns}
-            data={partyLedger}
-            searchPlaceholder="Search Party Name..."
-            onExportExcel={(data) => exportToExcel(data, 'Party_Wise_Summary_Ledger', partyColumns)}
-            onExportPDF={(data) =>
-              exportToPDF('Party-Wise Summary Ledger', partyColumns, data, 'Party_Wise_Summary_Ledger')
-            }
-          />
+        {/* Tab 4: Commission Summary Breakdown (20%) */}
+        {activeTab === 'commission_summary' && (
+          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-6">
+            <div>
+              <h3 className="text-lg font-black text-slate-900 flex items-center space-x-2">
+                <Percent className="w-5 h-5 text-amber-600" />
+                <span>Agency Commission Statement @ {commissionRate}%</span>
+              </h3>
+              <p className="text-xs text-slate-500 font-medium mt-0.5">
+                Detailed comparison of money inward, money outward, and the 20% commission earned
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="bg-sky-50 border border-sky-200 p-4 rounded-xl space-y-2">
+                <span className="text-xs font-bold text-sky-800 uppercase block">
+                  Inward Commission (20%)
+                </span>
+                <p className="text-2xl font-black text-sky-950">
+                  {formatCurrency(accountingSummary.inwardCommission)}
+                </p>
+                <div className="text-[11px] text-sky-700 font-semibold space-y-0.5 pt-2 border-t border-sky-200/80">
+                  <p>Inward Total Money: {formatCurrency(accountingSummary.inwardMoneyTotal)}</p>
+                  <p>Receipts Count: {enrichedInwards.length}</p>
+                </div>
+              </div>
+
+              <div className="bg-emerald-50 border border-emerald-200 p-4 rounded-xl space-y-2">
+                <span className="text-xs font-bold text-emerald-800 uppercase block">
+                  Outward Commission (20%)
+                </span>
+                <p className="text-2xl font-black text-emerald-950">
+                  {formatCurrency(accountingSummary.outwardCommission)}
+                </p>
+                <div className="text-[11px] text-emerald-700 font-semibold space-y-0.5 pt-2 border-t border-emerald-200/80">
+                  <p>Outward Total Money: {formatCurrency(accountingSummary.outwardMoneyTotal)}</p>
+                  <p>Receipts Count: {enrichedOutwards.length}</p>
+                </div>
+              </div>
+
+              <div className="bg-amber-50 border border-amber-300 p-4 rounded-xl space-y-2">
+                <span className="text-xs font-bold text-amber-900 uppercase block">
+                  Total Commission Earned
+                </span>
+                <p className="text-2xl font-black text-amber-950">
+                  {formatCurrency(accountingSummary.totalCommission20)}
+                </p>
+                <div className="text-[11px] text-amber-800 font-semibold space-y-0.5 pt-2 border-t border-amber-200/80">
+                  <p>Total Business Handled: {formatCurrency(accountingSummary.totalFreightHandled)}</p>
+                  <p>Commission Rate: {commissionRate}%</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="border border-slate-200 rounded-xl overflow-hidden">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-100 text-slate-800 font-black uppercase text-[11px] border-b border-slate-200">
+                  <tr>
+                    <th className="p-3">Stream</th>
+                    <th className="p-3">Entries Count</th>
+                    <th className="p-3">To Pay Freight</th>
+                    <th className="p-3">T.B.B Freight</th>
+                    <th className="p-3">Paid Freight</th>
+                    <th className="p-3 font-black">Total Money</th>
+                    <th className="p-3 font-black text-amber-800">Commission ({commissionRate}%)</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 font-semibold text-slate-700">
+                  <tr className="hover:bg-slate-50">
+                    <td className="p-3 font-black text-sky-700">Inward Freight</td>
+                    <td className="p-3">{enrichedInwards.length}</td>
+                    <td className="p-3">{formatCurrency(accountingSummary.inwardToPay)}</td>
+                    <td className="p-3">{formatCurrency(accountingSummary.inwardTbb)}</td>
+                    <td className="p-3">{formatCurrency(accountingSummary.inwardPaid)}</td>
+                    <td className="p-3 font-black text-slate-900">
+                      {formatCurrency(accountingSummary.inwardMoneyTotal)}
+                    </td>
+                    <td className="p-3 font-black text-amber-700">
+                      {formatCurrency(accountingSummary.inwardCommission)}
+                    </td>
+                  </tr>
+                  <tr className="hover:bg-slate-50">
+                    <td className="p-3 font-black text-emerald-700">Outward Freight</td>
+                    <td className="p-3">{enrichedOutwards.length}</td>
+                    <td className="p-3">{formatCurrency(accountingSummary.outwardToPay)}</td>
+                    <td className="p-3">{formatCurrency(accountingSummary.outwardTbb)}</td>
+                    <td className="p-3">{formatCurrency(accountingSummary.outwardPaid)}</td>
+                    <td className="p-3 font-black text-slate-900">
+                      {formatCurrency(accountingSummary.outwardMoneyTotal)}
+                    </td>
+                    <td className="p-3 font-black text-amber-700">
+                      {formatCurrency(accountingSummary.outwardCommission)}
+                    </td>
+                  </tr>
+                </tbody>
+                <tfoot className="bg-slate-50 font-black text-slate-900 border-t-2 border-slate-300">
+                  <tr>
+                    <td className="p-3 uppercase">Total Handled</td>
+                    <td className="p-3">{enrichedInwards.length + enrichedOutwards.length}</td>
+                    <td className="p-3">{formatCurrency(accountingSummary.inwardToPay + accountingSummary.outwardToPay)}</td>
+                    <td className="p-3">{formatCurrency(accountingSummary.inwardTbb + accountingSummary.outwardTbb)}</td>
+                    <td className="p-3">{formatCurrency(accountingSummary.inwardPaid + accountingSummary.outwardPaid)}</td>
+                    <td className="p-3 font-black text-indigo-900 text-sm">
+                      {formatCurrency(accountingSummary.totalFreightHandled)}
+                    </td>
+                    <td className="p-3 font-black text-amber-800 text-sm">
+                      {formatCurrency(accountingSummary.totalCommission20)}
+                    </td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
         )}
       </div>
 
-      {/* CREATE / EDIT VOUCHER MODAL */}
-      {voucherModal.isOpen && (
+      {/* VIEW DETAILS MODAL */}
+      {viewingRecord && (
         <Modal
-          isOpen={voucherModal.isOpen}
-          onClose={() => setVoucherModal({ isOpen: false, mode: 'create', id: null })}
-          title={
-            voucherModal.mode === 'create'
-              ? `New ${voucherForm.type === 'EXPENSE' ? 'Expense Payment' : 'Income Receipt'} Voucher`
-              : `Edit Voucher #${voucherForm.voucherNo}`
-          }
-          maxWidth="max-w-xl"
+          isOpen={!!viewingRecord}
+          onClose={() => setViewingRecord(null)}
+          title={`${viewingRecord.type} Money & Commission Details #${viewingRecord.receiptNo}`}
+          maxWidth="max-w-2xl"
         >
-          <form onSubmit={handleSaveVoucher} className="space-y-4 text-xs font-semibold">
-            {error && (
-              <div className="p-2.5 bg-rose-50 border border-rose-200 text-rose-700 rounded-lg text-xs font-bold flex items-center space-x-2">
-                <AlertTriangle className="w-4 h-4 flex-shrink-0" />
-                <span>{error}</span>
-              </div>
-            )}
-
-            <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-4 text-xs font-semibold">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
               <div>
-                <label className="block text-slate-700 uppercase font-bold mb-1">Voucher No.</label>
-                <input
-                  type="text"
-                  value={voucherForm.voucherNo}
-                  disabled
-                  className="w-full p-2 bg-slate-100 border border-slate-300 rounded font-black text-slate-900"
-                />
+                <span className="text-slate-400 font-bold uppercase block text-[10px]">Type</span>
+                <span className="font-black text-slate-900 text-xs">{viewingRecord.type}</span>
               </div>
-
               <div>
-                <label className="block text-slate-700 uppercase font-bold mb-1">Date *</label>
-                <input
-                  type="date"
-                  value={voucherForm.date}
-                  onChange={(e) => setVoucherForm({ ...voucherForm, date: e.target.value })}
-                  className="w-full p-2 border border-slate-300 rounded focus:ring-1 focus:ring-sky-500 font-bold"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-slate-700 uppercase font-bold mb-1">Voucher Type *</label>
-                <select
-                  value={voucherForm.type}
-                  onChange={(e) => {
-                    const newType = e.target.value;
-                    setVoucherForm({
-                      ...voucherForm,
-                      type: newType,
-                      category: newType === 'EXPENSE' ? EXPENSE_CATEGORIES[0] : INCOME_CATEGORIES[0],
-                    });
-                  }}
-                  className="w-full p-2 border border-slate-300 rounded bg-white font-bold"
-                >
-                  <option value="EXPENSE">Expense (Outflow)</option>
-                  <option value="INCOME">Income / Receipt (Inflow)</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-slate-700 uppercase font-bold mb-1">Category *</label>
-                <select
-                  value={voucherForm.category}
-                  onChange={(e) => setVoucherForm({ ...voucherForm, category: e.target.value })}
-                  className="w-full p-2 border border-slate-300 rounded bg-white font-bold"
-                >
-                  {(voucherForm.type === 'EXPENSE' ? EXPENSE_CATEGORIES : INCOME_CATEGORIES).map((cat) => (
-                    <option key={cat} value={cat}>
-                      {cat}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-slate-700 uppercase font-bold mb-1">
-                  {voucherForm.type === 'EXPENSE' ? 'Paid To (Party / Person)' : 'Received From'}
-                </label>
-                <input
-                  type="text"
-                  value={voucherForm.partyName}
-                  onChange={(e) => setVoucherForm({ ...voucherForm, partyName: e.target.value })}
-                  placeholder="Ex. Petrol Pump, Ramesh, Mathadi Labour..."
-                  className="w-full p-2 border border-slate-300 rounded focus:ring-1 focus:ring-sky-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-slate-700 uppercase font-bold mb-1">Amount (₹) *</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={voucherForm.amount}
-                  onChange={(e) => setVoucherForm({ ...voucherForm, amount: e.target.value })}
-                  placeholder="0.00"
-                  className="w-full p-2 border border-slate-300 rounded font-black text-sm text-slate-900 focus:ring-1 focus:ring-sky-500"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-slate-700 uppercase font-bold mb-1">Payment Mode</label>
-                <select
-                  value={voucherForm.paymentMode}
-                  onChange={(e) => setVoucherForm({ ...voucherForm, paymentMode: e.target.value })}
-                  className="w-full p-2 border border-slate-300 rounded bg-white font-bold"
-                >
-                  {PAYMENT_MODES.map((mode) => (
-                    <option key={mode} value={mode}>
-                      {mode}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-slate-700 uppercase font-bold mb-1">
-                  Vehicle No. (If Applicable)
-                </label>
-                <select
-                  value={voucherForm.vehicleNo}
-                  onChange={(e) => setVoucherForm({ ...voucherForm, vehicleNo: e.target.value })}
-                  className="w-full p-2 border border-slate-300 rounded bg-white font-bold uppercase"
-                >
-                  <option value="">-- None / General --</option>
-                  {(masters?.vehicles || []).map((v) => (
-                    <option key={v.id} value={v.vehicleNo}>
-                      {v.vehicleNo}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="col-span-2">
-                <label className="block text-slate-700 uppercase font-bold mb-1">
-                  Reference No. / UTR / Cheque No.
-                </label>
-                <input
-                  type="text"
-                  value={voucherForm.referenceNo}
-                  onChange={(e) => setVoucherForm({ ...voucherForm, referenceNo: e.target.value })}
-                  placeholder="Ex. UPI transaction ID, bank reference, cheque number..."
-                  className="w-full p-2 border border-slate-300 rounded focus:ring-1 focus:ring-sky-500"
-                />
-              </div>
-
-              <div className="col-span-2">
-                <label className="block text-slate-700 uppercase font-bold mb-1">Notes / Description</label>
-                <textarea
-                  rows="2"
-                  value={voucherForm.notes}
-                  onChange={(e) => setVoucherForm({ ...voucherForm, notes: e.target.value })}
-                  placeholder="Add any additional details or remarks..."
-                  className="w-full p-2 border border-slate-300 rounded focus:ring-1 focus:ring-sky-500"
-                />
-              </div>
-            </div>
-
-            <div className="flex justify-end space-x-2 pt-3 border-t border-slate-200">
-              <button
-                type="button"
-                onClick={() => setVoucherModal({ isOpen: false, mode: 'create', id: null })}
-                className="px-4 py-2 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-100 font-bold cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className={`px-5 py-2 text-white rounded-lg font-bold shadow-sm transition-all cursor-pointer ${
-                  voucherForm.type === 'EXPENSE'
-                    ? 'bg-rose-600 hover:bg-rose-700'
-                    : 'bg-emerald-600 hover:bg-emerald-700'
-                }`}
-              >
-                {voucherModal.mode === 'create' ? 'Save Voucher' : 'Update Voucher'}
-              </button>
-            </div>
-          </form>
-        </Modal>
-      )}
-
-      {/* VIEW VOUCHER MODAL */}
-      {viewingVoucher && (
-        <Modal
-          isOpen={!!viewingVoucher}
-          onClose={() => setViewingVoucher(null)}
-          title={`Voucher Details #${viewingVoucher.voucherNo}`}
-          maxWidth="max-w-lg"
-        >
-          <div className="space-y-4 text-xs">
-            <div className="grid grid-cols-2 gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
-              <div>
-                <span className="text-slate-400 font-bold uppercase block text-[10px]">Voucher No.</span>
-                <span className="font-black text-slate-900 text-sm">{viewingVoucher.voucherNo}</span>
+                <span className="text-slate-400 font-bold uppercase block text-[10px]">Receipt No.</span>
+                <span className="font-black text-slate-900 text-xs">{viewingRecord.receiptNo}</span>
               </div>
               <div>
                 <span className="text-slate-400 font-bold uppercase block text-[10px]">Date</span>
-                <span className="font-bold text-slate-800">{formatDate(viewingVoucher.date)}</span>
-              </div>
-              <div>
-                <span className="text-slate-400 font-bold uppercase block text-[10px]">Type</span>
-                <span
-                  className={`font-black uppercase ${
-                    viewingVoucher.type === 'INCOME' ? 'text-emerald-700' : 'text-rose-700'
-                  }`}
-                >
-                  {viewingVoucher.type}
-                </span>
-              </div>
-              <div>
-                <span className="text-slate-400 font-bold uppercase block text-[10px]">Category</span>
-                <span className="font-bold text-slate-900">{viewingVoucher.category}</span>
-              </div>
-              <div>
-                <span className="text-slate-400 font-bold uppercase block text-[10px]">
-                  {viewingVoucher.type === 'EXPENSE' ? 'Paid To' : 'Received From'}
-                </span>
-                <span className="font-bold text-slate-800">{viewingVoucher.partyName || '-'}</span>
-              </div>
-              <div>
-                <span className="text-slate-400 font-bold uppercase block text-[10px]">Payment Mode</span>
-                <span className="font-bold text-slate-800">{viewingVoucher.paymentMode}</span>
+                <span className="font-bold text-slate-800">{formatDate(viewingRecord.date)}</span>
               </div>
               <div>
                 <span className="text-slate-400 font-bold uppercase block text-[10px]">Vehicle No.</span>
-                <span className="font-bold text-slate-800">{viewingVoucher.vehicleNo || '-'}</span>
+                <span className="font-bold text-slate-800">{viewingRecord.vehicleNo || '-'}</span>
               </div>
               <div>
-                <span className="text-slate-400 font-bold uppercase block text-[10px]">Amount</span>
-                <span
-                  className={`font-black text-sm ${
-                    viewingVoucher.type === 'INCOME' ? 'text-emerald-700' : 'text-rose-700'
-                  }`}
-                >
-                  {formatCurrency(viewingVoucher.amount)}
+                <span className="text-slate-400 font-bold uppercase block text-[10px]">Packages</span>
+                <span className="font-black text-slate-900">{viewingRecord.totalQty || 0} Pkgs</span>
+              </div>
+              <div>
+                <span className="text-slate-400 font-bold uppercase block text-[10px]">To Pay</span>
+                <span className="font-bold text-amber-700">{formatCurrency(viewingRecord.totalToPay)}</span>
+              </div>
+              <div>
+                <span className="text-slate-400 font-bold uppercase block text-[10px]">T.B.B</span>
+                <span className="font-bold text-sky-700">{formatCurrency(viewingRecord.totalTbb)}</span>
+              </div>
+              <div>
+                <span className="text-slate-400 font-bold uppercase block text-[10px]">Paid</span>
+                <span className="font-bold text-emerald-700">{formatCurrency(viewingRecord.totalPaid)}</span>
+              </div>
+              <div className="col-span-2 bg-slate-100 p-2.5 rounded-lg border border-slate-200">
+                <span className="text-slate-500 font-bold uppercase block text-[10px]">Total Money</span>
+                <span className="font-black text-slate-900 text-base">
+                  {formatCurrency(viewingRecord.totalMoney)}
                 </span>
               </div>
-              <div className="col-span-2">
-                <span className="text-slate-400 font-bold uppercase block text-[10px]">
-                  Reference / Cheque No.
+              <div className="col-span-2 bg-amber-50 p-2.5 rounded-lg border border-amber-200">
+                <span className="text-amber-700 font-bold uppercase block text-[10px]">
+                  COMMISSION ({commissionRate}%)
                 </span>
-                <span className="font-medium text-slate-800">{viewingVoucher.referenceNo || '-'}</span>
-              </div>
-              <div className="col-span-2">
-                <span className="text-slate-400 font-bold uppercase block text-[10px]">
-                  Description / Remarks
+                <span className="font-black text-amber-800 text-base">
+                  {formatCurrency(viewingRecord.commissionAmount)}
                 </span>
-                <span className="font-medium text-slate-800">{viewingVoucher.notes || '-'}</span>
               </div>
             </div>
+
+            {/* Sub-items table */}
+            {viewingRecord.items && viewingRecord.items.length > 0 && (
+              <div className="space-y-2">
+                <h4 className="font-black text-slate-700 uppercase tracking-wider text-[11px]">
+                  LR Breakdown & Calculations
+                </h4>
+                <div className="border border-slate-200 rounded-xl overflow-x-auto max-h-56">
+                  <table className="w-full text-left text-[11px]">
+                    <thead className="bg-slate-100 text-slate-700 font-black uppercase border-b border-slate-200">
+                      <tr>
+                        <th className="p-2">LR No.</th>
+                        <th className="p-2">PKG</th>
+                        <th className="p-2">To Pay</th>
+                        <th className="p-2">T.B.B</th>
+                        <th className="p-2">Paid</th>
+                        <th className="p-2">Total Freight</th>
+                        <th className="p-2 text-amber-800">Comm (20%)</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 font-semibold">
+                      {viewingRecord.items.map((lr, idx) => {
+                        const lrFreight =
+                          (Number(lr.toPayAmount) || 0) +
+                          (Number(lr.tbbAmount) || 0) +
+                          (Number(lr.paidAmount) || 0);
+                        const lrComm = lrFreight * commMultiplier;
+                        return (
+                          <tr key={lr.id || idx} className="hover:bg-slate-50">
+                            <td className="p-2 font-black text-sky-800">{lr.lrNo}</td>
+                            <td className="p-2">{lr.pkg}</td>
+                            <td className="p-2">{formatCurrency(lr.toPayAmount)}</td>
+                            <td className="p-2">{formatCurrency(lr.tbbAmount)}</td>
+                            <td className="p-2">{formatCurrency(lr.paidAmount)}</td>
+                            <td className="p-2 font-black text-slate-900">{formatCurrency(lrFreight)}</td>
+                            <td className="p-2 font-black text-amber-700">{formatCurrency(lrComm)}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
 
             <div className="flex justify-end space-x-2 pt-2 border-t border-slate-200">
               <button
                 type="button"
-                onClick={() => handlePrintVoucher(viewingVoucher)}
-                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg text-xs flex items-center cursor-pointer"
+                onClick={() => handlePrintAccountingStatement(viewingRecord)}
+                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-lg flex items-center cursor-pointer"
               >
                 <Printer className="w-4 h-4 mr-1.5" />
-                <span>Print Voucher</span>
+                <span>Print Statement</span>
               </button>
               <button
                 type="button"
-                onClick={() => setViewingVoucher(null)}
-                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg text-xs cursor-pointer"
+                onClick={() => setViewingRecord(null)}
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-lg cursor-pointer"
               >
                 Close
-              </button>
-            </div>
-          </div>
-        </Modal>
-      )}
-
-      {/* CONFIRM DELETE MODAL */}
-      {deleteVoucherTarget && (
-        <Modal
-          isOpen={!!deleteVoucherTarget}
-          onClose={() => setDeleteVoucherTarget(null)}
-          title="Confirm Voucher Deletion"
-          maxWidth="max-w-md"
-        >
-          <div className="space-y-4 text-xs font-semibold">
-            <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 flex items-start space-x-3">
-              <AlertTriangle className="w-5 h-5 text-rose-600 flex-shrink-0 mt-0.5" />
-              <div>
-                <p className="font-black text-sm text-rose-900">
-                  Are you sure you want to delete this voucher?
-                </p>
-                <p className="mt-1">
-                  Voucher No.: <span className="font-black underline">{deleteVoucherTarget.voucherNo}</span>
-                </p>
-                <p className="mt-0.5 text-slate-600">
-                  Amount: {formatCurrency(deleteVoucherTarget.amount)} &bull; {deleteVoucherTarget.category}
-                </p>
-                <p className="text-[11px] text-rose-600 mt-1 font-bold">This action cannot be undone.</p>
-              </div>
-            </div>
-
-            <div className="flex justify-end space-x-2 pt-2 border-t border-slate-200">
-              <button
-                type="button"
-                onClick={() => setDeleteVoucherTarget(null)}
-                className="px-3.5 py-2 border border-slate-300 rounded-lg text-slate-600 hover:bg-slate-100 font-bold cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleConfirmDeleteVoucher}
-                className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg font-bold shadow-sm cursor-pointer"
-              >
-                Delete Voucher
               </button>
             </div>
           </div>
