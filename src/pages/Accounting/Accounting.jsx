@@ -168,7 +168,8 @@ export const Accounting = () => {
           date: item.inwardDate || item.date,
           type: 'INCOME',
           category: 'Paid Freight Collection',
-          refNo: `LR #${item.lrNo}`,
+          refNo: item.lrNo || '-',
+          lrNo: item.lrNo || '-',
           partyName: item.consignorName || item.consigneeName || 'Cash Party',
           amount: Number(item.paidAmount) || 0,
           paymentMode: 'CASH',
@@ -185,7 +186,8 @@ export const Accounting = () => {
           date: item.outwardDate || item.date,
           type: 'INCOME',
           category: 'To-Pay Freight Collection',
-          refNo: `LR #${item.lrNo}`,
+          refNo: item.lrNo || '-',
+          lrNo: item.lrNo || '-',
           partyName: item.consigneeName || 'Consignee',
           amount: Number(item.toPayAmount) || 0,
           paymentMode: 'CASH',
@@ -202,7 +204,8 @@ export const Accounting = () => {
           date: vch.date,
           type: vch.type,
           category: vch.category,
-          refNo: vch.voucherNo,
+          refNo: vch.lrNo || vch.voucherNo,
+          lrNo: vch.lrNo || vch.voucherNo,
           partyName: vch.partyName,
           amount: Number(vch.amount) || 0,
           paymentMode: vch.paymentMode,
@@ -396,9 +399,9 @@ export const Accounting = () => {
       ),
     },
     {
-      label: 'Reference / Ref No.',
-      key: 'refNo',
-      render: (row) => <span className="font-extrabold text-slate-900">{row.refNo}</span>,
+      label: 'LR No.',
+      key: 'lrNo',
+      render: (row) => <span className="font-extrabold text-slate-900">{row.lrNo || row.refNo || '-'}</span>,
     },
     { label: 'Category', key: 'category' },
     { label: 'Party / Description', key: 'partyName' },
@@ -796,7 +799,7 @@ export const Accounting = () => {
           <DataTable
             columns={cashBookColumns}
             data={cashBookEntries}
-            searchPlaceholder="Search Cash Book by Ref No., Category, Party Name..."
+            searchPlaceholder="Search Cash Book by LR No., Category, Party Name..."
             onExportExcel={(data) => exportToExcel(data, 'Cash_Book_Register', cashBookColumns)}
             onExportPDF={(data) =>
               exportToPDF('Cash Book Register', cashBookColumns, data, 'Cash_Book_Register')
