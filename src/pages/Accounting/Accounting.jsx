@@ -223,13 +223,14 @@ export const Accounting = () => {
 
   // Table Columns Definition
   const accountingColumns = [
-    { label: 'Date', key: 'date', type: 'date' },
+    { label: 'Date', key: 'date', type: 'date', nowrap: true },
     {
       label: 'Type',
       key: 'type',
+      nowrap: true,
       render: (row) => (
         <span
-          className={`inline-flex items-center px-2.5 py-0.5 rounded text-[11px] font-black ${
+          className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-black whitespace-nowrap shrink-0 ${
             row.type === 'INWARD'
               ? 'bg-sky-100 text-sky-800 border border-sky-300'
               : row.type === 'STOCK OUT'
@@ -238,29 +239,31 @@ export const Accounting = () => {
           }`}
         >
           {row.type === 'INWARD' ? (
-            <ArrowDownLeft className="w-3 h-3 mr-1 text-sky-600" />
+            <ArrowDownLeft className="w-3.5 h-3.5 mr-1 text-sky-600 shrink-0" />
           ) : (
-            <ArrowUpRight className="w-3 h-3 mr-1 text-emerald-600" />
+            <ArrowUpRight className="w-3.5 h-3.5 mr-1 text-emerald-600 shrink-0" />
           )}
-          {row.type}
+          <span>{row.type}</span>
         </span>
       ),
     },
     {
       label: 'Receipt No.',
       key: 'receiptNo',
-      render: (row) => <span className="font-extrabold text-slate-900">{row.receiptNo}</span>,
+      nowrap: true,
+      render: (row) => <span className="font-extrabold text-slate-900 whitespace-nowrap">{row.receiptNo}</span>,
     },
-    { label: 'Vehicle No.', key: 'vehicleNo', render: (row) => row.vehicleNo || '-' },
-    { label: 'PKG', key: 'totalQty' },
-    { label: 'To Pay', key: 'totalToPay', type: 'currency' },
-    { label: 'T.B.B', key: 'totalTbb', type: 'currency' },
-    { label: 'Paid', key: 'totalPaid', type: 'currency' },
+    { label: 'Vehicle No.', key: 'vehicleNo', nowrap: true, render: (row) => <span className="whitespace-nowrap">{row.vehicleNo || '-'}</span> },
+    { label: 'PKG', key: 'totalQty', nowrap: true },
+    { label: 'To Pay', key: 'totalToPay', type: 'currency', nowrap: true },
+    { label: 'T.B.B', key: 'totalTbb', type: 'currency', nowrap: true },
+    { label: 'Paid', key: 'totalPaid', type: 'currency', nowrap: true },
     {
       label: 'Total Money',
       key: 'totalMoney',
+      nowrap: true,
       render: (row) => (
-        <span className="font-black text-slate-900 text-xs">
+        <span className="font-black text-slate-900 text-xs whitespace-nowrap">
           {formatCurrency(row.totalMoney)}
         </span>
       ),
@@ -268,8 +271,9 @@ export const Accounting = () => {
     {
       label: `COMMISSION (${commissionRate}%)`,
       key: 'commissionAmount',
+      nowrap: true,
       render: (row) => (
-        <span className="font-black text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+        <span className="font-black text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 whitespace-nowrap">
           {formatCurrency(row.commissionAmount)}
         </span>
       ),
@@ -277,8 +281,9 @@ export const Accounting = () => {
     {
       label: 'Profit/Loss',
       key: 'netAmount',
+      nowrap: true,
       render: (row) => (
-        <span className={`font-bold ${row.netAmount >= 0 ? 'text-slate-800' : 'text-rose-600'}`}>
+        <span className={`font-bold whitespace-nowrap ${row.netAmount >= 0 ? 'text-slate-800' : 'text-rose-600'}`}>
           {formatCurrency(row.netAmount)}
         </span>
       ),
