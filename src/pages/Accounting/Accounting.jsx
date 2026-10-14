@@ -215,7 +215,7 @@ export const Accounting = () => {
         { label: 'Paid Amount', value: formatCurrency(row.totalPaid) },
         { label: 'Total Freight Money', value: formatCurrency(row.totalMoney) },
         { label: `Commission (${commissionRate}%)`, value: formatCurrency(row.commissionAmount) },
-        { label: 'Net Payable / Balance', value: formatCurrency(row.netAmount) },
+        { label: 'Profit / Loss', value: formatCurrency(row.netAmount) },
       ],
       items: row.items,
     });
@@ -275,10 +275,10 @@ export const Accounting = () => {
       ),
     },
     {
-      label: 'Net Balance',
+      label: 'Profit/Loss',
       key: 'netAmount',
       render: (row) => (
-        <span className="font-bold text-slate-700">
+        <span className={`font-bold ${row.netAmount >= 0 ? 'text-slate-800' : 'text-rose-600'}`}>
           {formatCurrency(row.netAmount)}
         </span>
       ),
