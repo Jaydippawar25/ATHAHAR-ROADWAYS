@@ -15,7 +15,6 @@ import {
   MoreHorizontal,
   FileSpreadsheet,
   FileText,
-  Printer,
   Search,
   Calendar,
   Filter,
@@ -38,7 +37,7 @@ import {
   PAYMENT_MODES,
   getNextExpenseVoucherNo,
 } from '../../services/expenseService';
-import { exportToExcel, exportToPDF, printRecordDetails } from '../../services/exportService';
+import { exportToExcel, exportToPDF } from '../../services/exportService';
 import { formatDate, getTodayDateString } from '../../utils/dateUtils';
 import { formatCurrency } from '../../utils/numberUtils';
 
@@ -370,26 +369,6 @@ export const Expenses = () => {
       notes: e.notes || '-',
     }));
     exportToPDF(title, columns, data, `Athahar_Expenses_${getTodayDateString()}`);
-  };
-
-  // Print Expense Voucher Slip
-  const handlePrintVoucher = (voucher) => {
-    printRecordDetails({
-      title: `ATHAHAR ROADWAYS - EXPENSE VOUCHER #${voucher.voucherNo}`,
-      fields: [
-        { label: 'Voucher No', value: voucher.voucherNo },
-        { label: 'Expense Date', value: formatDate(voucher.date) },
-        { label: 'Category', value: voucher.category },
-        { label: 'Total Amount', value: formatCurrency(voucher.amount) },
-        { label: 'Vehicle No.', value: voucher.vehicleNo || 'N/A' },
-        { label: 'Paid To / Payee', value: voucher.payeeName || '-' },
-        { label: 'Payment Mode', value: voucher.paymentMode || 'CASH' },
-        { label: 'Ref / Bill No.', value: voucher.referenceNo || '-' },
-        { label: 'Recorded By', value: voucher.createdBy || 'Administrator' },
-        { label: 'Notes / Remarks', value: voucher.notes || '-' },
-      ],
-      items: [],
-    });
   };
 
   return (
@@ -737,18 +716,18 @@ export const Expenses = () => {
       {/* EXPENSES DATA TABLE */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full text-left border-collapse table-auto">
             <thead>
-              <tr className="bg-slate-100/80 border-b border-slate-200 text-[11px] font-black text-slate-700 uppercase tracking-wider">
-                <th className="py-3 px-3.5">Date</th>
-                <th className="py-3 px-3.5">Voucher No</th>
-                <th className="py-3 px-3.5">Category</th>
-                <th className="py-3 px-3.5">Vehicle No</th>
-                <th className="py-3 px-3.5">Paid To / Payee</th>
-                <th className="py-3 px-3.5">Payment Mode</th>
-                <th className="py-3 px-3.5 text-right">Amount (₹)</th>
-                <th className="py-3 px-3.5">Notes / Ref</th>
-                <th className="py-3 px-3.5 text-center">Actions</th>
+              <tr className="bg-slate-100/90 border-b border-slate-200 text-[10.5px] font-black text-slate-700 uppercase tracking-tight">
+                <th className="py-2.5 px-3 whitespace-nowrap">Date</th>
+                <th className="py-2.5 px-3 whitespace-nowrap">Voucher No</th>
+                <th className="py-2.5 px-3 whitespace-nowrap">Category</th>
+                <th className="py-2.5 px-3 whitespace-nowrap">Vehicle No</th>
+                <th className="py-2.5 px-3 whitespace-nowrap">Paid To / Payee</th>
+                <th className="py-2.5 px-3 text-center whitespace-nowrap">Payment Mode</th>
+                <th className="py-2.5 px-3 text-right whitespace-nowrap">Amount (₹)</th>
+                <th className="py-2.5 px-3 whitespace-nowrap">Notes / Ref</th>
+                <th className="py-2.5 px-3 text-center whitespace-nowrap w-20 min-w-[76px]">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-xs font-semibold text-slate-800">
@@ -764,79 +743,77 @@ export const Expenses = () => {
                   const conf = categoryConfig[item.category] || categoryConfig['Other Expenses'];
                   const Icon = conf.icon;
                   return (
-                    <tr key={item.id} className="hover:bg-sky-50/40 transition-colors">
-                      <td className="py-3 px-3.5 font-bold text-slate-700 whitespace-nowrap">
+                    <tr key={item.id} className="hover:bg-sky-50/50 transition-colors">
+                      <td className="py-2.5 px-3 font-bold text-slate-700 whitespace-nowrap text-[11px]">
                         {formatDate(item.date)}
                       </td>
-                      <td className="py-3 px-3.5 whitespace-nowrap">
+                      <td className="py-2.5 px-3 whitespace-nowrap">
                         <span className="font-extrabold text-sky-800 bg-sky-50 px-2 py-0.5 rounded border border-sky-200 text-[11px]">
                           #{item.voucherNo}
                         </span>
                       </td>
-                      <td className="py-3 px-3.5 whitespace-nowrap">
+                      <td className="py-2.5 px-3 whitespace-nowrap">
                         <span
-                          className={`inline-flex items-center space-x-1 px-2.5 py-1 rounded-full text-[11px] font-black border ${conf.badge}`}
+                          className={`inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[10.5px] font-black border ${conf.badge}`}
                         >
                           <Icon className="w-3 h-3 mr-1" />
                           <span>{item.category}</span>
                         </span>
                       </td>
-                      <td className="py-3 px-3.5 whitespace-nowrap">
+                      <td className="py-2.5 px-3 whitespace-nowrap">
                         {item.vehicleNo ? (
-                          <span className="font-extrabold text-slate-900 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+                          <span className="font-extrabold text-slate-900 bg-slate-100 px-2 py-0.5 rounded border border-slate-200 text-[11px]">
                             {item.vehicleNo}
                           </span>
                         ) : (
                           <span className="text-slate-400 font-normal">-</span>
                         )}
                       </td>
-                      <td className="py-3 px-3.5 whitespace-nowrap font-bold text-slate-900">
+                      <td
+                        className="py-2.5 px-3 max-w-[150px] truncate font-bold text-slate-900 text-[11px]"
+                        title={item.payeeName}
+                      >
                         {item.payeeName || <span className="text-slate-400 font-normal">-</span>}
                       </td>
-                      <td className="py-3 px-3.5 whitespace-nowrap">
+                      <td className="py-2.5 px-3 whitespace-nowrap text-center">
                         <span className="text-[10px] font-extrabold px-2 py-0.5 rounded bg-slate-100 border border-slate-300 text-slate-700">
                           {item.paymentMode || 'CASH'}
                         </span>
                       </td>
-                      <td className="py-3 px-3.5 text-right font-black text-sm text-slate-900 whitespace-nowrap">
+                      <td className="py-2.5 px-3 text-right font-black text-xs text-slate-900 whitespace-nowrap">
                         {formatCurrency(item.amount)}
                       </td>
-                      <td className="py-3 px-3.5 max-w-xs truncate text-slate-600 font-medium">
+                      <td
+                        className="py-2.5 px-3 max-w-[160px] truncate text-slate-600 font-medium text-[11px]"
+                        title={item.notes ? item.notes : item.referenceNo ? `Ref: ${item.referenceNo}` : ''}
+                      >
                         {item.notes ? item.notes : item.referenceNo ? `Ref: ${item.referenceNo}` : '-'}
                       </td>
-                      <td className="py-3 px-3.5 text-center whitespace-nowrap">
+                      <td className="py-2.5 px-3 text-center whitespace-nowrap w-20 min-w-[76px]">
                         <div className="flex items-center justify-center space-x-1">
                           <button
                             type="button"
                             onClick={() => setViewingExpense(item)}
                             title="View Voucher"
-                            className="p-1.5 text-sky-600 hover:text-sky-800 hover:bg-sky-100 rounded transition-colors cursor-pointer"
+                            className="p-1 text-sky-600 hover:text-sky-800 hover:bg-sky-50 rounded transition-colors cursor-pointer"
                           >
-                            <Eye className="w-4 h-4" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handlePrintVoucher(item)}
-                            title="Print Voucher"
-                            className="p-1.5 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded transition-colors cursor-pointer"
-                          >
-                            <Printer className="w-4 h-4" />
+                            <Eye className="w-3.5 h-3.5" />
                           </button>
                           <button
                             type="button"
                             onClick={() => handleOpenEditModal(item)}
                             title="Edit Record"
-                            className="p-1.5 text-amber-600 hover:text-amber-800 hover:bg-amber-100 rounded transition-colors cursor-pointer"
+                            className="p-1 text-amber-600 hover:text-amber-800 hover:bg-amber-50 rounded transition-colors cursor-pointer"
                           >
-                            <Edit2 className="w-4 h-4" />
+                            <Edit2 className="w-3.5 h-3.5" />
                           </button>
                           <button
                             type="button"
                             onClick={() => setDeleteConfirmId(item.id)}
                             title="Delete Record"
-                            className="p-1.5 text-rose-600 hover:text-rose-800 hover:bg-rose-100 rounded transition-colors cursor-pointer"
+                            className="p-1 text-rose-600 hover:text-rose-800 hover:bg-rose-50 rounded transition-colors cursor-pointer"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </div>
                       </td>
@@ -847,14 +824,14 @@ export const Expenses = () => {
             </tbody>
             {filteredExpenses.length > 0 && (
               <tfoot>
-                <tr className="bg-slate-100/90 font-black border-t-2 border-slate-300 text-slate-900 text-xs">
-                  <td colSpan={6} className="py-3 px-3.5 uppercase tracking-wider text-right">
-                    Total Filtered Expenses:
+                <tr className="bg-sky-50/90 font-black border-t-2 border-slate-300 text-slate-900 text-[11px]">
+                  <td colSpan={6} className="py-2.5 px-3 uppercase tracking-wider text-right font-black text-slate-900">
+                    TOTAL FILTERED EXPENSES:
                   </td>
-                  <td className="py-3 px-3.5 text-right font-black text-sm text-slate-900">
+                  <td className="py-2.5 px-3 text-right font-black text-xs text-[#1e295b] whitespace-nowrap">
                     {formatCurrency(categoryTotals.total)}
                   </td>
-                  <td colSpan={2} className="py-3 px-3.5 text-slate-500 font-bold">
+                  <td colSpan={2} className="py-2.5 px-3 text-slate-500 font-bold text-left">
                     {filteredExpenses.length} Records
                   </td>
                 </tr>
@@ -1117,14 +1094,6 @@ export const Expenses = () => {
 
             {/* Modal Actions */}
             <div className="flex items-center justify-end space-x-2 pt-3 border-t border-slate-200">
-              <button
-                type="button"
-                onClick={() => handlePrintVoucher(viewingExpense)}
-                className="flex items-center space-x-1.5 px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-bold transition-colors cursor-pointer"
-              >
-                <Printer className="w-4 h-4" />
-                <span>Print Voucher</span>
-              </button>
               <button
                 type="button"
                 onClick={() => setViewingExpense(null)}
