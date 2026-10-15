@@ -5,7 +5,8 @@ export const EXPENSE_CATEGORIES = [
   'Vehicle Maintenance',
   'Toll and Road Charges',
   'Driver and Helper Expenses',
-  'Loading and Unloading',
+  'Loading Expense',
+  'Unloading Expense',
   'Other Expenses',
 ];
 
@@ -72,7 +73,21 @@ const INITIAL_SAMPLE_EXPENSES = [
     id: 'exp-105',
     voucherNo: 'EXP-05',
     date: new Date().toISOString().split('T')[0],
-    category: 'Loading and Unloading',
+    category: 'Loading Expense',
+    amount: 650,
+    vehicleNo: 'MH-10-CR-1122',
+    payeeName: 'Sangli Mathadi Hamali Union',
+    paymentMode: 'CASH',
+    referenceNo: '',
+    notes: 'Loading 40 packages for outward dispatch vehicle',
+    createdAt: new Date().toISOString(),
+    createdBy: 'Administrator',
+  },
+  {
+    id: 'exp-106',
+    voucherNo: 'EXP-06',
+    date: new Date().toISOString().split('T')[0],
+    category: 'Unloading Expense',
     amount: 950,
     vehicleNo: '',
     payeeName: 'Sangli Mathadi Hamali Union',
@@ -90,7 +105,17 @@ export const getAllExpenses = () => {
     setStoredItem(STORAGE_KEYS.EXPENSES, INITIAL_SAMPLE_EXPENSES);
     return INITIAL_SAMPLE_EXPENSES;
   }
-  return stored;
+  // Auto-migrate any existing 'Loading and Unloading' entries
+  return stored.map((item) => {
+    if (item.category === 'Loading and Unloading') {
+      const isUnload = String(item.notes || '').toLowerCase().includes('unload');
+      return {
+        ...item,
+        category: isUnload ? 'Unloading Expense' : 'Loading Expense',
+      };
+    }
+    return item;
+  });
 };
 
 export const getNextExpenseVoucherNo = (expensesList) => {

@@ -9,6 +9,9 @@ import {
   Navigation,
   Users,
   Package,
+  PackageCheck,
+  ArrowDownToLine,
+  ArrowUpFromLine,
   MoreHorizontal,
   FileSpreadsheet,
   FileText,
@@ -101,6 +104,18 @@ export const Expenses = () => {
       color: 'text-sky-700 bg-sky-50 border-sky-200',
       badge: 'bg-sky-100 text-sky-800 border-sky-300',
       cardBorder: 'border-l-4 border-l-sky-500',
+    },
+    'Loading Expense': {
+      icon: ArrowUpFromLine,
+      color: 'text-emerald-700 bg-emerald-50 border-emerald-200',
+      badge: 'bg-emerald-100 text-emerald-800 border-emerald-300',
+      cardBorder: 'border-l-4 border-l-emerald-500',
+    },
+    'Unloading Expense': {
+      icon: ArrowDownToLine,
+      color: 'text-teal-700 bg-teal-50 border-teal-200',
+      badge: 'bg-teal-100 text-teal-800 border-teal-300',
+      cardBorder: 'border-l-4 border-l-teal-500',
     },
     'Loading and Unloading': {
       icon: Package,
@@ -199,7 +214,8 @@ export const Expenses = () => {
       'Vehicle Maintenance': 0,
       'Toll and Road Charges': 0,
       'Driver and Helper Expenses': 0,
-      'Loading and Unloading': 0,
+      'Loading Expense': 0,
+      'Unloading Expense': 0,
       'Other Expenses': 0,
     };
 
@@ -208,6 +224,13 @@ export const Expenses = () => {
       totals.total += amt;
       if (totals[item.category] !== undefined) {
         totals[item.category] += amt;
+      } else if (item.category === 'Loading and Unloading') {
+        const isUnload = String(item.notes || '').toLowerCase().includes('unload');
+        if (isUnload) {
+          totals['Unloading Expense'] += amt;
+        } else {
+          totals['Loading Expense'] += amt;
+        }
       } else {
         totals['Other Expenses'] += amt;
       }
@@ -418,10 +441,10 @@ export const Expenses = () => {
         </div>
       </div>
 
-      {/* TOP KPI CARDS FOR THE 6 REQUESTED CATEGORIES */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3">
+      {/* TOP KPI CARDS FOR CATEGORIES */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2.5">
         {/* Total Overall Expenses */}
-        <div className="col-span-2 sm:col-span-3 lg:col-span-1 bg-gradient-to-br from-[#072440] to-[#0c3761] text-white p-3.5 rounded-xl shadow-md border border-sky-950 flex flex-col justify-between">
+        <div className="col-span-2 sm:col-span-4 lg:col-span-1 bg-gradient-to-br from-[#072440] to-[#0c3761] text-white p-3 rounded-xl shadow-md border border-sky-950 flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-black uppercase tracking-wider text-sky-300">
               Total Expenses
@@ -429,7 +452,7 @@ export const Expenses = () => {
             <DollarSign className="w-4 h-4 text-sky-400" />
           </div>
           <div className="mt-2">
-            <div className="text-lg font-black tracking-tight text-white">
+            <div className="text-base sm:text-lg font-black tracking-tight text-white">
               {formatCurrency(categoryTotals.total)}
             </div>
             <div className="text-[10px] text-sky-200/80 font-semibold mt-0.5">
@@ -446,7 +469,7 @@ export const Expenses = () => {
           } ${categoryConfig['Diesel / Fuel Expense'].cardBorder}`}
         >
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold uppercase text-slate-500">Diesel / Fuel</span>
+            <span className="text-[10px] font-bold uppercase text-slate-500 truncate">Diesel / Fuel</span>
             <div className="p-1 rounded-md bg-amber-50 text-amber-600">
               <Fuel className="w-3.5 h-3.5" />
             </div>
@@ -455,7 +478,7 @@ export const Expenses = () => {
             <div className="text-base font-black text-slate-900">
               {formatCurrency(categoryTotals['Diesel / Fuel Expense'])}
             </div>
-            <div className="text-[10px] font-bold text-amber-600 mt-0.5">
+            <div className="text-[10px] font-bold text-amber-600 mt-0.5 truncate">
               Fuel & Diesel
             </div>
           </div>
@@ -469,7 +492,7 @@ export const Expenses = () => {
           } ${categoryConfig['Vehicle Maintenance'].cardBorder}`}
         >
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold uppercase text-slate-500">Maintenance</span>
+            <span className="text-[10px] font-bold uppercase text-slate-500 truncate">Maintenance</span>
             <div className="p-1 rounded-md bg-rose-50 text-rose-600">
               <Wrench className="w-3.5 h-3.5" />
             </div>
@@ -478,7 +501,7 @@ export const Expenses = () => {
             <div className="text-base font-black text-slate-900">
               {formatCurrency(categoryTotals['Vehicle Maintenance'])}
             </div>
-            <div className="text-[10px] font-bold text-rose-600 mt-0.5">
+            <div className="text-[10px] font-bold text-rose-600 mt-0.5 truncate">
               Repairs & Garage
             </div>
           </div>
@@ -492,7 +515,7 @@ export const Expenses = () => {
           } ${categoryConfig['Toll and Road Charges'].cardBorder}`}
         >
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold uppercase text-slate-500">Toll & Road</span>
+            <span className="text-[10px] font-bold uppercase text-slate-500 truncate">Toll & Road</span>
             <div className="p-1 rounded-md bg-purple-50 text-purple-600">
               <Navigation className="w-3.5 h-3.5" />
             </div>
@@ -501,7 +524,7 @@ export const Expenses = () => {
             <div className="text-base font-black text-slate-900">
               {formatCurrency(categoryTotals['Toll and Road Charges'])}
             </div>
-            <div className="text-[10px] font-bold text-purple-600 mt-0.5">
+            <div className="text-[10px] font-bold text-purple-600 mt-0.5 truncate">
               Fastag & RTO
             </div>
           </div>
@@ -515,7 +538,7 @@ export const Expenses = () => {
           } ${categoryConfig['Driver and Helper Expenses'].cardBorder}`}
         >
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold uppercase text-slate-500">Driver & Helper</span>
+            <span className="text-[10px] font-bold uppercase text-slate-500 truncate">Driver/Helper</span>
             <div className="p-1 rounded-md bg-sky-50 text-sky-600">
               <Users className="w-3.5 h-3.5" />
             </div>
@@ -524,36 +547,59 @@ export const Expenses = () => {
             <div className="text-base font-black text-slate-900">
               {formatCurrency(categoryTotals['Driver and Helper Expenses'])}
             </div>
-            <div className="text-[10px] font-bold text-sky-600 mt-0.5">
+            <div className="text-[10px] font-bold text-sky-600 mt-0.5 truncate">
               Bhatta & Advances
             </div>
           </div>
         </div>
 
-        {/* 5. Loading and Unloading */}
+        {/* 5. Loading Expense */}
         <div
-          onClick={() => setSelectedCategory(selectedCategory === 'Loading and Unloading' ? 'ALL' : 'Loading and Unloading')}
+          onClick={() => setSelectedCategory(selectedCategory === 'Loading Expense' ? 'ALL' : 'Loading Expense')}
           className={`bg-white p-3 rounded-xl border transition-all cursor-pointer shadow-2xs hover:shadow-md ${
-            selectedCategory === 'Loading and Unloading' ? 'ring-2 ring-emerald-500 border-emerald-500' : 'border-slate-200'
-          } ${categoryConfig['Loading and Unloading'].cardBorder}`}
+            selectedCategory === 'Loading Expense' ? 'ring-2 ring-emerald-500 border-emerald-500' : 'border-slate-200'
+          } ${categoryConfig['Loading Expense'].cardBorder}`}
         >
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold uppercase text-slate-500">Hamali / Loading</span>
+            <span className="text-[10px] font-bold uppercase text-slate-500 truncate">Loading</span>
             <div className="p-1 rounded-md bg-emerald-50 text-emerald-600">
-              <Package className="w-3.5 h-3.5" />
+              <ArrowUpFromLine className="w-3.5 h-3.5" />
             </div>
           </div>
           <div className="mt-2">
             <div className="text-base font-black text-slate-900">
-              {formatCurrency(categoryTotals['Loading and Unloading'])}
+              {formatCurrency(categoryTotals['Loading Expense'])}
             </div>
-            <div className="text-[10px] font-bold text-emerald-600 mt-0.5">
-              Labour Charges
+            <div className="text-[10px] font-bold text-emerald-600 mt-0.5 truncate">
+              Loading Hamali
             </div>
           </div>
         </div>
 
-        {/* 6. Other Expenses */}
+        {/* 6. Unloading Expense */}
+        <div
+          onClick={() => setSelectedCategory(selectedCategory === 'Unloading Expense' ? 'ALL' : 'Unloading Expense')}
+          className={`bg-white p-3 rounded-xl border transition-all cursor-pointer shadow-2xs hover:shadow-md ${
+            selectedCategory === 'Unloading Expense' ? 'ring-2 ring-teal-500 border-teal-500' : 'border-slate-200'
+          } ${categoryConfig['Unloading Expense'].cardBorder}`}
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-bold uppercase text-slate-500 truncate">Unloading</span>
+            <div className="p-1 rounded-md bg-teal-50 text-teal-600">
+              <ArrowDownToLine className="w-3.5 h-3.5" />
+            </div>
+          </div>
+          <div className="mt-2">
+            <div className="text-base font-black text-slate-900">
+              {formatCurrency(categoryTotals['Unloading Expense'])}
+            </div>
+            <div className="text-[10px] font-bold text-teal-600 mt-0.5 truncate">
+              Unloading Hamali
+            </div>
+          </div>
+        </div>
+
+        {/* 7. Other Expenses */}
         <div
           onClick={() => setSelectedCategory(selectedCategory === 'Other Expenses' ? 'ALL' : 'Other Expenses')}
           className={`bg-white p-3 rounded-xl border transition-all cursor-pointer shadow-2xs hover:shadow-md ${
@@ -561,7 +607,7 @@ export const Expenses = () => {
           } ${categoryConfig['Other Expenses'].cardBorder}`}
         >
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold uppercase text-slate-500">Other Expenses</span>
+            <span className="text-[10px] font-bold uppercase text-slate-500 truncate">Other Expenses</span>
             <div className="p-1 rounded-md bg-slate-100 text-slate-600">
               <MoreHorizontal className="w-3.5 h-3.5" />
             </div>
@@ -570,7 +616,7 @@ export const Expenses = () => {
             <div className="text-base font-black text-slate-900">
               {formatCurrency(categoryTotals['Other Expenses'])}
             </div>
-            <div className="text-[10px] font-bold text-slate-600 mt-0.5">
+            <div className="text-[10px] font-bold text-slate-600 mt-0.5 truncate">
               Misc & Godown
             </div>
           </div>
