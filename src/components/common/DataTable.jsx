@@ -313,10 +313,10 @@ export const DataTable = ({
       {/* Table Container */}
       <div className="w-full overflow-x-auto">
         <table className="w-full text-left text-xs text-slate-700 border-collapse table-auto">
-          <thead className="bg-slate-100 text-slate-800 font-extrabold border-b border-slate-200 text-[10px] uppercase tracking-tight">
+          <thead className="bg-slate-100 text-slate-800 font-extrabold border-b border-slate-200 text-[10.5px] uppercase tracking-tight">
             <tr>
               {selectable && (
-                <th className="px-2 py-3.5 w-6 text-center">
+                <th className="px-2 py-3 w-8 text-center">
                   <input
                     type="checkbox"
                     checked={allSelected}
@@ -325,16 +325,28 @@ export const DataTable = ({
                   />
                 </th>
               )}
-              {columns.map((col, idx) => (
-                <th
-                  key={idx}
-                  className={`px-2 py-3.5 leading-tight whitespace-nowrap ${
-                    col.key === 'actions' ? 'text-center w-[76px]' : ''
-                  }`}
-                >
-                  {col.label}
-                </th>
-              ))}
+              {columns.map((col, idx) => {
+                const isAction = col.key === 'actions';
+                const isCenter = isAction || col.type === 'status' || col.align === 'center' || col.key === 'pkg';
+                const isRight = col.type === 'currency' || col.align === 'right';
+
+                return (
+                  <th
+                    key={idx}
+                    className={`px-2 py-3 leading-tight whitespace-nowrap ${
+                      isAction
+                        ? 'text-center w-24 min-w-[92px]'
+                        : isRight
+                        ? 'text-right'
+                        : isCenter
+                        ? 'text-center'
+                        : 'text-left'
+                    } ${col.width || ''}`}
+                  >
+                    {col.label}
+                  </th>
+                );
+              })}
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-200 bg-white">
@@ -356,7 +368,7 @@ export const DataTable = ({
                   }`}
                 >
                   {selectable && (
-                    <td className="px-1 py-4 text-center">
+                    <td className="px-2 py-2.5 text-center">
                       <input
                         type="checkbox"
                         checked={selectedIds.includes(row.id)}
@@ -378,7 +390,9 @@ export const DataTable = ({
                       cellVal = formatDate(cellVal);
                     }
 
-                    const isActionCol = col.key === 'actions';
+                    const isAction = col.key === 'actions';
+                    const isCenter = isAction || col.type === 'status' || col.align === 'center' || col.key === 'pkg';
+                    const isRight = col.type === 'currency' || col.align === 'right';
                     const isNumOrDate =
                       col.nowrap ||
                       col.type === 'status' ||
@@ -397,14 +411,18 @@ export const DataTable = ({
                     return (
                       <td
                         key={colIdx}
-                        className={`px-2 py-3.5 font-semibold text-slate-800 text-[11px] leading-snug ${
-                          isActionCol
+                        className={`px-2 py-2.5 font-semibold text-slate-800 text-[11px] leading-snug ${
+                          isAction
+                            ? 'whitespace-nowrap text-center w-24 min-w-[92px]'
+                            : isRight
+                            ? 'whitespace-nowrap text-right font-bold'
+                            : isCenter
                             ? 'whitespace-nowrap text-center'
                             : isNumOrDate
                             ? 'whitespace-nowrap'
                             : col.width
                             ? col.width
-                            : 'max-w-[140px] truncate'
+                            : 'max-w-[130px] truncate'
                         }`}
                         title={!col.render && typeof row[col.key] === 'string' ? row[col.key] : undefined}
                       >
@@ -417,7 +435,7 @@ export const DataTable = ({
             )}
           </tbody>
 
-          {/* TOTAL Summary Footer Row (Matching Image 1 + Grand Total Sum) */}
+          {/* TOTAL Summary Footer Row */}
           {showTotal && filteredData.length > 0 && (() => {
             const grandTotalSum = filteredData.reduce((acc, curr) => {
               const toPay = Number(curr.toPayAmount ?? curr.totalToPay) || 0;
@@ -427,14 +445,25 @@ export const DataTable = ({
               return acc + (sum || Number(curr.totalFreight || curr.freight) || 0);
             }, 0);
 
+            const lastTotalIndex = totalColIndices.length > 0 ? totalColIndices[totalColIndices.length - 1] : -1;
+            const hasExplicitTotalCol = columns.some((c) =>
+              ['totalfreight', 'totalmoney', 'grandtotal', 'netamount'].includes((c.key || '').toLowerCase())
+            );
+            const grandTotalColIndex =
+              !hasExplicitTotalCol && lastTotalIndex !== -1 && lastTotalIndex + 1 < columns.length && columns[lastTotalIndex + 1].key !== 'actions'
+                ? lastTotalIndex + 1
+                : -1;
+
             return (
               <tfoot className="bg-sky-50/90 border-t-2 border-slate-300 font-extrabold text-slate-900 text-[11px]">
                 <tr>
-                  {selectable && <td className="px-2 py-3.5"></td>}
+                  {selectable && <td className="px-2 py-2.5"></td>}
                   {columns.map((col, colIdx) => {
+                    const isAction = col.key === 'actions';
+
                     if (colIdx === labelIndex) {
                       return (
-                        <td key={colIdx} className="px-2 py-3.5 text-right font-black tracking-wider uppercase text-slate-900 whitespace-nowrap">
+                        <td key={colIdx} className="px-2 py-2.5 text-right font-black tracking-wider uppercase text-slate-900 whitespace-nowrap">
                           TOTAL:
                         </td>
                       );
@@ -449,28 +478,33 @@ export const DataTable = ({
 
                       if (k.includes('pkg') || k.includes('qty')) {
                         return (
-                          <td key={colIdx} className="px-2 py-3.5 font-black text-slate-900 whitespace-nowrap">
+                          <td key={colIdx} className="px-2 py-2.5 font-black text-slate-900 text-center whitespace-nowrap">
                             {sum} Pkgs
                           </td>
                         );
                       }
 
                       return (
-                        <td key={colIdx} className="px-2 py-3.5 font-extrabold text-[#1e295b] whitespace-nowrap">
+                        <td key={colIdx} className="px-2 py-2.5 font-extrabold text-[#1e295b] text-right whitespace-nowrap">
                           {formatCurrency(sum)}
                         </td>
                       );
                     }
 
-                    if (colIdx === columns.length - 1) {
+                    if (colIdx === grandTotalColIndex) {
                       return (
-                        <td key={colIdx} className="px-2 py-3.5 font-black text-emerald-900 bg-emerald-100/90 rounded text-center whitespace-nowrap border border-emerald-300 shadow-xs text-[10px]" title="To Pay + TBB + Paid = Total">
-                          {formatCurrency(grandTotalSum)}
+                        <td key={colIdx} className="px-2 py-2 text-center whitespace-nowrap">
+                          <span
+                            className="inline-flex items-center px-2 py-0.5 font-black text-emerald-950 bg-emerald-100 rounded border border-emerald-300 text-[10px] shadow-2xs"
+                            title="Total Freight (To Pay + TBB + Paid)"
+                          >
+                            Total: {formatCurrency(grandTotalSum)}
+                          </span>
                         </td>
                       );
                     }
 
-                    return <td key={colIdx} className="px-2 py-3.5"></td>;
+                    return <td key={colIdx} className={`px-2 py-2.5 ${isAction ? 'w-24 min-w-[92px]' : ''}`}></td>;
                   })}
                 </tr>
               </tfoot>
