@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 import { Modal } from '../../components/common/Modal';
+import { EditableCombobox } from '../../components/common/EditableCombobox';
 import { Save, Printer, ArrowLeft, AlertCircle, Plus, Trash2, Edit2, RotateCcw, PackageCheck, Eye, X, Search } from 'lucide-react';
 import { getTodayDateString, formatDate } from '../../utils/dateUtils';
 import { formatCurrency } from '../../utils/numberUtils';
@@ -614,18 +615,14 @@ export const OutwardCreate = () => {
               TRANSPORTER NAME
             </label>
             <div className="flex items-center space-x-1 min-w-0">
-              <select
+              <EditableCombobox
                 name="transporterName"
                 value={headerData.transporterName}
                 onChange={handleHeaderChange}
-                className="flex-1 px-2.5 py-1.5 border border-slate-300 bg-white rounded text-xs font-bold text-slate-800 focus:ring-1 focus:ring-sky-500 min-w-0 truncate"
-              >
-                {masters.transporters.map((t) => (
-                  <option key={t.id} value={t.name}>
-                    {t.name}
-                  </option>
-                ))}
-              </select>
+                options={masters.transporters}
+                placeholder="Select or type Transporter"
+                className="px-2.5 py-1.5 border border-slate-300 bg-white rounded text-xs font-bold text-slate-800 focus:ring-1 focus:ring-sky-500"
+              />
               <button
                 type="button"
                 onClick={() => handleOpenQuickAdd('transporters', 'Transporter', 'transporterName', true)}
@@ -642,18 +639,14 @@ export const OutwardCreate = () => {
               FROM (ORIGIN STATION) *
             </label>
             <div className="flex items-center space-x-1 min-w-0">
-              <select
+              <EditableCombobox
                 name="fromStation"
                 value={headerData.fromStation}
                 onChange={handleHeaderChange}
-                className="flex-1 px-2.5 py-1.5 border border-slate-300 bg-white rounded text-xs font-bold text-slate-800 focus:ring-1 focus:ring-sky-500 min-w-0 truncate"
-              >
-                {masters.stations.map((st) => (
-                  <option key={st.id} value={st.name}>
-                    {st.name}
-                  </option>
-                ))}
-              </select>
+                options={masters.stations}
+                placeholder="Select or type Station"
+                className="px-2.5 py-1.5 border border-slate-300 bg-white rounded text-xs font-bold text-slate-800 focus:ring-1 focus:ring-sky-500"
+              />
               <button
                 type="button"
                 onClick={() => handleOpenQuickAdd('stations', 'Origin Station', 'fromStation', true)}
@@ -670,18 +663,14 @@ export const OutwardCreate = () => {
               VEHICLE NO. *
             </label>
             <div className="flex items-center space-x-1 min-w-0">
-              <select
+              <EditableCombobox
                 name="vehicleNo"
                 value={headerData.vehicleNo}
                 onChange={handleHeaderChange}
-                className="flex-1 px-2.5 py-1.5 border border-slate-300 bg-white rounded text-xs font-extrabold text-[#1e295b] focus:ring-1 focus:ring-sky-500 uppercase min-w-0 truncate"
-              >
-                {masters.vehicles.map((v) => (
-                  <option key={v.id} value={v.vehicleNo}>
-                    {v.vehicleNo}
-                  </option>
-                ))}
-              </select>
+                options={masters.vehicles}
+                placeholder="Select or type Vehicle"
+                className="px-2.5 py-1.5 border border-slate-300 bg-white rounded text-xs font-extrabold text-[#1e295b] focus:ring-1 focus:ring-sky-500"
+              />
               <button
                 type="button"
                 onClick={() => handleOpenQuickAdd('vehicles', 'Vehicle Number', 'vehicleNo', true)}
@@ -698,18 +687,14 @@ export const OutwardCreate = () => {
               DELIVERY PERSON *
             </label>
             <div className="flex items-center space-x-1 min-w-0">
-              <select
+              <EditableCombobox
                 name="deliveryPersonName"
                 value={headerData.deliveryPersonName}
                 onChange={handleHeaderChange}
-                className="flex-1 px-2.5 py-1.5 border border-emerald-300 bg-emerald-50 rounded text-xs font-extrabold text-emerald-900 focus:ring-1 focus:ring-emerald-500 min-w-0 truncate"
-              >
-                {masters.deliveryPersons.map((dp) => (
-                  <option key={dp.id} value={dp.name}>
-                    {dp.name}
-                  </option>
-                ))}
-              </select>
+                options={masters.deliveryPersons}
+                placeholder="Select or type Delivery Person"
+                className="px-2.5 py-1.5 border border-emerald-300 bg-emerald-50 rounded text-xs font-extrabold text-emerald-900 focus:ring-1 focus:ring-emerald-500"
+              />
               <button
                 type="button"
                 onClick={() => handleOpenQuickAdd('deliveryPersons', 'Delivery Person', 'deliveryPersonName', true)}
@@ -726,18 +711,14 @@ export const OutwardCreate = () => {
               DRIVER NAME *
             </label>
             <div className="flex items-center space-x-1 min-w-0">
-              <select
+              <EditableCombobox
                 name="driverName"
                 value={headerData.driverName}
                 onChange={handleHeaderChange}
-                className="flex-1 px-2.5 py-1.5 border border-slate-300 bg-white rounded text-xs font-semibold text-slate-800 focus:ring-1 focus:ring-sky-500 min-w-0 truncate"
-              >
-                {masters.drivers.map((d) => (
-                  <option key={d.id} value={d.name}>
-                    {d.name}
-                  </option>
-                ))}
-              </select>
+                options={masters.drivers}
+                placeholder="Select or type Driver"
+                className="px-2.5 py-1.5 border border-slate-300 bg-white rounded text-xs font-semibold text-slate-800 focus:ring-1 focus:ring-sky-500"
+              />
               <button
                 type="button"
                 onClick={() => handleOpenQuickAdd('drivers', 'Driver Name', 'driverName', true)}
@@ -1135,28 +1116,25 @@ export const OutwardCreate = () => {
             </div>
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase mb-1">CT To (Station)</label>
-              <input
-                type="text"
+              <EditableCombobox
                 name="ctTo"
                 value={itemForm.ctTo}
                 onChange={handleItemChange}
+                options={masters.stations}
+                placeholder="Select or type Station"
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
               />
             </div>
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Delivery Person</label>
-              <select
+              <EditableCombobox
                 name="deliveryPersonName"
                 value={itemForm.deliveryPersonName}
                 onChange={handleItemChange}
+                options={masters.deliveryPersons}
+                placeholder="Select or type Delivery Person"
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm font-semibold"
-              >
-                {masters.deliveryPersons.map((dp) => (
-                  <option key={dp.id} value={dp.name}>
-                    {dp.name}
-                  </option>
-                ))}
-              </select>
+              />
             </div>
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Consignor</label>

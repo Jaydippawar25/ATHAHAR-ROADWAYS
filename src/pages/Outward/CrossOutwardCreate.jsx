@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 import { Modal } from '../../components/common/Modal';
+import { EditableCombobox } from '../../components/common/EditableCombobox';
 import { Save, Printer, ArrowLeft, AlertCircle, Plus, Trash2, Edit2, RotateCcw, Eye } from 'lucide-react';
 import { getTodayDateString, formatDate } from '../../utils/dateUtils';
 import { formatCurrency } from '../../utils/numberUtils';
@@ -502,18 +503,14 @@ export const CrossOutwardCreate = () => {
               Transporter Name
             </label>
             <div className="flex">
-              <select
+              <EditableCombobox
+                name="transporterName"
                 value={headerData.transporterName}
-                onChange={(e) => handleHeaderChange('transporterName', e.target.value)}
+                onChange={(e, val) => handleHeaderChange('transporterName', val)}
+                options={masters.transporters}
+                placeholder="Select or type Transporter"
                 className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-l text-xs font-semibold text-slate-900 focus:outline-none focus:border-sky-600"
-              >
-                <option value="">-- Select Transporter --</option>
-                {masters.transporters.map((t) => (
-                  <option key={t.id} value={t.name}>
-                    {t.name}
-                  </option>
-                ))}
-              </select>
+              />
               <button
                 type="button"
                 onClick={() => openQuickAdd('transporters', 'Add New Transporter', 'transporterName', true)}
@@ -531,18 +528,14 @@ export const CrossOutwardCreate = () => {
               From (Origin Station) <span className="text-red-500">*</span>
             </label>
             <div className="flex">
-              <select
+              <EditableCombobox
+                name="fromStation"
                 value={headerData.fromStation}
-                onChange={(e) => handleHeaderChange('fromStation', e.target.value)}
+                onChange={(e, val) => handleHeaderChange('fromStation', val)}
+                options={masters.stations}
+                placeholder="Select or type Station"
                 className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-l text-xs font-semibold text-slate-900 focus:outline-none focus:border-sky-600"
-              >
-                <option value="">-- Select Station --</option>
-                {masters.stations.map((s) => (
-                  <option key={s.id} value={s.name}>
-                    {s.name}
-                  </option>
-                ))}
-              </select>
+              />
               <button
                 type="button"
                 onClick={() => openQuickAdd('stations', 'Add New Station / City', 'fromStation', true)}
@@ -560,18 +553,14 @@ export const CrossOutwardCreate = () => {
               Vehicle No. <span className="text-red-500">*</span>
             </label>
             <div className="flex">
-              <select
+              <EditableCombobox
+                name="vehicleNo"
                 value={headerData.vehicleNo}
-                onChange={(e) => handleHeaderChange('vehicleNo', e.target.value)}
+                onChange={(e, val) => handleHeaderChange('vehicleNo', val)}
+                options={masters.vehicles}
+                placeholder="Select or type Vehicle"
                 className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-l text-xs font-semibold text-slate-900 focus:outline-none focus:border-sky-600"
-              >
-                <option value="">-- Select Vehicle --</option>
-                {masters.vehicles.map((v) => (
-                  <option key={v.id} value={v.vehicleNo}>
-                    {v.vehicleNo}
-                  </option>
-                ))}
-              </select>
+              />
               <button
                 type="button"
                 onClick={() => openQuickAdd('vehicles', 'Add New Vehicle No.', 'vehicleNo', true)}
@@ -589,18 +578,14 @@ export const CrossOutwardCreate = () => {
               Driver Name <span className="text-red-500">*</span>
             </label>
             <div className="flex">
-              <select
+              <EditableCombobox
+                name="driverName"
                 value={headerData.driverName}
-                onChange={(e) => handleHeaderChange('driverName', e.target.value)}
+                onChange={(e, val) => handleHeaderChange('driverName', val)}
+                options={masters.drivers}
+                placeholder="Select or type Driver"
                 className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-l text-xs font-semibold text-slate-900 focus:outline-none focus:border-sky-600"
-              >
-                <option value="">-- Select Driver --</option>
-                {masters.drivers.map((d) => (
-                  <option key={d.id} value={d.name}>
-                    {d.name}
-                  </option>
-                ))}
-              </select>
+              />
               <button
                 type="button"
                 onClick={() => openQuickAdd('drivers', 'Add New Driver Name', 'driverName', true)}
@@ -618,18 +603,14 @@ export const CrossOutwardCreate = () => {
               Vehicle Owner Name
             </label>
             <div className="flex">
-              <select
+              <EditableCombobox
+                name="ownerName"
                 value={headerData.ownerName}
-                onChange={(e) => handleHeaderChange('ownerName', e.target.value)}
+                onChange={(e, val) => handleHeaderChange('ownerName', val)}
+                options={(masters.vehicleOwners || []).map((o) => o.name)}
+                placeholder="Select or type Owner"
                 className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-l text-xs font-semibold text-slate-900 focus:outline-none focus:border-sky-600"
-              >
-                <option value="">-- Select Owner --</option>
-                {(masters.vehicleOwners || []).map((o) => (
-                  <option key={o.id} value={o.name}>
-                    {o.name}
-                  </option>
-                ))}
-              </select>
+              />
               <button
                 type="button"
                 onClick={() => openQuickAdd('vehicleOwners', 'Add Vehicle Owner', 'ownerName', true)}
@@ -765,20 +746,16 @@ export const CrossOutwardCreate = () => {
                 CT TO:
               </label>
               <div className="flex">
-                <select
+                <EditableCombobox
                   ref={(el) => (fieldRefs.current[5] = el)}
+                  name="ctTo"
                   value={itemForm.ctTo}
-                  onChange={(e) => handleItemChange('ctTo', e.target.value)}
+                  onChange={(e, val) => handleItemChange('ctTo', val)}
                   onKeyDown={(e) => handleKeyDown(e, 5)}
+                  options={masters.stations}
+                  placeholder="Select or type Destination"
                   className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-l text-xs font-semibold text-slate-900 focus:outline-none focus:border-sky-600"
-                >
-                  <option value="">-- Select Destination --</option>
-                  {masters.stations.map((s) => (
-                    <option key={s.id} value={s.name}>
-                      {s.name}
-                    </option>
-                  ))}
-                </select>
+                />
                 <button
                   type="button"
                   onClick={() => openQuickAdd('stations', 'Add Destination City (CT TO)', 'ctTo', false)}
