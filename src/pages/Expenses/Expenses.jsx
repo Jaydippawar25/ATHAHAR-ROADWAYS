@@ -371,6 +371,24 @@ export const Expenses = () => {
     exportToPDF(title, columns, data, `Athahar_Expenses_${getTodayDateString()}`);
   };
 
+  // Helper for compact short labels in table
+  const getCategoryShortLabel = (cat) => {
+    if (cat === 'Diesel / Fuel Expense') return 'Diesel / Fuel';
+    if (cat === 'Vehicle Maintenance') return 'Maintenance';
+    if (cat === 'Toll and Road Charges') return 'Toll & Road';
+    if (cat === 'Driver and Helper Expenses') return 'Driver / Helper';
+    if (cat === 'Loading Expense') return 'Loading';
+    if (cat === 'Unloading Expense') return 'Unloading';
+    if (cat === 'Loading and Unloading') return 'Loading / Unload';
+    if (cat === 'Other Expenses') return 'Other';
+    return cat;
+  };
+
+  const getPaymentModeShortLabel = (mode) => {
+    if (mode === 'BANK_TRANSFER') return 'BANK TRF';
+    return mode || 'CASH';
+  };
+
   return (
     <div className="space-y-5 text-slate-800 max-w-full">
       {/* PAGE HEADER */}
@@ -715,19 +733,19 @@ export const Expenses = () => {
 
       {/* EXPENSES DATA TABLE */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse table-auto">
+        <div className="w-full overflow-x-hidden">
+          <table className="w-full text-left border-collapse table-fixed">
             <thead>
-              <tr className="bg-slate-100/90 border-b border-slate-200 text-[10.5px] font-black text-slate-700 uppercase tracking-tight">
-                <th className="py-2.5 px-3 whitespace-nowrap">Date</th>
-                <th className="py-2.5 px-3 whitespace-nowrap">Voucher No</th>
-                <th className="py-2.5 px-3 whitespace-nowrap">Category</th>
-                <th className="py-2.5 px-3 whitespace-nowrap">Vehicle No</th>
-                <th className="py-2.5 px-3 whitespace-nowrap">Paid To / Payee</th>
-                <th className="py-2.5 px-3 text-center whitespace-nowrap">Payment Mode</th>
-                <th className="py-2.5 px-3 text-right whitespace-nowrap">Amount (₹)</th>
-                <th className="py-2.5 px-3 whitespace-nowrap">Notes / Ref</th>
-                <th className="py-2.5 px-3 text-center whitespace-nowrap w-20 min-w-[76px]">Actions</th>
+              <tr className="bg-slate-100/90 border-b border-slate-200 text-[10px] font-black text-slate-700 uppercase tracking-tight">
+                <th className="py-2.5 px-2 w-[76px] whitespace-nowrap">Date</th>
+                <th className="py-2.5 px-2 w-[72px] whitespace-nowrap">Voucher</th>
+                <th className="py-2.5 px-2 w-[125px] whitespace-nowrap">Category</th>
+                <th className="py-2.5 px-2 w-[98px] whitespace-nowrap">Vehicle No</th>
+                <th className="py-2.5 px-2 w-[125px] whitespace-nowrap">Paid To / Payee</th>
+                <th className="py-2.5 px-2 w-[65px] text-center whitespace-nowrap">Mode</th>
+                <th className="py-2.5 px-2 w-[85px] text-right whitespace-nowrap">Amount (₹)</th>
+                <th className="py-2.5 px-2 whitespace-nowrap">Notes / Ref</th>
+                <th className="py-2.5 px-2 w-[65px] text-center whitespace-nowrap">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-xs font-semibold text-slate-800">
@@ -744,25 +762,25 @@ export const Expenses = () => {
                   const Icon = conf.icon;
                   return (
                     <tr key={item.id} className="hover:bg-sky-50/50 transition-colors">
-                      <td className="py-2.5 px-3 font-bold text-slate-700 whitespace-nowrap text-[11px]">
+                      <td className="py-2 px-2 font-bold text-slate-700 whitespace-nowrap text-[10.5px]">
                         {formatDate(item.date)}
                       </td>
-                      <td className="py-2.5 px-3 whitespace-nowrap">
-                        <span className="font-extrabold text-sky-800 bg-sky-50 px-2 py-0.5 rounded border border-sky-200 text-[11px]">
+                      <td className="py-2 px-2 whitespace-nowrap">
+                        <span className="font-extrabold text-sky-800 bg-sky-50 px-1.5 py-0.5 rounded border border-sky-200 text-[10.5px]">
                           #{item.voucherNo}
                         </span>
                       </td>
-                      <td className="py-2.5 px-3 whitespace-nowrap">
+                      <td className="py-2 px-2 whitespace-nowrap" title={item.category}>
                         <span
-                          className={`inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[10.5px] font-black border ${conf.badge}`}
+                          className={`inline-flex items-center space-x-1 px-1.5 py-0.5 rounded-full text-[10px] font-black border ${conf.badge}`}
                         >
-                          <Icon className="w-3 h-3 mr-1" />
-                          <span>{item.category}</span>
+                          <Icon className="w-2.5 h-2.5 mr-0.5 shrink-0" />
+                          <span className="truncate">{getCategoryShortLabel(item.category)}</span>
                         </span>
                       </td>
-                      <td className="py-2.5 px-3 whitespace-nowrap">
+                      <td className="py-2 px-2 whitespace-nowrap" title={item.vehicleNo || ''}>
                         {item.vehicleNo ? (
-                          <span className="font-extrabold text-slate-900 bg-slate-100 px-2 py-0.5 rounded border border-slate-200 text-[11px]">
+                          <span className="font-extrabold text-slate-900 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200 text-[10.5px]">
                             {item.vehicleNo}
                           </span>
                         ) : (
@@ -770,27 +788,30 @@ export const Expenses = () => {
                         )}
                       </td>
                       <td
-                        className="py-2.5 px-3 max-w-[150px] truncate font-bold text-slate-900 text-[11px]"
+                        className="py-2 px-2 truncate font-bold text-slate-900 text-[11px]"
                         title={item.payeeName}
                       >
                         {item.payeeName || <span className="text-slate-400 font-normal">-</span>}
                       </td>
-                      <td className="py-2.5 px-3 whitespace-nowrap text-center">
-                        <span className="text-[10px] font-extrabold px-2 py-0.5 rounded bg-slate-100 border border-slate-300 text-slate-700">
-                          {item.paymentMode || 'CASH'}
+                      <td className="py-2 px-2 whitespace-nowrap text-center">
+                        <span
+                          className="text-[9.5px] font-extrabold px-1.5 py-0.5 rounded bg-slate-100 border border-slate-300 text-slate-700 uppercase"
+                          title={item.paymentMode || 'CASH'}
+                        >
+                          {getPaymentModeShortLabel(item.paymentMode)}
                         </span>
                       </td>
-                      <td className="py-2.5 px-3 text-right font-black text-xs text-slate-900 whitespace-nowrap">
+                      <td className="py-2 px-2 text-right font-black text-xs text-slate-900 whitespace-nowrap">
                         {formatCurrency(item.amount)}
                       </td>
                       <td
-                        className="py-2.5 px-3 max-w-[160px] truncate text-slate-600 font-medium text-[11px]"
+                        className="py-2 px-2 truncate text-slate-600 font-medium text-[11px]"
                         title={item.notes ? item.notes : item.referenceNo ? `Ref: ${item.referenceNo}` : ''}
                       >
                         {item.notes ? item.notes : item.referenceNo ? `Ref: ${item.referenceNo}` : '-'}
                       </td>
-                      <td className="py-2.5 px-3 text-center whitespace-nowrap w-20 min-w-[76px]">
-                        <div className="flex items-center justify-center space-x-1">
+                      <td className="py-2 px-2 text-center whitespace-nowrap">
+                        <div className="flex items-center justify-center space-x-0.5">
                           <button
                             type="button"
                             onClick={() => setViewingExpense(item)}
@@ -825,13 +846,13 @@ export const Expenses = () => {
             {filteredExpenses.length > 0 && (
               <tfoot>
                 <tr className="bg-sky-50/90 font-black border-t-2 border-slate-300 text-slate-900 text-[11px]">
-                  <td colSpan={6} className="py-2.5 px-3 uppercase tracking-wider text-right font-black text-slate-900">
+                  <td colSpan={6} className="py-2 px-2 uppercase tracking-wider text-right font-black text-slate-900">
                     TOTAL FILTERED EXPENSES:
                   </td>
-                  <td className="py-2.5 px-3 text-right font-black text-xs text-[#1e295b] whitespace-nowrap">
+                  <td className="py-2 px-2 text-right font-black text-xs text-[#1e295b] whitespace-nowrap">
                     {formatCurrency(categoryTotals.total)}
                   </td>
-                  <td colSpan={2} className="py-2.5 px-3 text-slate-500 font-bold text-left">
+                  <td colSpan={2} className="py-2 px-2 text-slate-500 font-bold text-left truncate">
                     {filteredExpenses.length} Records
                   </td>
                 </tr>
