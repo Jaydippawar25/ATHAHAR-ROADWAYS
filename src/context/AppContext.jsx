@@ -27,6 +27,12 @@ import {
   updateVoucher,
   deleteVoucher,
 } from '../services/accountingService';
+import {
+  getAllExpenses,
+  createExpense,
+  updateExpense,
+  deleteExpense,
+} from '../services/expenseService';
 
 const AppContext = createContext(null);
 
@@ -38,6 +44,7 @@ export const AppProvider = ({ children }) => {
   const [outwardItems, setOutwardItems] = useState(getAllOutwardItems());
   const [pendingStock, setPendingStock] = useState(getPendingStockItems());
   const [vouchers, setVouchers] = useState(getAllVouchers());
+  const [expenses, setExpenses] = useState(getAllExpenses());
 
   const refreshData = () => {
     setMasters(getMasters());
@@ -47,6 +54,7 @@ export const AppProvider = ({ children }) => {
     setOutwardItems(getAllOutwardItems());
     setPendingStock(getPendingStockItems());
     setVouchers(getAllVouchers());
+    setExpenses(getAllExpenses());
   };
 
   const handleCreateInward = (headerData, lrItems, username) => {
@@ -157,6 +165,24 @@ export const AppProvider = ({ children }) => {
     return res;
   };
 
+  const handleCreateExpense = (expenseData, username) => {
+    const res = createExpense(expenseData, username);
+    refreshData();
+    return res;
+  };
+
+  const handleUpdateExpense = (id, fields, username) => {
+    const res = updateExpense(id, fields, username);
+    refreshData();
+    return res;
+  };
+
+  const handleDeleteExpense = (id) => {
+    const res = deleteExpense(id);
+    refreshData();
+    return res;
+  };
+
   return (
     <AppContext.Provider
       value={{
@@ -167,6 +193,7 @@ export const AppProvider = ({ children }) => {
         outwardItems,
         pendingStock,
         vouchers,
+        expenses,
         refreshData,
         handleCreateInward,
         handleUpdateFullInward,
@@ -186,6 +213,9 @@ export const AppProvider = ({ children }) => {
         handleCreateVoucher,
         handleUpdateVoucher,
         handleDeleteVoucher,
+        handleCreateExpense,
+        handleUpdateExpense,
+        handleDeleteExpense,
       }}
     >
       {children}

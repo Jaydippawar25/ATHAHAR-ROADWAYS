@@ -10,6 +10,7 @@ import { AllEntries } from '../pages/AllEntries/AllEntries';
 import { Masters } from '../pages/Masters/Masters';
 import { Reports } from '../pages/Reports/Reports';
 import { Accounting } from '../pages/Accounting/Accounting';
+import { Expenses } from '../pages/Expenses/Expenses';
 import { Settings } from '../pages/Settings/Settings';
 import { ProtectedRoute } from './ProtectedRoute';
 
@@ -114,6 +115,14 @@ export const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <Accounting />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/expenses"
+        element={
+          <ProtectedRoute>
+            <Expenses />
           </ProtectedRoute>
         }
       />

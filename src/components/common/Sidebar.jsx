@@ -9,6 +9,7 @@ import {
   ArrowLeftRight,
   FileText,
   Wallet,
+  Receipt,
   Database,
   Settings,
   Truck,
@@ -39,6 +40,7 @@ export const Sidebar = () => {
     { label: 'All Entries', path: '/all-entries', icon: ArrowLeftRight },
     { label: 'Reports', path: '/reports', icon: FileText },
     { label: 'Accounting', path: '/accounting', icon: Wallet },
+    { label: 'Expenses', path: '/expenses', icon: Receipt },
     { label: 'Masters', path: '/masters', icon: Database },
     { label: 'Settings', path: '/settings', icon: Settings },
   ];
