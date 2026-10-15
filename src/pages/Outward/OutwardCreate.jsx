@@ -23,11 +23,11 @@ export const OutwardCreate = () => {
   const [headerData, setHeaderData] = useState({
     outwardNo: getNextOutwardNo(outwards),
     date: getTodayDateString(),
-    transporterName: masters.transporters[0]?.name || '',
-    fromStation: masters.stations[0]?.name || 'SANGLI',
-    vehicleNo: masters.vehicles[0]?.vehicleNo || '',
-    deliveryPersonName: masters.deliveryPersons[0]?.name || '',
-    driverName: masters.drivers[0]?.name || '',
+    transporterName: '',
+    fromStation: '',
+    vehicleNo: '',
+    deliveryPersonName: '',
+    driverName: '',
     memoNo: '',
   });
 
@@ -38,8 +38,8 @@ export const OutwardCreate = () => {
     date: getTodayDateString(),
     pkg: '',
     invoiceNo: '',
-    ctTo: masters.stations[0]?.name || '',
-    deliveryPersonName: masters.deliveryPersons[0]?.name || '',
+    ctTo: '',
+    deliveryPersonName: '',
     consignorName: '',
     consigneeName: '',
     toPayAmount: '',
@@ -125,7 +125,7 @@ export const OutwardCreate = () => {
       const newAdditions = unselectedFiltered.map((item, idx) => ({
         ...item,
         srNo: selectedItems.length + idx + 1,
-        deliveryPersonName: headerData.deliveryPersonName || masters.deliveryPersons[0]?.name || '',
+        deliveryPersonName: headerData.deliveryPersonName || item.deliveryPersonName || '',
       }));
       setSelectedItems((prev) => [...prev, ...newAdditions]);
     } else if (filteredPendingStock.length > 0) {
@@ -193,7 +193,7 @@ export const OutwardCreate = () => {
       const items = location.state.selectedPendingItems.map((item, idx) => ({
         ...item,
         srNo: idx + 1,
-        deliveryPersonName: masters.deliveryPersons[0]?.name || 'SANTOSH SAI RAM PALUS',
+        deliveryPersonName: item.deliveryPersonName || headerData.deliveryPersonName || '',
       }));
       setSelectedItems(items);
     }
@@ -279,7 +279,7 @@ export const OutwardCreate = () => {
         toPayAmount: item.toPayAmount !== undefined && item.toPayAmount !== null ? item.toPayAmount : 0,
         tbbAmount: item.tbbAmount !== undefined && item.tbbAmount !== null ? item.tbbAmount : 0,
         paidAmount: item.paidAmount !== undefined && item.paidAmount !== null ? item.paidAmount : 0,
-        deliveryPersonName: headerData.deliveryPersonName || masters.deliveryPersons[0]?.name || 'SANTOSH SAI RAM PALUS',
+        deliveryPersonName: headerData.deliveryPersonName || item.deliveryPersonName || '',
       };
       setSelectedItems((prev) => [...prev, newItem]);
     }
@@ -366,8 +366,8 @@ export const OutwardCreate = () => {
       date: getTodayDateString(),
       pkg: '',
       invoiceNo: '',
-      ctTo: masters.stations[0]?.name || '',
-      deliveryPersonName: masters.deliveryPersons[0]?.name || '',
+      ctTo: '',
+      deliveryPersonName: '',
       consignorName: '',
       consigneeName: '',
       toPayAmount: '',
@@ -620,7 +620,7 @@ export const OutwardCreate = () => {
                 value={headerData.transporterName}
                 onChange={handleHeaderChange}
                 options={masters.transporters}
-                placeholder="Select or type Transporter"
+                placeholder=""
                 className="px-2.5 py-1.5 border border-slate-300 bg-white rounded text-xs font-bold text-slate-800 focus:ring-1 focus:ring-sky-500"
               />
               <button
@@ -644,7 +644,7 @@ export const OutwardCreate = () => {
                 value={headerData.fromStation}
                 onChange={handleHeaderChange}
                 options={masters.stations}
-                placeholder="Select or type Station"
+                placeholder=""
                 className="px-2.5 py-1.5 border border-slate-300 bg-white rounded text-xs font-bold text-slate-800 focus:ring-1 focus:ring-sky-500"
               />
               <button
@@ -668,7 +668,7 @@ export const OutwardCreate = () => {
                 value={headerData.vehicleNo}
                 onChange={handleHeaderChange}
                 options={masters.vehicles}
-                placeholder="Select or type Vehicle"
+                placeholder=""
                 className="px-2.5 py-1.5 border border-slate-300 bg-white rounded text-xs font-extrabold text-[#1e295b] focus:ring-1 focus:ring-sky-500"
               />
               <button
@@ -692,7 +692,7 @@ export const OutwardCreate = () => {
                 value={headerData.deliveryPersonName}
                 onChange={handleHeaderChange}
                 options={masters.deliveryPersons}
-                placeholder="Select or type Delivery Person"
+                placeholder=""
                 className="px-2.5 py-1.5 border border-emerald-300 bg-emerald-50 rounded text-xs font-extrabold text-emerald-900 focus:ring-1 focus:ring-emerald-500"
               />
               <button
@@ -716,7 +716,7 @@ export const OutwardCreate = () => {
                 value={headerData.driverName}
                 onChange={handleHeaderChange}
                 options={masters.drivers}
-                placeholder="Select or type Driver"
+                placeholder=""
                 className="px-2.5 py-1.5 border border-slate-300 bg-white rounded text-xs font-semibold text-slate-800 focus:ring-1 focus:ring-sky-500"
               />
               <button
@@ -1121,7 +1121,7 @@ export const OutwardCreate = () => {
                 value={itemForm.ctTo}
                 onChange={handleItemChange}
                 options={masters.stations}
-                placeholder="Select or type Station"
+                placeholder=""
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
               />
             </div>
@@ -1132,7 +1132,7 @@ export const OutwardCreate = () => {
                 value={itemForm.deliveryPersonName}
                 onChange={handleItemChange}
                 options={masters.deliveryPersons}
-                placeholder="Select or type Delivery Person"
+                placeholder=""
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm font-semibold"
               />
             </div>

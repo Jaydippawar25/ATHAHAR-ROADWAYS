@@ -23,12 +23,12 @@ export const InwardCreate = () => {
   const [headerData, setHeaderData] = useState({
     inwardNo: getNextInwardNo(inwards),
     date: getTodayDateString(),
-    transporterName: masters.transporters[0]?.name || '',
-    fromStation: masters.stations[1]?.name || masters.stations[0]?.name || '',
-    vehicleNo: masters.vehicles[0]?.vehicleNo || '',
-    ownerName: masters.vehicles[0]?.ownerName || masters.owners?.[0]?.name || '',
+    transporterName: '',
+    fromStation: '',
+    vehicleNo: '',
+    ownerName: '',
     memoNo: '',
-    driverName: masters.drivers[0]?.name || '',
+    driverName: '',
   });
 
   // LR ENTRY FORM (Matching LIMRA LR detail fields)
@@ -38,7 +38,7 @@ export const InwardCreate = () => {
     date: getTodayDateString(),
     pkg: '',
     invoiceNo: '',
-    ctTo: masters.stations[0]?.name || '',
+    ctTo: '',
     consignorName: '',
     consigneeName: '',
     toPayAmount: '',
@@ -242,7 +242,7 @@ export const InwardCreate = () => {
       date: getTodayDateString(),
       pkg: '',
       invoiceNo: '',
-      ctTo: masters.stations[0]?.name || '',
+      ctTo: '',
       consignorName: '',
       consigneeName: '',
       toPayAmount: '',
@@ -277,7 +277,7 @@ export const InwardCreate = () => {
       date: itemForm.date || getTodayDateString(),
       pkg: Number(itemForm.pkg) || 1,
       invoiceNo: itemForm.invoiceNo || '',
-      ctTo: itemForm.ctTo || masters.stations[0]?.name || '',
+      ctTo: itemForm.ctTo || '',
       consignorName: itemForm.consignorName || '',
       consigneeName: itemForm.consigneeName || '',
       toPayAmount: Number(itemForm.toPayAmount) || 0,
@@ -555,7 +555,7 @@ export const InwardCreate = () => {
                 value={headerData.transporterName}
                 onChange={handleHeaderChange}
                 options={masters.transporters}
-                placeholder="Select or type Transporter"
+                placeholder=""
                 className="px-2.5 py-1.5 border border-slate-300 bg-white rounded text-xs font-bold text-slate-800 focus:ring-1 focus:ring-sky-500"
               />
               <button
@@ -579,7 +579,7 @@ export const InwardCreate = () => {
                 value={headerData.fromStation}
                 onChange={handleHeaderChange}
                 options={masters.stations}
-                placeholder="Select or type Station"
+                placeholder=""
                 className="px-2.5 py-1.5 border border-slate-300 bg-white rounded text-xs font-bold text-slate-800 focus:ring-1 focus:ring-sky-500"
               />
               <button
@@ -603,7 +603,7 @@ export const InwardCreate = () => {
                 value={headerData.vehicleNo}
                 onChange={handleHeaderChange}
                 options={masters.vehicles}
-                placeholder="Select or type Vehicle"
+                placeholder=""
                 className="px-2.5 py-1.5 border border-slate-300 bg-white rounded text-xs font-extrabold text-[#1e295b] focus:ring-1 focus:ring-sky-500"
               />
               <button
@@ -641,7 +641,7 @@ export const InwardCreate = () => {
                 value={headerData.driverName}
                 onChange={handleHeaderChange}
                 options={masters.drivers}
-                placeholder="Select or type Driver"
+                placeholder=""
                 className="px-2.5 py-1.5 border border-slate-300 bg-white rounded text-xs font-semibold text-slate-800 focus:ring-1 focus:ring-sky-500"
               />
               <button
@@ -671,7 +671,7 @@ export const InwardCreate = () => {
                     headerData.ownerName,
                   ].filter(Boolean))
                 )}
-                placeholder="Select or type Owner"
+                placeholder=""
                 className="px-2.5 py-1.5 border border-slate-300 bg-white rounded text-xs font-bold text-slate-800 focus:ring-1 focus:ring-sky-500"
               />
               <button
@@ -806,7 +806,7 @@ export const InwardCreate = () => {
                 value={itemForm.ctTo}
                 onChange={handleItemChange}
                 options={masters.stations}
-                placeholder="Select or type Destination"
+                placeholder=""
                 className="px-2 py-1.5 bg-white border border-slate-300 rounded text-xs font-bold text-[#1e295b]"
               />
               <button

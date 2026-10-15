@@ -23,12 +23,12 @@ export const CrossOutwardCreate = () => {
   const [headerData, setHeaderData] = useState({
     outwardNo: getNextCrossOutwardNo(outwards),
     date: getTodayDateString(),
-    transporterName: masters.transporters[0]?.name || '',
-    fromStation: masters.stations[0]?.name || 'SANGLI',
-    vehicleNo: masters.vehicles[0]?.vehicleNo || '',
+    transporterName: '',
+    fromStation: '',
+    vehicleNo: '',
     memoNo: '',
-    driverName: masters.drivers[0]?.name || '',
-    ownerName: masters.vehicleOwners?.[0]?.name || '',
+    driverName: '',
+    ownerName: '',
     isCrossOutward: true,
   });
 
@@ -40,7 +40,7 @@ export const CrossOutwardCreate = () => {
     invoiceNo: '',
     consignorName: '',
     consigneeName: '',
-    ctTo: masters.stations[0]?.name || '',
+    ctTo: '',
     pkg: '',
     toPayAmount: '',
     tbbAmount: '',
@@ -230,7 +230,7 @@ export const CrossOutwardCreate = () => {
       invoiceNo: '',
       consignorName: '',
       consigneeName: '',
-      ctTo: masters.stations[0]?.name || '',
+      ctTo: '',
       pkg: '',
       toPayAmount: '',
       tbbAmount: '',
@@ -508,7 +508,7 @@ export const CrossOutwardCreate = () => {
                 value={headerData.transporterName}
                 onChange={(e, val) => handleHeaderChange('transporterName', val)}
                 options={masters.transporters}
-                placeholder="Select or type Transporter"
+                placeholder=""
                 className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-l text-xs font-semibold text-slate-900 focus:outline-none focus:border-sky-600"
               />
               <button
@@ -533,7 +533,7 @@ export const CrossOutwardCreate = () => {
                 value={headerData.fromStation}
                 onChange={(e, val) => handleHeaderChange('fromStation', val)}
                 options={masters.stations}
-                placeholder="Select or type Station"
+                placeholder=""
                 className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-l text-xs font-semibold text-slate-900 focus:outline-none focus:border-sky-600"
               />
               <button
@@ -558,7 +558,7 @@ export const CrossOutwardCreate = () => {
                 value={headerData.vehicleNo}
                 onChange={(e, val) => handleHeaderChange('vehicleNo', val)}
                 options={masters.vehicles}
-                placeholder="Select or type Vehicle"
+                placeholder=""
                 className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-l text-xs font-semibold text-slate-900 focus:outline-none focus:border-sky-600"
               />
               <button
@@ -583,7 +583,7 @@ export const CrossOutwardCreate = () => {
                 value={headerData.driverName}
                 onChange={(e, val) => handleHeaderChange('driverName', val)}
                 options={masters.drivers}
-                placeholder="Select or type Driver"
+                placeholder=""
                 className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-l text-xs font-semibold text-slate-900 focus:outline-none focus:border-sky-600"
               />
               <button
@@ -608,7 +608,7 @@ export const CrossOutwardCreate = () => {
                 value={headerData.ownerName}
                 onChange={(e, val) => handleHeaderChange('ownerName', val)}
                 options={(masters.vehicleOwners || []).map((o) => o.name)}
-                placeholder="Select or type Owner"
+                placeholder=""
                 className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-l text-xs font-semibold text-slate-900 focus:outline-none focus:border-sky-600"
               />
               <button
@@ -753,7 +753,7 @@ export const CrossOutwardCreate = () => {
                   onChange={(e, val) => handleItemChange('ctTo', val)}
                   onKeyDown={(e) => handleKeyDown(e, 5)}
                   options={masters.stations}
-                  placeholder="Select or type Destination"
+                  placeholder=""
                   className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-l text-xs font-semibold text-slate-900 focus:outline-none focus:border-sky-600"
                 />
                 <button
