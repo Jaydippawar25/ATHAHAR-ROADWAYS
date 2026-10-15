@@ -16,6 +16,7 @@ import {
   Calculator,
   DollarSign,
   ArrowLeftRight,
+  Shuffle,
 } from 'lucide-react';
 import { DataTable } from '../../components/common/DataTable';
 import { Modal } from '../../components/common/Modal';
@@ -26,7 +27,7 @@ import { formatCurrency } from '../../utils/numberUtils';
 export const Accounting = () => {
   const { inwards, inwardItems, outwards, outwardItems } = useApp();
 
-  // Active view tab: 'all_accounting' | 'inward_money' | 'outward_money' | 'commission_summary'
+  // Active view tab: 'all_accounting' | 'inward_money' | 'outward_money' | 'stock_out_money' | 'commission_summary'
   const [activeTab, setActiveTab] = useState('all_accounting');
 
   // Configurable commission percentage (defaulted to 20% as requested)
@@ -107,10 +108,14 @@ export const Accounting = () => {
       });
   }, [inwards, inwardItems, dateFilter, commMultiplier, commissionRate]);
 
-  // 2. Enrich Outward receipts with live items totals and 20% Commission
+  // Helper to distinguish Stock Out from Standard Outward
+  const isStockOutRecord = (out) =>
+    Boolean(out.isCrossOutward || String(out.outwardNo || '').toUpperCase().startsWith('STOCK-OUT'));
+
+  // 2. Enrich Outward receipts (Standard Outward)
   const enrichedOutwards = useMemo(() => {
     return outwards
-      .filter((out) => isDateInFilter(out.date))
+      .filter((out) => !isStockOutRecord(out) && isDateInFilter(out.date))
       .map((out) => {
         const items = outwardItems.filter(
           (item) => item.outwardId === out.id || item.outwardNo === out.outwardNo
@@ -140,7 +145,7 @@ export const Accounting = () => {
         return {
           ...out,
           id: out.id || `out-${out.outwardNo}`,
-          type: out.isCrossOutward ? 'STOCK OUT' : 'OUTWARD',
+          type: 'OUTWARD',
           receiptNo: out.outwardNo,
           totalQty,
           totalToPay,
@@ -153,16 +158,64 @@ export const Accounting = () => {
           items,
         };
       });
-  }, [outwards, outwardItems, dateFilter, commMultiplier, commissionRate]);
+  }, [outwards, outwardItems, dateFilter, commissionRate]);
 
-  // 3. Combined Inward & Outward Transactions
+  // 3. Enrich Stock Out receipts (Cross Stock Out)
+  const enrichedStockOuts = useMemo(() => {
+    return outwards
+      .filter((out) => isStockOutRecord(out) && isDateInFilter(out.date))
+      .map((out) => {
+        const items = outwardItems.filter(
+          (item) => item.outwardId === out.id || item.outwardNo === out.outwardNo
+        );
+        const totalQty =
+          items.length > 0
+            ? items.reduce((acc, curr) => acc + (Number(curr.pkg) || 0), 0)
+            : Number(out.totalQty) || 0;
+        const totalToPay =
+          items.length > 0
+            ? items.reduce((acc, curr) => acc + (Number(curr.toPayAmount) || 0), 0)
+            : Number(out.totalToPay) || 0;
+        const totalTbb =
+          items.length > 0
+            ? items.reduce((acc, curr) => acc + (Number(curr.tbbAmount) || 0), 0)
+            : Number(out.totalTbb) || 0;
+        const totalPaid =
+          items.length > 0
+            ? items.reduce((acc, curr) => acc + (Number(curr.paidAmount) || 0), 0)
+            : Number(out.totalPaid) || 0;
+
+        const totalMoney = totalToPay + totalTbb + totalPaid;
+        // Commission is ONLY for Inward; no commission in stock out
+        const commissionAmount = 0;
+        const netAmount = totalMoney;
+
+        return {
+          ...out,
+          id: out.id || `stock-out-${out.outwardNo}`,
+          type: 'STOCK OUT',
+          receiptNo: out.outwardNo,
+          totalQty,
+          totalToPay,
+          totalTbb,
+          totalPaid,
+          totalMoney,
+          commissionRate,
+          commissionAmount,
+          netAmount,
+          items,
+        };
+      });
+  }, [outwards, outwardItems, dateFilter, commissionRate]);
+
+  // 4. Combined Inward, Outward & Stock Out Transactions
   const allTransactions = useMemo(() => {
-    const combined = [...enrichedInwards, ...enrichedOutwards];
+    const combined = [...enrichedInwards, ...enrichedOutwards, ...enrichedStockOuts];
     combined.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
     return combined;
-  }, [enrichedInwards, enrichedOutwards]);
+  }, [enrichedInwards, enrichedOutwards, enrichedStockOuts]);
 
-  // 4. Financial KPI Totals
+  // 5. Financial KPI Totals
   const accountingSummary = useMemo(() => {
     // Inward Calculations (Commission is calculated ONLY on Inward)
     const inwardMoneyTotal = enrichedInwards.reduce((acc, curr) => acc + curr.totalMoney, 0);
@@ -178,10 +231,17 @@ export const Accounting = () => {
     const outwardPaid = enrichedOutwards.reduce((acc, curr) => acc + curr.totalPaid, 0);
     const outwardCommission = 0;
 
+    // Stock Out Calculations (No commission in stock out)
+    const stockOutMoneyTotal = enrichedStockOuts.reduce((acc, curr) => acc + curr.totalMoney, 0);
+    const stockOutToPay = enrichedStockOuts.reduce((acc, curr) => acc + curr.totalToPay, 0);
+    const stockOutTbb = enrichedStockOuts.reduce((acc, curr) => acc + curr.totalTbb, 0);
+    const stockOutPaid = enrichedStockOuts.reduce((acc, curr) => acc + curr.totalPaid, 0);
+    const stockOutCommission = 0;
+
     // Combined Totals: Total Commission is strictly from Inward
-    const totalFreightHandled = inwardMoneyTotal + outwardMoneyTotal;
+    const totalFreightHandled = inwardMoneyTotal + outwardMoneyTotal + stockOutMoneyTotal;
     const totalCommission20 = inwardCommission;
-    const netDifference = inwardMoneyTotal - outwardMoneyTotal;
+    const netDifference = inwardMoneyTotal - (outwardMoneyTotal + stockOutMoneyTotal);
 
     return {
       inwardMoneyTotal,
@@ -194,11 +254,16 @@ export const Accounting = () => {
       outwardTbb,
       outwardPaid,
       outwardCommission,
+      stockOutMoneyTotal,
+      stockOutToPay,
+      stockOutTbb,
+      stockOutPaid,
+      stockOutCommission,
       totalFreightHandled,
       totalCommission20,
       netDifference,
     };
-  }, [enrichedInwards, enrichedOutwards, commMultiplier]);
+  }, [enrichedInwards, enrichedOutwards, enrichedStockOuts, commMultiplier]);
 
   // Print Details Handler
   const handlePrintAccountingStatement = (row) => {
@@ -244,6 +309,8 @@ export const Accounting = () => {
         >
           {row.type === 'INWARD' ? (
             <ArrowDownLeft className="w-3.5 h-3.5 mr-1 text-sky-600 shrink-0" />
+          ) : row.type === 'STOCK OUT' ? (
+            <Shuffle className="w-3.5 h-3.5 mr-1 text-purple-600 shrink-0" />
           ) : (
             <ArrowUpRight className="w-3.5 h-3.5 mr-1 text-emerald-600 shrink-0" />
           )}
@@ -335,11 +402,11 @@ export const Accounting = () => {
           </div>
 
           <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 flex items-center space-x-3">
-            <span>Inward & Outward Money Calculation</span>
+            <span>Inward, Outward & Stock Out Accounting</span>
           </h2>
 
           <p className="text-slate-500 text-xs sm:text-sm font-medium">
-            Live calculation of Total Money Inward, Total Money Outward, and 20% Agency Commission
+            Live calculation of Total Money Inward, Outward, Stock Out, and 20% Agency Commission
           </p>
         </div>
 
@@ -367,8 +434,8 @@ export const Accounting = () => {
         </div>
       </div>
 
-      {/* Primary Financial Summary Cards (Inward Money, Outward Money, 20% Commission) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Primary Financial Summary Cards (Inward Money, Outward Money, Stock Out Money, 20% Commission, Total Handled) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         {/* Card 1: Inward Money */}
         <div className="bg-white p-5 rounded-2xl border-2 border-sky-100 shadow-sm relative overflow-hidden">
           <div className="flex items-center justify-between mb-2">
@@ -407,7 +474,26 @@ export const Accounting = () => {
           </div>
         </div>
 
-        {/* Card 3: Commission (20%) */}
+        {/* Card 3: Stock Out Money */}
+        <div className="bg-white p-5 rounded-2xl border-2 border-purple-100 shadow-sm relative overflow-hidden">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-black uppercase tracking-wider text-purple-800">
+              Total Money Stock Out
+            </span>
+            <div className="p-2 bg-purple-100 text-purple-700 rounded-xl">
+              <Shuffle className="w-5 h-5" />
+            </div>
+          </div>
+          <p className="text-2xl sm:text-3xl font-black text-purple-900">
+            {formatCurrency(accountingSummary.stockOutMoneyTotal)}
+          </p>
+          <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] font-bold text-slate-500">
+            <span>To Pay: {formatCurrency(accountingSummary.stockOutToPay)}</span>
+            <span>Paid: {formatCurrency(accountingSummary.stockOutPaid)}</span>
+          </div>
+        </div>
+
+        {/* Card 4: Commission (20%) */}
         <div className="bg-white p-5 rounded-2xl border-2 border-amber-200 shadow-sm relative overflow-hidden">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-black uppercase tracking-wider text-amber-800">
@@ -422,11 +508,11 @@ export const Accounting = () => {
           </p>
           <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] font-bold text-slate-500">
             <span>Inward ({commissionRate}%): {formatCurrency(accountingSummary.inwardCommission)}</span>
-            <span>Outward: ₹0.00 (Inward Only)</span>
+            <span>Outward/Stock: ₹0.00</span>
           </div>
         </div>
 
-        {/* Card 4: Total Turnover */}
+        {/* Card 5: Total Turnover */}
         <div className="bg-white p-5 rounded-2xl border-2 border-slate-200 shadow-sm relative overflow-hidden">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-black uppercase tracking-wider text-slate-700">
@@ -459,7 +545,7 @@ export const Accounting = () => {
               }`}
             >
               <ArrowLeftRight className="w-4 h-4" />
-              <span>All Inward & Outward ({allTransactions.length})</span>
+              <span>All Inward, Outward & Stock Out ({allTransactions.length})</span>
             </button>
 
             <button
@@ -484,6 +570,18 @@ export const Accounting = () => {
             >
               <ArrowUpRight className="w-4 h-4" />
               <span>Outward Money ({enrichedOutwards.length})</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('stock_out_money')}
+              className={`px-4 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center space-x-1.5 cursor-pointer ${
+                activeTab === 'stock_out_money'
+                  ? 'bg-purple-600 text-white shadow-md'
+                  : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
+              }`}
+            >
+              <Shuffle className="w-4 h-4" />
+              <span>Stock Out Money ({enrichedStockOuts.length})</span>
             </button>
 
             <button
@@ -545,16 +643,16 @@ export const Accounting = () => {
           </div>
         </div>
 
-        {/* Tab 1: All Inward & Outward Transactions with 20% Commission */}
+        {/* Tab 1: All Inward, Outward & Stock Out Transactions */}
         {activeTab === 'all_accounting' && (
           <DataTable
             columns={accountingColumns}
             data={allTransactions}
-            searchPlaceholder="Search Inward & Outward Accounting by Receipt No, Vehicle No..."
+            searchPlaceholder="Search Inward, Outward & Stock Out Accounting by Receipt No, Vehicle No..."
             onExportExcel={(data) => exportToExcel(data, 'Accounting_All_Transactions', accountingColumns)}
             onExportPDF={(data) =>
               exportToPDF(
-                'Inward and Outward Accounting Statement',
+                'Inward, Outward & Stock Out Accounting Statement',
                 accountingColumns,
                 data,
                 'Accounting_All_Transactions'
@@ -599,7 +697,25 @@ export const Accounting = () => {
           />
         )}
 
-        {/* Tab 4: Commission Summary Breakdown (20%) */}
+        {/* Tab 4: Stock Out Money */}
+        {activeTab === 'stock_out_money' && (
+          <DataTable
+            columns={accountingColumns}
+            data={enrichedStockOuts}
+            searchPlaceholder="Search Stock Out Money by Stock Out No, Vehicle No..."
+            onExportExcel={(data) => exportToExcel(data, 'Accounting_Stock_Out_Money', accountingColumns)}
+            onExportPDF={(data) =>
+              exportToPDF(
+                'Stock Out Money Accounting Statement',
+                accountingColumns,
+                data,
+                'Accounting_Stock_Out_Money'
+              )
+            }
+          />
+        )}
+
+        {/* Tab 5: Commission Summary Breakdown (20%) */}
         {activeTab === 'commission_summary' && (
           <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-6">
             <div>
@@ -608,11 +724,11 @@ export const Accounting = () => {
                 <span>Agency Commission Statement @ {commissionRate}%</span>
               </h3>
               <p className="text-xs text-slate-500 font-medium mt-0.5">
-                Detailed comparison of money inward, money outward, and the 20% commission earned
+                Detailed comparison of money inward, outward dispatches, stock out entries, and 20% agency commission
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="bg-sky-50 border border-sky-200 p-4 rounded-xl space-y-2">
                 <span className="text-xs font-bold text-sky-800 uppercase block">
                   Inward Commission (20%)
@@ -639,6 +755,19 @@ export const Accounting = () => {
                 </div>
               </div>
 
+              <div className="bg-purple-50 border border-purple-200 p-4 rounded-xl space-y-2">
+                <span className="text-xs font-bold text-purple-800 uppercase block">
+                  Stock Out (No Commission)
+                </span>
+                <p className="text-2xl font-black text-purple-950">
+                  {formatCurrency(0)}
+                </p>
+                <div className="text-[11px] text-purple-700 font-semibold space-y-0.5 pt-2 border-t border-purple-200/80">
+                  <p>Stock Out Total Money: {formatCurrency(accountingSummary.stockOutMoneyTotal)}</p>
+                  <p>Commission: ₹0.00 (Inward Only)</p>
+                </div>
+              </div>
+
               <div className="bg-amber-50 border border-amber-300 p-4 rounded-xl space-y-2">
                 <span className="text-xs font-bold text-amber-900 uppercase block">
                   Total Commission Earned
@@ -647,7 +776,7 @@ export const Accounting = () => {
                   {formatCurrency(accountingSummary.totalCommission20)}
                 </p>
                 <div className="text-[11px] text-amber-800 font-semibold space-y-0.5 pt-2 border-t border-amber-200/80">
-                  <p>Total Business Handled: {formatCurrency(accountingSummary.totalFreightHandled)}</p>
+                  <p>Total Handled: {formatCurrency(accountingSummary.totalFreightHandled)}</p>
                   <p>Commission Rate: {commissionRate}% (Inward Only)</p>
                 </div>
               </div>
@@ -693,14 +822,45 @@ export const Accounting = () => {
                       ₹0.00 (No Comm)
                     </td>
                   </tr>
+                  <tr className="hover:bg-slate-50">
+                    <td className="p-3 font-black text-purple-700">Stock Out Freight</td>
+                    <td className="p-3">{enrichedStockOuts.length}</td>
+                    <td className="p-3">{formatCurrency(accountingSummary.stockOutToPay)}</td>
+                    <td className="p-3">{formatCurrency(accountingSummary.stockOutTbb)}</td>
+                    <td className="p-3">{formatCurrency(accountingSummary.stockOutPaid)}</td>
+                    <td className="p-3 font-black text-slate-900">
+                      {formatCurrency(accountingSummary.stockOutMoneyTotal)}
+                    </td>
+                    <td className="p-3 font-black text-slate-500">
+                      ₹0.00 (No Comm)
+                    </td>
+                  </tr>
                 </tbody>
                 <tfoot className="bg-slate-50 font-black text-slate-900 border-t-2 border-slate-300">
                   <tr>
                     <td className="p-3 uppercase">Total Handled</td>
-                    <td className="p-3">{enrichedInwards.length + enrichedOutwards.length}</td>
-                    <td className="p-3">{formatCurrency(accountingSummary.inwardToPay + accountingSummary.outwardToPay)}</td>
-                    <td className="p-3">{formatCurrency(accountingSummary.inwardTbb + accountingSummary.outwardTbb)}</td>
-                    <td className="p-3">{formatCurrency(accountingSummary.inwardPaid + accountingSummary.outwardPaid)}</td>
+                    <td className="p-3">{enrichedInwards.length + enrichedOutwards.length + enrichedStockOuts.length}</td>
+                    <td className="p-3">
+                      {formatCurrency(
+                        accountingSummary.inwardToPay +
+                          accountingSummary.outwardToPay +
+                          accountingSummary.stockOutToPay
+                      )}
+                    </td>
+                    <td className="p-3">
+                      {formatCurrency(
+                        accountingSummary.inwardTbb +
+                          accountingSummary.outwardTbb +
+                          accountingSummary.stockOutTbb
+                      )}
+                    </td>
+                    <td className="p-3">
+                      {formatCurrency(
+                        accountingSummary.inwardPaid +
+                          accountingSummary.outwardPaid +
+                          accountingSummary.stockOutPaid
+                      )}
+                    </td>
                     <td className="p-3 font-black text-indigo-900 text-sm">
                       {formatCurrency(accountingSummary.totalFreightHandled)}
                     </td>
