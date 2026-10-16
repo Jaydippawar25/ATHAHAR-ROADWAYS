@@ -86,9 +86,11 @@ export const Accounting = () => {
             ? items.reduce((acc, curr) => acc + (Number(curr.paidAmount) || 0), 0)
             : Number(inw.totalPaid) || 0;
 
-        const totalMoney = totalToPay + totalTbb + totalPaid;
-        const commissionAmount = totalMoney * commMultiplier;
-        const netAmount = totalMoney - commissionAmount;
+        const grossFreight = totalToPay + totalTbb + totalPaid;
+        const commissionAmount = grossFreight * commMultiplier;
+        // Total Money calculates (-) COMMISSION for Inward
+        const totalMoney = grossFreight - commissionAmount;
+        const netAmount = totalMoney;
 
         return {
           ...inw,
@@ -99,9 +101,10 @@ export const Accounting = () => {
           totalToPay,
           totalTbb,
           totalPaid,
-          totalMoney,
+          grossFreight,
           commissionRate,
           commissionAmount,
+          totalMoney,
           netAmount,
           items,
         };
@@ -218,11 +221,19 @@ export const Accounting = () => {
   // 5. Financial KPI Totals
   const accountingSummary = useMemo(() => {
     // Inward Calculations (Commission is calculated ONLY on Inward)
+    const inwardGrossFreight = enrichedInwards.reduce(
+      (acc, curr) => acc + (curr.grossFreight ?? (curr.totalToPay + curr.totalTbb + curr.totalPaid)),
+      0
+    );
+    const inwardCommission = enrichedInwards.reduce(
+      (acc, curr) => acc + (curr.commissionAmount || 0),
+      0
+    );
+    // Net Inward Money after deducting Commission
     const inwardMoneyTotal = enrichedInwards.reduce((acc, curr) => acc + curr.totalMoney, 0);
     const inwardToPay = enrichedInwards.reduce((acc, curr) => acc + curr.totalToPay, 0);
     const inwardTbb = enrichedInwards.reduce((acc, curr) => acc + curr.totalTbb, 0);
     const inwardPaid = enrichedInwards.reduce((acc, curr) => acc + curr.totalPaid, 0);
-    const inwardCommission = inwardMoneyTotal * commMultiplier;
 
     // Outward Calculations (No commission in outward)
     const outwardMoneyTotal = enrichedOutwards.reduce((acc, curr) => acc + curr.totalMoney, 0);
@@ -239,12 +250,13 @@ export const Accounting = () => {
     const stockOutCommission = 0;
 
     // Combined Totals: Total Commission is strictly from Inward
-    const totalFreightHandled = inwardMoneyTotal + outwardMoneyTotal + stockOutMoneyTotal;
+    const totalFreightHandled = inwardGrossFreight + outwardMoneyTotal + stockOutMoneyTotal;
     const totalCommission20 = inwardCommission;
     const netDifference = inwardMoneyTotal - (outwardMoneyTotal + stockOutMoneyTotal);
 
     return {
       inwardMoneyTotal,
+      inwardGrossFreight,
       inwardToPay,
       inwardTbb,
       inwardPaid,
@@ -279,12 +291,15 @@ export const Accounting = () => {
         { label: 'To Pay Amount', value: formatCurrency(row.totalToPay) },
         { label: 'T.B.B Amount', value: formatCurrency(row.totalTbb) },
         { label: 'Paid Amount', value: formatCurrency(row.totalPaid) },
-        { label: 'Total Freight Money', value: formatCurrency(row.totalMoney) },
-        {
-          label: `Commission (${commissionRate}%)`,
-          value: row.type === 'INWARD' ? formatCurrency(row.commissionAmount) : '₹0.00 (Inward Only)',
-        },
-        { label: 'Profit / Loss', value: formatCurrency(row.netAmount) },
+        ...(row.type === 'INWARD'
+          ? [
+              {
+                label: `Commission (${commissionRate}%)`,
+                value: `(-) ${formatCurrency(row.commissionAmount)}`,
+              },
+              { label: 'Total Money (After Commission)', value: formatCurrency(row.totalMoney) },
+            ]
+          : [{ label: 'Total Money', value: formatCurrency(row.totalMoney) }]),
       ],
       items: row.items,
     });
@@ -330,18 +345,9 @@ export const Accounting = () => {
     { label: 'T.B.B', key: 'totalTbb', type: 'currency', nowrap: true },
     { label: 'Paid', key: 'totalPaid', type: 'currency', nowrap: true },
     {
-      label: 'Total Money',
-      key: 'totalMoney',
-      nowrap: true,
-      render: (row) => (
-        <span className="font-black text-slate-900 text-xs whitespace-nowrap">
-          {formatCurrency(row.totalMoney)}
-        </span>
-      ),
-    },
-    {
       label: `COMMISSION (${commissionRate}%)`,
       key: 'commissionAmount',
+      type: 'currency',
       nowrap: true,
       render: (row) =>
         row.type === 'INWARD' ? (
@@ -355,12 +361,13 @@ export const Accounting = () => {
         ),
     },
     {
-      label: 'Profit/Loss',
-      key: 'netAmount',
+      label: 'Total Money',
+      key: 'totalMoney',
+      type: 'currency',
       nowrap: true,
       render: (row) => (
-        <span className={`font-bold whitespace-nowrap ${row.netAmount >= 0 ? 'text-slate-800' : 'text-rose-600'}`}>
-          {formatCurrency(row.netAmount)}
+        <span className="font-black text-slate-900 text-xs whitespace-nowrap">
+          {formatCurrency(row.totalMoney)}
         </span>
       ),
     },
@@ -387,6 +394,12 @@ export const Accounting = () => {
       ),
     },
   ];
+
+  // Outward & Stock Out Columns (Excludes COMMISSION column)
+  const outwardColumns = useMemo(
+    () => accountingColumns.filter((col) => col.key !== 'commissionAmount'),
+    [accountingColumns]
+  );
 
   return (
     <div className="space-y-6 text-slate-800 max-w-full">
@@ -450,8 +463,8 @@ export const Accounting = () => {
             {formatCurrency(accountingSummary.inwardMoneyTotal)}
           </p>
           <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] font-bold text-slate-500">
-            <span>To Pay: {formatCurrency(accountingSummary.inwardToPay)}</span>
-            <span>Paid: {formatCurrency(accountingSummary.inwardPaid)}</span>
+            <span>Gross: {formatCurrency(accountingSummary.inwardGrossFreight)}</span>
+            <span>Comm: -{formatCurrency(accountingSummary.inwardCommission)}</span>
           </div>
         </div>
 
@@ -508,26 +521,27 @@ export const Accounting = () => {
           </p>
           <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] font-bold text-slate-500">
             <span>Inward ({commissionRate}%): {formatCurrency(accountingSummary.inwardCommission)}</span>
-            <span>Outward/Stock: ₹0.00</span>
+            <span className="text-slate-400 font-medium">Inward Freight Only</span>
           </div>
         </div>
 
-        {/* Card 5: Total Turnover */}
-        <div className="bg-white p-5 rounded-2xl border-2 border-slate-200 shadow-sm relative overflow-hidden">
+        {/* Card 5: Net Difference of Inward and Outward */}
+        <div className="bg-white p-5 rounded-2xl border-2 border-emerald-200 shadow-sm relative overflow-hidden">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-black uppercase tracking-wider text-slate-700">
-              Total Freight Handled
+            <span className="text-xs font-black uppercase tracking-wider text-emerald-800">
+              Net Difference (Inward - Outward)
             </span>
-            <div className="p-2 bg-indigo-100 text-indigo-700 rounded-xl">
-              <Layers className="w-5 h-5" />
+            <div className="p-2 bg-emerald-100 text-emerald-700 rounded-xl">
+              <TrendingUp className="w-5 h-5" />
             </div>
           </div>
-          <p className="text-2xl sm:text-3xl font-black text-slate-900">
-            {formatCurrency(accountingSummary.totalFreightHandled)}
+          <p className="text-2xl sm:text-3xl font-black text-emerald-950">
+            {formatCurrency(accountingSummary.netDifference)}
           </p>
-          <p className="text-[11px] font-bold text-slate-500 mt-2.5 pt-2 border-t border-slate-100">
-            Net Difference (In - Out): {formatCurrency(accountingSummary.netDifference)}
-          </p>
+          <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] font-bold text-slate-500">
+            <span>Inward: {formatCurrency(accountingSummary.inwardMoneyTotal)}</span>
+            <span>Outward: {formatCurrency(accountingSummary.outwardMoneyTotal + accountingSummary.stockOutMoneyTotal)}</span>
+          </div>
         </div>
       </div>
 
@@ -682,14 +696,14 @@ export const Accounting = () => {
         {/* Tab 3: Outward Money */}
         {activeTab === 'outward_money' && (
           <DataTable
-            columns={accountingColumns}
+            columns={outwardColumns}
             data={enrichedOutwards}
             searchPlaceholder="Search Outward Money by Outward No, Vehicle No..."
-            onExportExcel={(data) => exportToExcel(data, 'Accounting_Outward_Money', accountingColumns)}
+            onExportExcel={(data) => exportToExcel(data, 'Accounting_Outward_Money', outwardColumns)}
             onExportPDF={(data) =>
               exportToPDF(
                 'Outward Money Accounting Statement',
-                accountingColumns,
+                outwardColumns,
                 data,
                 'Accounting_Outward_Money'
               )
@@ -700,14 +714,14 @@ export const Accounting = () => {
         {/* Tab 4: Stock Out Money */}
         {activeTab === 'stock_out_money' && (
           <DataTable
-            columns={accountingColumns}
+            columns={outwardColumns}
             data={enrichedStockOuts}
             searchPlaceholder="Search Stock Out Money by Stock Out No, Vehicle No..."
-            onExportExcel={(data) => exportToExcel(data, 'Accounting_Stock_Out_Money', accountingColumns)}
+            onExportExcel={(data) => exportToExcel(data, 'Accounting_Stock_Out_Money', outwardColumns)}
             onExportPDF={(data) =>
               exportToPDF(
                 'Stock Out Money Accounting Statement',
-                accountingColumns,
+                outwardColumns,
                 data,
                 'Accounting_Stock_Out_Money'
               )
@@ -791,8 +805,8 @@ export const Accounting = () => {
                     <th className="p-3">To Pay Freight</th>
                     <th className="p-3">T.B.B Freight</th>
                     <th className="p-3">Paid Freight</th>
-                    <th className="p-3 font-black">Total Money</th>
                     <th className="p-3 font-black text-amber-800">Commission ({commissionRate}%)</th>
+                    <th className="p-3 font-black">Total Money</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 font-semibold text-slate-700">
@@ -802,11 +816,11 @@ export const Accounting = () => {
                     <td className="p-3">{formatCurrency(accountingSummary.inwardToPay)}</td>
                     <td className="p-3">{formatCurrency(accountingSummary.inwardTbb)}</td>
                     <td className="p-3">{formatCurrency(accountingSummary.inwardPaid)}</td>
-                    <td className="p-3 font-black text-slate-900">
-                      {formatCurrency(accountingSummary.inwardMoneyTotal)}
-                    </td>
                     <td className="p-3 font-black text-amber-700">
                       {formatCurrency(accountingSummary.inwardCommission)}
+                    </td>
+                    <td className="p-3 font-black text-slate-900">
+                      {formatCurrency(accountingSummary.inwardMoneyTotal)}
                     </td>
                   </tr>
                   <tr className="hover:bg-slate-50">
@@ -815,11 +829,11 @@ export const Accounting = () => {
                     <td className="p-3">{formatCurrency(accountingSummary.outwardToPay)}</td>
                     <td className="p-3">{formatCurrency(accountingSummary.outwardTbb)}</td>
                     <td className="p-3">{formatCurrency(accountingSummary.outwardPaid)}</td>
-                    <td className="p-3 font-black text-slate-900">
-                      {formatCurrency(accountingSummary.outwardMoneyTotal)}
-                    </td>
                     <td className="p-3 font-black text-slate-500">
                       ₹0.00 (No Comm)
+                    </td>
+                    <td className="p-3 font-black text-slate-900">
+                      {formatCurrency(accountingSummary.outwardMoneyTotal)}
                     </td>
                   </tr>
                   <tr className="hover:bg-slate-50">
@@ -828,11 +842,11 @@ export const Accounting = () => {
                     <td className="p-3">{formatCurrency(accountingSummary.stockOutToPay)}</td>
                     <td className="p-3">{formatCurrency(accountingSummary.stockOutTbb)}</td>
                     <td className="p-3">{formatCurrency(accountingSummary.stockOutPaid)}</td>
-                    <td className="p-3 font-black text-slate-900">
-                      {formatCurrency(accountingSummary.stockOutMoneyTotal)}
-                    </td>
                     <td className="p-3 font-black text-slate-500">
                       ₹0.00 (No Comm)
+                    </td>
+                    <td className="p-3 font-black text-slate-900">
+                      {formatCurrency(accountingSummary.stockOutMoneyTotal)}
                     </td>
                   </tr>
                 </tbody>
@@ -861,11 +875,15 @@ export const Accounting = () => {
                           accountingSummary.stockOutPaid
                       )}
                     </td>
-                    <td className="p-3 font-black text-indigo-900 text-sm">
-                      {formatCurrency(accountingSummary.totalFreightHandled)}
-                    </td>
                     <td className="p-3 font-black text-amber-800 text-sm">
                       {formatCurrency(accountingSummary.totalCommission20)}
+                    </td>
+                    <td className="p-3 font-black text-indigo-900 text-sm">
+                      {formatCurrency(
+                        accountingSummary.inwardMoneyTotal +
+                          accountingSummary.outwardMoneyTotal +
+                          accountingSummary.stockOutMoneyTotal
+                      )}
                     </td>
                   </tr>
                 </tfoot>
@@ -917,18 +935,22 @@ export const Accounting = () => {
                 <span className="text-slate-400 font-bold uppercase block text-[10px]">Paid</span>
                 <span className="font-bold text-emerald-700">{formatCurrency(viewingRecord.totalPaid)}</span>
               </div>
-              <div className="col-span-2 bg-slate-100 p-2.5 rounded-lg border border-slate-200">
-                <span className="text-slate-500 font-bold uppercase block text-[10px]">Total Money</span>
+              {viewingRecord.type === 'INWARD' && (
+                <div className="col-span-2 bg-amber-50 p-2.5 rounded-lg border border-amber-200">
+                  <span className="text-amber-700 font-bold uppercase block text-[10px]">
+                    COMMISSION ({commissionRate}%)
+                  </span>
+                  <span className="font-black text-amber-800 text-base">
+                    {formatCurrency(viewingRecord.commissionAmount)}
+                  </span>
+                </div>
+              )}
+              <div className={`${viewingRecord.type === 'INWARD' ? 'col-span-2' : 'col-span-4'} bg-slate-100 p-2.5 rounded-lg border border-slate-200`}>
+                <span className="text-slate-500 font-bold uppercase block text-[10px]">
+                  {viewingRecord.type === 'INWARD' ? 'Total Money (After Commission)' : 'Total Money'}
+                </span>
                 <span className="font-black text-slate-900 text-base">
                   {formatCurrency(viewingRecord.totalMoney)}
-                </span>
-              </div>
-              <div className="col-span-2 bg-amber-50 p-2.5 rounded-lg border border-amber-200">
-                <span className="text-amber-700 font-bold uppercase block text-[10px]">
-                  COMMISSION {viewingRecord.type === 'INWARD' ? `(${commissionRate}%)` : '(Inward Only)'}
-                </span>
-                <span className="font-black text-amber-800 text-base">
-                  {formatCurrency(viewingRecord.commissionAmount)}
                 </span>
               </div>
             </div>
@@ -949,9 +971,9 @@ export const Accounting = () => {
                         <th className="p-2">T.B.B</th>
                         <th className="p-2">Paid</th>
                         <th className="p-2">Total Freight</th>
-                        <th className="p-2 text-amber-800">
-                          {viewingRecord.type === 'INWARD' ? `Comm (${commissionRate}%)` : 'Comm (₹0)'}
-                        </th>
+                        {viewingRecord.type === 'INWARD' && (
+                          <th className="p-2 text-amber-800">Comm ({commissionRate}%)</th>
+                        )}
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 font-semibold">
@@ -970,7 +992,9 @@ export const Accounting = () => {
                             <td className="p-2">{formatCurrency(lr.tbbAmount)}</td>
                             <td className="p-2">{formatCurrency(lr.paidAmount)}</td>
                             <td className="p-2 font-black text-slate-900">{formatCurrency(lrFreight)}</td>
-                            <td className="p-2 font-black text-amber-700">{formatCurrency(lrComm)}</td>
+                            {viewingRecord.type === 'INWARD' && (
+                              <td className="p-2 font-black text-amber-700">{formatCurrency(lrComm)}</td>
+                            )}
                           </tr>
                         );
                       })}

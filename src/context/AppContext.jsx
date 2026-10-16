@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { getMasters, addMasterItem, updateMasterItem, deleteMasterItem } from '../services/masterService';
 import {
   getAllInwards,
@@ -33,6 +33,15 @@ import {
   updateExpense,
   deleteExpense,
 } from '../services/expenseService';
+import {
+  safeInitializeData,
+  subscribeToFirestore,
+  pullAllFromFirestore,
+  syncAllToFirestore,
+  testFirestoreConnection,
+  STORAGE_KEYS,
+} from '../services/mockStorage';
+import { STATUS } from '../utils/constants';
 
 const AppContext = createContext(null);
 
@@ -46,6 +55,14 @@ export const AppProvider = ({ children }) => {
   const [vouchers, setVouchers] = useState(getAllVouchers());
   const [expenses, setExpenses] = useState(getAllExpenses());
 
+  // Cloud Sync Status Tracking
+  const [syncStatus, setSyncStatus] = useState({
+    state: 'connecting', // 'connecting' | 'connected' | 'syncing' | 'offline' | 'error'
+    message: 'Connecting to Cloud Firestore...',
+    lastSync: null,
+    source: 'local',
+  });
+
   const refreshData = () => {
     setMasters(getMasters());
     setInwards(getAllInwards());
@@ -55,6 +72,133 @@ export const AppProvider = ({ children }) => {
     setPendingStock(getPendingStockItems());
     setVouchers(getAllVouchers());
     setExpenses(getAllExpenses());
+  };
+
+  // Safe Cloud Hydration and Real-Time Bidirectional Synchronization
+  useEffect(() => {
+    let unsubscribe = null;
+    let isMounted = true;
+
+    const initSync = async () => {
+      try {
+        setSyncStatus((prev) => ({
+          ...prev,
+          state: 'syncing',
+          message: 'Checking Cloud Firestore...',
+        }));
+
+        const initResult = await safeInitializeData();
+        if (!isMounted) return;
+
+        if (initResult.success) {
+          refreshData();
+          setSyncStatus({
+            state: 'connected',
+            message: 'Cloud Sync Active',
+            lastSync: new Date().toLocaleTimeString(),
+            source: initResult.source,
+          });
+        } else {
+          setSyncStatus({
+            state: 'offline',
+            message: 'Local Offline Mode',
+            lastSync: new Date().toLocaleTimeString(),
+            source: 'local',
+            error: initResult.error,
+          });
+        }
+
+        // Establish live onSnapshot subscription
+        unsubscribe = subscribeToFirestore((updatedKey, newData) => {
+          if (!isMounted) return;
+          switch (updatedKey) {
+            case STORAGE_KEYS.MASTERS:
+              setMasters(newData);
+              break;
+            case STORAGE_KEYS.INWARDS:
+              setInwards(newData);
+              break;
+            case STORAGE_KEYS.INWARD_ITEMS:
+              setInwardItems(newData);
+              setPendingStock((newData || []).filter((item) => item.status === STATUS.PENDING));
+              break;
+            case STORAGE_KEYS.OUTWARDS:
+              setOutwards(newData);
+              break;
+            case STORAGE_KEYS.OUTWARD_ITEMS:
+              setOutwardItems(newData);
+              break;
+            case STORAGE_KEYS.ACCOUNTING_VOUCHERS:
+              setVouchers(newData);
+              break;
+            case STORAGE_KEYS.EXPENSES:
+              setExpenses(newData);
+              break;
+            default:
+              refreshData();
+              break;
+          }
+
+          setSyncStatus((prev) => ({
+            ...prev,
+            state: 'connected',
+            lastSync: new Date().toLocaleTimeString(),
+          }));
+        });
+      } catch (err) {
+        if (!isMounted) return;
+        console.warn('Sync initialization warning:', err);
+        setSyncStatus({
+          state: 'offline',
+          message: 'Local Offline Mode',
+          lastSync: new Date().toLocaleTimeString(),
+          source: 'local',
+          error: err?.message || String(err),
+        });
+      }
+    };
+
+    initSync();
+
+    return () => {
+      isMounted = false;
+      if (unsubscribe) unsubscribe();
+    };
+  }, []);
+
+  // Manual Trigger to Pull All from Cloud Firestore
+  const handlePullFromCloud = async () => {
+    setSyncStatus((prev) => ({
+      ...prev,
+      state: 'syncing',
+      message: 'Pulling records from Cloud Firestore...',
+    }));
+    const count = await pullAllFromFirestore();
+    refreshData();
+    setSyncStatus({
+      state: 'connected',
+      message: `Successfully pulled ${count} collections from Cloud Firestore!`,
+      lastSync: new Date().toLocaleTimeString(),
+      source: 'firestore',
+    });
+    return count;
+  };
+
+  // Manual Trigger to Push All to Cloud Firestore
+  const handlePushToCloud = async () => {
+    setSyncStatus((prev) => ({
+      ...prev,
+      state: 'syncing',
+      message: 'Pushing local records to Cloud Firestore...',
+    }));
+    const count = await syncAllToFirestore();
+    setSyncStatus({
+      state: 'connected',
+      message: `Successfully pushed ${count} collections to Cloud Firestore!`,
+      lastSync: new Date().toLocaleTimeString(),
+      source: 'localStorage',
+    });
+    return count;
   };
 
   const handleCreateInward = (headerData, lrItems, username) => {
@@ -194,7 +338,11 @@ export const AppProvider = ({ children }) => {
         pendingStock,
         vouchers,
         expenses,
+        syncStatus,
         refreshData,
+        handlePullFromCloud,
+        handlePushToCloud,
+        testFirestoreConnection,
         handleCreateInward,
         handleUpdateFullInward,
         handleDeleteInward,
@@ -224,4 +372,3 @@ export const AppProvider = ({ children }) => {
 };
 
 export const useApp = () => useContext(AppContext);
-

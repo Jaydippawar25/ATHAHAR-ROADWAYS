@@ -84,45 +84,47 @@ export const PendingStock = () => {
     {
       label: 'LR No.',
       key: 'lrNo',
+      width: 'w-[82px]',
       render: (row) => (
-        <span className="font-extrabold text-sky-700 bg-sky-50 px-2 py-1 rounded border border-sky-200">
+        <span className="font-extrabold text-sky-800 bg-sky-50 px-1.5 py-0.5 rounded border border-sky-200 text-[10.5px] block text-center truncate">
           {row.lrNo}
         </span>
       ),
     },
-    { label: 'Inward Date', key: 'inwardDate', type: 'date' },
-    { label: 'Inward No.', key: 'inwardNo' },
-    { label: 'Memo No.', key: 'memoNo' },
-    { label: 'CT To', key: 'ctTo' },
-    { label: 'Consignor', key: 'consignorName' },
-    { label: 'Consignee', key: 'consigneeName' },
-    { label: 'PKG', key: 'pkg', render: (row) => <span className="font-bold">{row.pkg}</span> },
-    { label: 'To Pay', key: 'toPayAmount', type: 'currency' },
-    { label: 'T.B.B', key: 'tbbAmount', type: 'currency' },
-    { label: 'Paid', key: 'paidAmount', type: 'currency' },
-    { label: 'Status', key: 'status', type: 'status' },
+    { label: 'Inw Date', key: 'inwardDate', type: 'date', width: 'w-[74px]' },
+    { label: 'Inw No.', key: 'inwardNo', width: 'w-[72px]' },
+    { label: 'Memo No.', key: 'memoNo', width: 'w-[70px]' },
+    { label: 'CT To', key: 'ctTo', width: 'w-[84px]' },
+    { label: 'Consignor', key: 'consignorName', width: 'w-[96px]' },
+    { label: 'Consignee', key: 'consigneeName', width: 'w-[96px]' },
+    { label: 'PKG', key: 'pkg', width: 'w-[44px]', render: (row) => <span className="font-bold">{row.pkg}</span> },
+    { label: 'To Pay', key: 'toPayAmount', type: 'currency', width: 'w-[72px]' },
+    { label: 'T.B.B', key: 'tbbAmount', type: 'currency', width: 'w-[68px]' },
+    { label: 'Paid', key: 'paidAmount', type: 'currency', width: 'w-[66px]' },
+    { label: 'Status', key: 'status', type: 'status', width: 'w-[72px]' },
     {
       label: 'Actions',
       key: 'actions',
+      width: 'w-[64px]',
       render: (row) => (
-        <div className="flex items-center justify-center space-x-1">
+        <div className="flex items-center justify-center space-x-0.5">
           <button
             onClick={() => setViewingRecord(row)}
-            className="p-0.5 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded transition-colors cursor-pointer"
+            className="p-1 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded transition-colors cursor-pointer"
             title="View Pending LR"
           >
             <Eye className="w-3.5 h-3.5" />
           </button>
           <button
             onClick={() => handleStartEdit(row)}
-            className="p-0.5 text-sky-600 hover:text-sky-800 hover:bg-sky-50 rounded transition-colors cursor-pointer"
+            className="p-1 text-sky-600 hover:text-sky-800 hover:bg-sky-50 rounded transition-colors cursor-pointer"
             title="Edit Pending LR"
           >
             <Pencil className="w-3.5 h-3.5" />
           </button>
           <button
             onClick={() => setDeleteRecord(row)}
-            className="p-0.5 text-rose-600 hover:text-rose-800 hover:bg-rose-50 rounded transition-colors cursor-pointer"
+            className="p-1 text-rose-600 hover:text-rose-800 hover:bg-rose-50 rounded transition-colors cursor-pointer"
             title="Delete Pending LR"
           >
             <Trash2 className="w-3.5 h-3.5" />
@@ -188,6 +190,8 @@ export const PendingStock = () => {
         searchPlaceholder="Search Pending LR No, Memo No, Consignor, Consignee..."
         onExportExcel={(data) => exportToExcel(data, 'Pending_Stock_Report', pendingColumns)}
         onExportPDF={(data) => exportToPDF('Pending Stock Register', pendingColumns, data, 'Pending_Stock_Report')}
+        compact={true}
+        tableLayout="fixed"
       />
 
       {/* VIEW MODAL */}

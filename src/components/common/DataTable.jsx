@@ -17,7 +17,12 @@ export const DataTable = ({
   onSelectRow,
   onSelectAll,
   showTotal = true,
+  compact = false,
+  tableLayout = 'auto',
+  className = '',
 }) => {
+  const isCompact = compact || (columns && columns.length >= 10);
+
   const [searchTerm, setSearchTerm] = useState('');
   const [dateFilter, setDateFilter] = useState('ALL');
   const [startDate, setStartDate] = useState('');
@@ -149,7 +154,8 @@ export const DataTable = ({
       k.includes('tbb') ||
       k.includes('paid') ||
       k.includes('freight') ||
-      k.includes('amount')
+      k.includes('amount') ||
+      k.includes('money')
     );
   };
 
@@ -312,16 +318,16 @@ export const DataTable = ({
 
       {/* Table Container */}
       <div className="w-full overflow-x-auto">
-        <table className="w-full text-left text-xs text-slate-700 border-collapse table-auto">
-          <thead className="bg-slate-100 text-slate-800 font-extrabold border-b border-slate-200 text-[10.5px] uppercase tracking-tight">
+        <table className={`w-full text-left text-slate-700 border-collapse ${tableLayout === 'fixed' || isCompact ? 'table-fixed' : 'table-auto'} ${className}`}>
+          <thead className={`bg-slate-100 text-slate-800 font-extrabold border-b border-slate-200 ${isCompact ? 'text-[10px]' : 'text-[10.5px]'} uppercase tracking-tight`}>
             <tr>
               {selectable && (
-                <th className="px-2 py-3 w-8 text-center">
+                <th className={`${isCompact ? 'px-1 py-2 w-7' : 'px-2 py-3 w-8'} text-center`}>
                   <input
                     type="checkbox"
                     checked={allSelected}
                     onChange={(e) => onSelectAll && onSelectAll(e.target.checked, filteredData)}
-                    className="rounded border-slate-300 text-sky-600 focus:ring-sky-500"
+                    className="rounded border-slate-300 text-sky-600 focus:ring-sky-500 cursor-pointer"
                   />
                 </th>
               )}
@@ -333,15 +339,23 @@ export const DataTable = ({
                 return (
                   <th
                     key={idx}
-                    className={`px-2 py-3 leading-tight whitespace-nowrap ${
+                    className={`${isCompact ? 'px-1.5 py-2' : 'px-2 py-3'} leading-tight whitespace-nowrap ${
                       isAction
-                        ? 'text-center w-24 min-w-[92px]'
+                        ? 'text-center'
                         : isRight
                         ? 'text-right'
                         : isCenter
                         ? 'text-center'
                         : 'text-left'
-                    } ${col.width || ''}`}
+                    } ${
+                      col.width
+                        ? col.width
+                        : isAction
+                        ? isCompact
+                          ? 'w-16 min-w-[62px]'
+                          : 'w-20 min-w-[76px]'
+                        : ''
+                    }`}
                   >
                     {col.label}
                   </th>
@@ -368,12 +382,12 @@ export const DataTable = ({
                   }`}
                 >
                   {selectable && (
-                    <td className="px-2 py-2.5 text-center">
+                    <td className={`${isCompact ? 'px-1 py-1.5' : 'px-2 py-2.5'} text-center`}>
                       <input
                         type="checkbox"
                         checked={selectedIds.includes(row.id)}
                         onChange={() => onSelectRow && onSelectRow(row)}
-                        className="rounded border-slate-300 text-sky-600 focus:ring-sky-500"
+                        className="rounded border-slate-300 text-sky-600 focus:ring-sky-500 cursor-pointer"
                       />
                     </td>
                   )}
@@ -408,22 +422,24 @@ export const DataTable = ({
                       col.key === 'totalQty' ||
                       col.key === 'srNo';
 
+                    const paddingCls = isCompact ? 'px-1.5 py-1.5' : 'px-2 py-2.5';
+                    const textCls = isCompact ? 'text-[10.5px]' : 'text-[11px]';
+                    const alignCls = isRight ? 'text-right font-bold' : isCenter ? 'text-center' : 'text-left';
+                    const wrapCls = isAction || isRight || isCenter || isNumOrDate ? 'whitespace-nowrap' : 'truncate';
+                    const widthCls = col.width
+                      ? col.width
+                      : isAction
+                      ? isCompact
+                        ? 'w-16 min-w-[62px]'
+                        : 'w-20 min-w-[76px]'
+                      : isCompact
+                      ? 'max-w-[95px] truncate'
+                      : 'max-w-[130px] truncate';
+
                     return (
                       <td
                         key={colIdx}
-                        className={`px-2 py-2.5 font-semibold text-slate-800 text-[11px] leading-snug ${
-                          isAction
-                            ? 'whitespace-nowrap text-center w-24 min-w-[92px]'
-                            : isRight
-                            ? 'whitespace-nowrap text-right font-bold'
-                            : isCenter
-                            ? 'whitespace-nowrap text-center'
-                            : isNumOrDate
-                            ? 'whitespace-nowrap'
-                            : col.width
-                            ? col.width
-                            : 'max-w-[130px] truncate'
-                        }`}
+                        className={`${paddingCls} font-semibold text-slate-800 ${textCls} leading-snug ${alignCls} ${wrapCls} ${widthCls} ${col.className || ''}`}
                         title={!col.render && typeof row[col.key] === 'string' ? row[col.key] : undefined}
                       >
                         {cellVal ?? '-'}
@@ -454,16 +470,19 @@ export const DataTable = ({
                 ? lastTotalIndex + 1
                 : -1;
 
+            const padCls = isCompact ? 'px-1.5 py-1.5' : 'px-2 py-2.5';
+            const fTextCls = isCompact ? 'text-[10.5px]' : 'text-[11px]';
+
             return (
-              <tfoot className="bg-sky-50/90 border-t-2 border-slate-300 font-extrabold text-slate-900 text-[11px]">
+              <tfoot className={`bg-sky-50/90 border-t-2 border-slate-300 font-extrabold text-slate-900 ${fTextCls}`}>
                 <tr>
-                  {selectable && <td className="px-2 py-2.5"></td>}
+                  {selectable && <td className={`${isCompact ? 'px-1 py-1.5' : 'px-2 py-2.5'}`}></td>}
                   {columns.map((col, colIdx) => {
                     const isAction = col.key === 'actions';
 
                     if (colIdx === labelIndex) {
                       return (
-                        <td key={colIdx} className="px-2 py-2.5 text-right font-black tracking-wider uppercase text-slate-900 whitespace-nowrap">
+                        <td key={colIdx} className={`${padCls} text-right font-black tracking-wider uppercase text-slate-900 whitespace-nowrap`}>
                           TOTAL:
                         </td>
                       );
@@ -478,14 +497,14 @@ export const DataTable = ({
 
                       if (k.includes('pkg') || k.includes('qty')) {
                         return (
-                          <td key={colIdx} className="px-2 py-2.5 font-black text-slate-900 text-center whitespace-nowrap">
+                          <td key={colIdx} className={`${padCls} font-black text-slate-900 text-center whitespace-nowrap`}>
                             {sum} Pkgs
                           </td>
                         );
                       }
 
                       return (
-                        <td key={colIdx} className="px-2 py-2.5 font-extrabold text-[#1e295b] text-right whitespace-nowrap">
+                        <td key={colIdx} className={`${padCls} font-extrabold text-[#1e295b] text-right whitespace-nowrap`}>
                           {formatCurrency(sum)}
                         </td>
                       );
@@ -493,18 +512,26 @@ export const DataTable = ({
 
                     if (colIdx === grandTotalColIndex) {
                       return (
-                        <td key={colIdx} className="px-2 py-2 text-center whitespace-nowrap">
+                        <td key={colIdx} className={`${isCompact ? 'px-1 py-1.5' : 'px-2 py-2'} text-center whitespace-nowrap`}>
                           <span
-                            className="inline-flex items-center px-2 py-0.5 font-black text-emerald-950 bg-emerald-100 rounded border border-emerald-300 text-[10px] shadow-2xs"
+                            className={`inline-flex items-center ${isCompact ? 'px-1.5 py-0.5 text-[9.5px]' : 'px-2 py-0.5 text-[10px]'} font-black text-emerald-950 bg-emerald-100 rounded border border-emerald-300 shadow-2xs`}
                             title="Total Freight (To Pay + TBB + Paid)"
                           >
-                            Total: {formatCurrency(grandTotalSum)}
+                            {isCompact ? formatCurrency(grandTotalSum) : `Total: ${formatCurrency(grandTotalSum)}`}
                           </span>
                         </td>
                       );
                     }
 
-                    return <td key={colIdx} className={`px-2 py-2.5 ${isAction ? 'w-24 min-w-[92px]' : ''}`}></td>;
+                    const widthCls = col.width
+                      ? col.width
+                      : isAction
+                      ? isCompact
+                        ? 'w-16 min-w-[62px]'
+                        : 'w-20 min-w-[76px]'
+                      : '';
+
+                    return <td key={colIdx} className={`${padCls} ${widthCls}`}></td>;
                   })}
                 </tr>
               </tfoot>
