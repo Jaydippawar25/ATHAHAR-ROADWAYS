@@ -50,7 +50,7 @@ export const Reports = () => {
     { label: 'To Pay', key: 'toPayAmount', type: 'currency' },
     { label: 'T.B.B', key: 'tbbAmount', type: 'currency' },
     { label: 'Paid', key: 'paidAmount', type: 'currency' },
-    { label: 'Status', key: 'status', type: 'status' },
+    { label: 'Status', key: 'status', type: 'status', width: 'min-w-[96px]' },
     {
       label: 'Actions',
       key: 'actions',

@@ -351,7 +351,7 @@ export const AllEntries = () => {
       key: 'lrNo',
       render: (row) => <span className="font-extrabold text-sky-800 whitespace-nowrap">{row.lrNo}</span>,
     },
-    { label: 'Status', key: 'status', type: 'status' },
+    { label: 'Status', key: 'status', type: 'status', width: 'min-w-[96px]' },
     { label: 'In Date', key: 'inwardDate', type: 'date' },
     { label: 'Out Date', key: 'outwardDate', type: 'date' },
     {

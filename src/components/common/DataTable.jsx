@@ -318,7 +318,7 @@ export const DataTable = ({
 
       {/* Table Container */}
       <div className="w-full overflow-x-auto">
-        <table className={`w-full text-left text-slate-700 border-collapse ${tableLayout === 'fixed' || isCompact ? 'table-fixed' : 'table-auto'} ${className}`}>
+        <table className={`w-full text-left text-slate-700 border-collapse ${tableLayout === 'fixed' ? 'table-fixed' : 'table-auto'} ${className}`}>
           <thead className={`bg-slate-100 text-slate-800 font-extrabold border-b border-slate-200 ${isCompact ? 'text-[10px]' : 'text-[10.5px]'} uppercase tracking-tight`}>
             <tr>
               {selectable && (
@@ -354,6 +354,10 @@ export const DataTable = ({
                         ? isCompact
                           ? 'w-16 min-w-[62px]'
                           : 'w-20 min-w-[76px]'
+                        : col.type === 'status'
+                        ? 'min-w-[96px]'
+                        : col.key === 'type'
+                        ? 'min-w-[105px]'
                         : ''
                     }`}
                   >
@@ -425,16 +429,23 @@ export const DataTable = ({
                     const paddingCls = isCompact ? 'px-1.5 py-1.5' : 'px-2 py-2.5';
                     const textCls = isCompact ? 'text-[10.5px]' : 'text-[11px]';
                     const alignCls = isRight ? 'text-right font-bold' : isCenter ? 'text-center' : 'text-left';
-                    const wrapCls = isAction || isRight || isCenter || isNumOrDate ? 'whitespace-nowrap' : 'truncate';
+                    const isBadgeCol = col.type === 'status' || col.key === 'type';
+                    const wrapCls = isAction || isRight || isCenter || isNumOrDate || isBadgeCol ? 'whitespace-nowrap' : 'truncate';
                     const widthCls = col.width
                       ? col.width
                       : isAction
                       ? isCompact
                         ? 'w-16 min-w-[62px]'
                         : 'w-20 min-w-[76px]'
+                      : col.type === 'status'
+                      ? 'min-w-[96px]'
+                      : col.key === 'type'
+                      ? 'min-w-[105px]'
+                      : isNumOrDate
+                      ? 'whitespace-nowrap'
                       : isCompact
-                      ? 'max-w-[95px] truncate'
-                      : 'max-w-[130px] truncate';
+                      ? 'max-w-[110px] truncate'
+                      : 'max-w-[140px] truncate';
 
                     return (
                       <td

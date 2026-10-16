@@ -311,10 +311,11 @@ export const Accounting = () => {
     {
       label: 'Type',
       key: 'type',
+      width: 'min-w-[110px]',
       nowrap: true,
       render: (row) => (
         <span
-          className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-black whitespace-nowrap shrink-0 ${
+          className={`inline-flex items-center px-2 py-0.5 rounded text-[10.5px] font-black whitespace-nowrap shrink-0 ${
             row.type === 'INWARD'
               ? 'bg-sky-100 text-sky-800 border border-sky-300'
               : row.type === 'STOCK OUT'
@@ -323,11 +324,11 @@ export const Accounting = () => {
           }`}
         >
           {row.type === 'INWARD' ? (
-            <ArrowDownLeft className="w-3.5 h-3.5 mr-1 text-sky-600 shrink-0" />
+            <ArrowDownLeft className="w-3 h-3 mr-1 text-sky-600 shrink-0" />
           ) : row.type === 'STOCK OUT' ? (
-            <Shuffle className="w-3.5 h-3.5 mr-1 text-purple-600 shrink-0" />
+            <Shuffle className="w-3 h-3 mr-1 text-purple-600 shrink-0" />
           ) : (
-            <ArrowUpRight className="w-3.5 h-3.5 mr-1 text-emerald-600 shrink-0" />
+            <ArrowUpRight className="w-3 h-3 mr-1 text-emerald-600 shrink-0" />
           )}
           <span>{row.type}</span>
         </span>
