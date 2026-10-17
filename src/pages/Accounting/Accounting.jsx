@@ -252,7 +252,7 @@ export const Accounting = () => {
     // Combined Totals: Total Commission is strictly from Inward
     const totalFreightHandled = inwardGrossFreight + outwardMoneyTotal + stockOutMoneyTotal;
     const totalCommission20 = inwardCommission;
-    const netDifference = inwardMoneyTotal - (outwardMoneyTotal + stockOutMoneyTotal);
+    const netDifference = inwardMoneyTotal - outwardMoneyTotal;
 
     return {
       inwardMoneyTotal,
@@ -541,7 +541,7 @@ export const Accounting = () => {
           </p>
           <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] font-bold text-slate-500">
             <span>Inward: {formatCurrency(accountingSummary.inwardMoneyTotal)}</span>
-            <span>Outward: {formatCurrency(accountingSummary.outwardMoneyTotal + accountingSummary.stockOutMoneyTotal)}</span>
+            <span>Outward: {formatCurrency(accountingSummary.outwardMoneyTotal)}</span>
           </div>
         </div>
       </div>
