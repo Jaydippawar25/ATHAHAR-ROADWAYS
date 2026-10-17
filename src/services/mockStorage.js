@@ -191,88 +191,17 @@ export const testFirestoreConnection = async () => {
 };
 
 /**
- * Default sample data for true first-time initialization
+ * Clean empty data for fresh initialization (no dummy records)
  */
 const getDefaultInitialData = () => {
-  const sampleInward = {
-    id: 'inw-9026',
-    inwardNo: '9026',
-    date: new Date().toISOString().split('T')[0],
-    transporterName: 'LIMRA FREIGHT LOGISTICS',
-    vehicleNo: 'MH-04-FK-1234',
-    driverName: 'RAMESH KUMAR',
-    ownerName: 'AHMED KHAN',
-    from: 'SURAT',
-    memoNo: 'MEM-8801',
-    totalQty: 25,
-    totalToPay: 4500,
-    totalTbb: 1200,
-    totalPaid: 500,
-    createdAt: new Date().toISOString(),
-    createdBy: 'Operator',
-  };
-
-  const sampleItems = [
-    {
-      id: 'item-101',
-      inwardId: 'inw-9026',
-      inwardNo: '9026',
-      inwardDate: sampleInward.date,
-      transporterName: sampleInward.transporterName,
-      vehicleNo: sampleInward.vehicleNo,
-      driverName: sampleInward.driverName,
-      ownerName: sampleInward.ownerName,
-      from: sampleInward.from,
-      memoNo: sampleInward.memoNo,
-      srNo: 1,
-      lrNo: '174',
-      date: sampleInward.date,
-      pkg: 10,
-      invoiceNo: 'INV-5541',
-      ctTo: 'BHIWANDI HUB',
-      consignorName: 'GLOBAL TEXTILES PVT LTD',
-      consigneeName: 'BHIWANDI FASHION HUB',
-      toPayAmount: 2000,
-      tbbAmount: 500,
-      paidAmount: 200,
-      status: STATUS.PENDING,
-      createdAt: new Date().toISOString(),
-    },
-    {
-      id: 'item-102',
-      inwardId: 'inw-9026',
-      inwardNo: '9026',
-      inwardDate: sampleInward.date,
-      transporterName: sampleInward.transporterName,
-      vehicleNo: sampleInward.vehicleNo,
-      driverName: sampleInward.driverName,
-      ownerName: sampleInward.ownerName,
-      from: sampleInward.from,
-      memoNo: sampleInward.memoNo,
-      srNo: 2,
-      lrNo: '13941',
-      date: sampleInward.date,
-      pkg: 15,
-      invoiceNo: 'INV-5542',
-      ctTo: 'MUMBAI CENTRAL',
-      consignorName: 'SUPER TRADERS',
-      consigneeName: 'METRO RETAILS',
-      toPayAmount: 2500,
-      tbbAmount: 700,
-      paidAmount: 300,
-      status: STATUS.PENDING,
-      createdAt: new Date().toISOString(),
-    },
-  ];
-
-  return { sampleInward, sampleItems };
+  return { sampleInward: null, sampleItems: [] };
 };
 
 /**
  * Safe Asynchronous Hydration & Initialization:
  * 1. Checks if Cloud Firestore already has live records.
- * 2. If Firestore has data -> downloads it into local storage (NEVER overwrites Cloud with local mock).
- * 3. If Firestore is empty AND local storage is empty -> seeds default masters and uploads.
+ * 2. If Firestore has data -> downloads it into local storage.
+ * 3. If Firestore is empty AND local storage is empty -> initializes clean empty state.
  * 4. If Firestore is unreachable -> cleanly falls back to existing local storage.
  */
 export const safeInitializeData = async () => {
@@ -303,24 +232,99 @@ export const safeInitializeData = async () => {
       return { success: true, source: 'localStorage' };
     }
 
-    // Both Cloud and Local are empty -> Brand new initialization
+    // Both Cloud and Local are empty -> Clean fresh initialization
     isApplyingRemoteUpdate = true;
-    const { sampleInward, sampleItems } = getDefaultInitialData();
-
     setStoredItemLocalOnly(STORAGE_KEYS.MASTERS, INITIAL_MASTERS);
-    setStoredItemLocalOnly(STORAGE_KEYS.INWARDS, [sampleInward]);
-    setStoredItemLocalOnly(STORAGE_KEYS.INWARD_ITEMS, sampleItems);
+    setStoredItemLocalOnly(STORAGE_KEYS.INWARDS, []);
+    setStoredItemLocalOnly(STORAGE_KEYS.INWARD_ITEMS, []);
     setStoredItemLocalOnly(STORAGE_KEYS.OUTWARDS, []);
     setStoredItemLocalOnly(STORAGE_KEYS.OUTWARD_ITEMS, []);
     setStoredItemLocalOnly(STORAGE_KEYS.AUDIT_LOGS, []);
+    setStoredItemLocalOnly(STORAGE_KEYS.ACCOUNTING_VOUCHERS, []);
+    setStoredItemLocalOnly(STORAGE_KEYS.EXPENSES, []);
     isApplyingRemoteUpdate = false;
 
-    // Upload initial seed to Firestore
+    // Upload clean initial state to Firestore
     await syncAllToFirestore();
     return { success: true, source: 'initialized' };
   } catch (err) {
     console.warn('[Storage Init] Cloud check encountered an error. Falling back to local storage:', err);
     return { success: false, error: err?.message || String(err), source: 'local_fallback' };
+  }
+};
+
+/**
+ * Completely wipe all records from both LocalStorage and Cloud Firestore
+ */
+export const clearAllDatabaseData = async () => {
+  isApplyingRemoteUpdate = true;
+  try {
+    // 1. Clear local storage keys
+    Object.values(STORAGE_KEYS).forEach((k) => {
+      try {
+        localStorage.removeItem(k);
+      } catch (e) {}
+    });
+
+    const emptyMasters = {
+      transporters: [],
+      vehicles: [],
+      drivers: [],
+      consignors: [],
+      consignees: [],
+      stations: [],
+      deliveryPersons: [],
+      owners: [],
+    };
+
+    setStoredItemLocalOnly(STORAGE_KEYS.MASTERS, emptyMasters);
+    setStoredItemLocalOnly(STORAGE_KEYS.INWARDS, []);
+    setStoredItemLocalOnly(STORAGE_KEYS.INWARD_ITEMS, []);
+    setStoredItemLocalOnly(STORAGE_KEYS.OUTWARDS, []);
+    setStoredItemLocalOnly(STORAGE_KEYS.OUTWARD_ITEMS, []);
+    setStoredItemLocalOnly(STORAGE_KEYS.AUDIT_LOGS, []);
+    setStoredItemLocalOnly(STORAGE_KEYS.ACCOUNTING_VOUCHERS, []);
+    setStoredItemLocalOnly(STORAGE_KEYS.EXPENSES, []);
+
+    // 2. Wipe Firestore app_data documents
+    if (db) {
+      for (const key of Object.values(STORAGE_KEYS)) {
+        try {
+          const docRef = doc(db, 'app_data', key);
+          const emptyVal = key === STORAGE_KEYS.MASTERS ? emptyMasters : [];
+          await setDoc(docRef, {
+            data: emptyVal,
+            updatedAt: new Date().toISOString(),
+            clearedAt: new Date().toISOString(),
+          });
+        } catch (e) {
+          console.warn(`Could not clear Firestore app_data/${key}:`, e);
+        }
+      }
+
+      // 3. Clear granular collection documents
+      const granularCollections = [
+        'athahar_inwards',
+        'athahar_inward_items',
+        'athahar_outwards',
+        'athahar_outward_items',
+        'athahar_accounting_vouchers',
+        'athahar_expenses',
+        'athahar_masters',
+      ];
+      for (const colName of granularCollections) {
+        try {
+          const colRef = collection(db, colName);
+          const snap = await getDocs(colRef);
+          for (const docSnap of snap.docs) {
+            await deleteDoc(docSnap.ref);
+          }
+        } catch (e) {}
+      }
+    }
+    return { success: true };
+  } finally {
+    isApplyingRemoteUpdate = false;
   }
 };
 

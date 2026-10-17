@@ -39,6 +39,7 @@ import {
   pullAllFromFirestore,
   syncAllToFirestore,
   testFirestoreConnection,
+  clearAllDatabaseData,
   STORAGE_KEYS,
 } from '../services/mockStorage';
 import { STATUS } from '../utils/constants';
@@ -201,6 +202,24 @@ export const AppProvider = ({ children }) => {
     return count;
   };
 
+  // Complete Database Wipe (Local + Cloud Firestore)
+  const handleClearAllData = async () => {
+    setSyncStatus((prev) => ({
+      ...prev,
+      state: 'syncing',
+      message: 'Wiping all database records...',
+    }));
+    await clearAllDatabaseData();
+    refreshData();
+    setSyncStatus({
+      state: 'connected',
+      message: 'All records and Cloud Firestore data cleared!',
+      lastSync: new Date().toLocaleTimeString(),
+      source: 'cleared',
+    });
+    return { success: true };
+  };
+
   const handleCreateInward = (headerData, lrItems, username) => {
     const res = createInward(headerData, lrItems, username);
     refreshData();
@@ -342,6 +361,7 @@ export const AppProvider = ({ children }) => {
         refreshData,
         handlePullFromCloud,
         handlePushToCloud,
+        handleClearAllData,
         testFirestoreConnection,
         handleCreateInward,
         handleUpdateFullInward,

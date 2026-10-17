@@ -11,13 +11,20 @@ import {
   DownloadCloud,
   UploadCloud,
   Wifi,
+  Trash2,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useApp } from '../../context/AppContext';
 
 export const Settings = () => {
   const { user } = useAuth();
-  const { syncStatus, handlePullFromCloud, handlePushToCloud, testFirestoreConnection } = useApp();
+  const {
+    syncStatus,
+    handlePullFromCloud,
+    handlePushToCloud,
+    handleClearAllData,
+    testFirestoreConnection,
+  } = useApp();
   const [actionStatus, setActionStatus] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -81,6 +88,45 @@ export const Settings = () => {
         type: 'error',
         message: `Pull failed: ${err?.message || String(err)}`,
         detail: 'Verify internet connection and Firestore Security Rules.',
+      });
+    }
+  };
+
+  const handleClearDatabase = async () => {
+    const confirmed = window.confirm(
+      'WARNING: Are you sure you want to permanently delete ALL records?\n\n' +
+        'This will delete:\n' +
+        '• All Inward Entries & Items\n' +
+        '• All Outward Entries & Items\n' +
+        '• All Pending Stock Items\n' +
+        '• All Accounting Vouchers\n' +
+        '• All Expenses & Reports\n' +
+        '• All Masters (Transporters, Vehicles, Drivers, Consignors, etc.)\n\n' +
+        'Data will be permanently wiped from BOTH local storage and Cloud Firestore.'
+    );
+
+    if (!confirmed) return;
+
+    setIsProcessing(true);
+    setActionStatus({
+      type: 'info',
+      message: 'Wiping all records from Cloud Firestore & local storage...',
+    });
+
+    try {
+      await handleClearAllData();
+      setIsProcessing(false);
+      setActionStatus({
+        type: 'success',
+        message:
+          'All records (Inwards, Outwards, Stock, Accounting, Expenses, Masters) have been permanently wiped.',
+      });
+    } catch (err) {
+      setIsProcessing(false);
+      setActionStatus({
+        type: 'error',
+        message: `Wipe failed: ${err?.message || String(err)}`,
+        detail: 'Ensure you have an active network connection.',
       });
     }
   };
@@ -244,7 +290,41 @@ export const Settings = () => {
             </div>
           </div>
         </div>
+
+        {/* Danger Zone: Wipe Database Card */}
+        <div className="bg-rose-50/60 p-6 rounded-xl border border-rose-200 shadow-sm space-y-4 md:col-span-2">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-rose-200 pb-3 gap-3">
+            <div className="flex items-center space-x-2.5">
+              <div className="p-2 bg-rose-100 rounded-lg text-rose-700">
+                <Trash2 className="w-5 h-5 text-rose-600" />
+              </div>
+              <div>
+                <h3 className="font-bold text-rose-950">Danger Zone: Complete Database Wipe</h3>
+                <p className="text-xs text-rose-700">
+                  Permanently delete all business data and masters across Cloud Firestore & browser
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={handleClearDatabase}
+              disabled={isProcessing}
+              className="px-4 py-2 bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white rounded-lg text-xs font-bold flex items-center space-x-2 transition disabled:opacity-50 shadow-sm"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>Clear All Database Records</span>
+            </button>
+          </div>
+
+          <p className="text-xs text-rose-800 leading-relaxed">
+            Clicking <strong>Clear All Database Records</strong> will permanently erase all Inward
+            entries, Outward entries, Stock-Out, Pending Stock, Accounting vouchers, Expenses,
+            Reports, and Masters from live Cloud Firestore and local device memory. Use this button
+            only when resetting the application for a clean production setup.
+          </p>
+        </div>
       </div>
     </div>
   );
 };
+
