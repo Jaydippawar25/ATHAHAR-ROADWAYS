@@ -1,11 +1,9 @@
 import React from 'react';
-import { Calendar, CloudOff, RefreshCw, User } from 'lucide-react';
-import { useApp } from '../../context/AppContext';
+import { Calendar, User } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { Link } from 'react-router-dom';
 
 export const TopHeader = () => {
-  const { syncStatus } = useApp();
   const { user } = useAuth();
 
   const currentDateStr = new Date().toLocaleDateString('en-GB', {
@@ -13,9 +11,6 @@ export const TopHeader = () => {
     month: 'short',
     year: 'numeric',
   });
-
-  const isConnected = syncStatus?.state === 'connected';
-  const isSyncing = syncStatus?.state === 'syncing' || syncStatus?.state === 'connecting';
 
   return (
     <header className="bg-white border-b border-slate-200/90 px-4 sm:px-6 py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs sticky top-0 z-30">
@@ -39,36 +34,6 @@ export const TopHeader = () => {
       </div>
 
       <div className="flex items-center space-x-3 w-fit self-end sm:self-auto">
-        {/* Live Cloud Sync Status Pill */}
-        <Link
-          to="/settings"
-          title={`Data Sync Status: ${syncStatus?.message || 'Ready'}${
-            syncStatus?.lastSync ? ` (Last: ${syncStatus.lastSync})` : ''
-          }`}
-          className={`flex items-center space-x-1.5 px-3 py-1 rounded-full text-xs font-semibold border transition-all ${
-            isConnected
-              ? 'bg-emerald-50 border-emerald-200 text-emerald-800 hover:bg-emerald-100'
-              : isSyncing
-              ? 'bg-amber-50 border-amber-200 text-amber-800 hover:bg-amber-100'
-              : 'bg-slate-100 border-slate-300 text-slate-700 hover:bg-slate-200'
-          }`}
-        >
-          {isSyncing ? (
-            <RefreshCw className="w-3 h-3 text-amber-600 animate-spin" />
-          ) : isConnected ? (
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-            </span>
-          ) : (
-            <CloudOff className="w-3 h-3 text-slate-500" />
-          )}
-
-          <span>
-            {isSyncing ? 'Syncing...' : isConnected ? 'Cloud Synced' : 'Local Mode'}
-          </span>
-        </Link>
-
         {/* Calendar Date Pill */}
         <div className="flex items-center space-x-1.5 text-xs text-slate-600 font-medium px-2 py-1">
           <Calendar className="w-3.5 h-3.5 text-slate-400" />

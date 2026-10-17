@@ -4,7 +4,7 @@ import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 import { Modal } from '../../components/common/Modal';
 import { EditableCombobox } from '../../components/common/EditableCombobox';
-import { Save, Printer, AlertCircle, Plus, Trash2, Edit2, Layers, CheckCircle } from 'lucide-react';
+import { Save, Printer, AlertCircle, Plus, Trash2, Edit2, Layers, CheckCircle, X } from 'lucide-react';
 import { getTodayDateString, formatDate } from '../../utils/dateUtils';
 import { formatCurrency } from '../../utils/numberUtils';
 import { printRecordDetails } from '../../services/exportService';
