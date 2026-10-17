@@ -7,8 +7,15 @@ import {
   browserLocalPersistence,
   browserSessionPersistence,
   sendPasswordResetEmail,
+  updatePassword,
+  updateEmail,
+  verifyBeforeUpdateEmail,
+  createUserWithEmailAndPassword,
+  updateProfile,
+  getAuth,
 } from 'firebase/auth';
-import { auth } from '../firebase/firebase';
+import { initializeApp, getApps } from 'firebase/app';
+import { auth, firebaseConfig } from '../firebase/firebase';
 
 const AuthContext = createContext(null);
 
@@ -82,6 +89,67 @@ export const AuthProvider = ({ children }) => {
     return sendPasswordResetEmail(auth, email.trim());
   };
 
+  const changePassword = async (newPassword) => {
+    setAuthError(null);
+    if (!auth.currentUser) throw new Error('No active user logged in.');
+    return updatePassword(auth.currentUser, newPassword);
+  };
+
+  const changeEmail = async (newEmail) => {
+    setAuthError(null);
+    if (!auth.currentUser) throw new Error('No active user logged in.');
+    if (typeof verifyBeforeUpdateEmail === 'function') {
+      try {
+        await verifyBeforeUpdateEmail(auth.currentUser, newEmail.trim());
+        return { verifySent: true };
+      } catch (err) {
+        if (err.code === 'auth/operation-not-allowed') {
+          await updateEmail(auth.currentUser, newEmail.trim());
+          return { verifySent: false };
+        }
+        throw err;
+      }
+    } else {
+      await updateEmail(auth.currentUser, newEmail.trim());
+      return { verifySent: false };
+    }
+  };
+
+  const createOperatorUser = async (email, password, displayName, role = 'Operator') => {
+    setAuthError(null);
+    const secondaryAppName = 'SecondaryAuthApp';
+    const secondaryApp =
+      getApps().find((a) => a.name === secondaryAppName) ||
+      initializeApp(firebaseConfig, secondaryAppName);
+    const secondaryAuth = getAuth(secondaryApp);
+
+    try {
+      const userCredential = await createUserWithEmailAndPassword(
+        secondaryAuth,
+        email.trim(),
+        password
+      );
+      const newFbUser = userCredential.user;
+
+      if (displayName) {
+        await updateProfile(newFbUser, { displayName });
+      }
+
+      await signOut(secondaryAuth);
+
+      return {
+        uid: newFbUser.uid,
+        email: newFbUser.email,
+        displayName: displayName || email.split('@')[0],
+        role,
+        createdAt: new Date().toISOString(),
+      };
+    } catch (error) {
+      await signOut(secondaryAuth).catch(() => {});
+      throw error;
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -91,6 +159,9 @@ export const AuthProvider = ({ children }) => {
         login,
         logout,
         resetPassword,
+        changePassword,
+        changeEmail,
+        createOperatorUser,
       }}
     >
       {children}
