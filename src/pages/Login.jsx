@@ -170,7 +170,7 @@ export const Login = () => {
                     <span>Logging in...</span>
                   </>
                 ) : (
-                  <span>Access Dashboard</span>
+                  <span>Login</span>
                 )}
               </button>
 
