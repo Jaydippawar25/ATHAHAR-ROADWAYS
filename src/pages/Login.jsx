@@ -4,8 +4,8 @@ import { useAuth } from '../context/AuthContext';
 import { User, Lock, Eye, EyeOff, AlertCircle, RefreshCw, CheckCircle2 } from 'lucide-react';
 
 export const Login = () => {
-  const [username, setUsername] = useState('admin@atharva.com');
-  const [password, setPassword] = useState('password123');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [remember, setRemember] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
@@ -116,7 +116,7 @@ export const Login = () => {
                 <input
                   type="email"
                   required
-                  placeholder="admin@atharva.com"
+                  placeholder="Enter email address"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   className="w-full text-sm text-slate-800 placeholder-slate-400 focus:outline-none bg-transparent"
@@ -129,7 +129,7 @@ export const Login = () => {
                 <input
                   type={showPassword ? 'text' : 'password'}
                   required
-                  placeholder="password"
+                  placeholder="Enter password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full text-sm text-slate-800 placeholder-slate-400 focus:outline-none bg-transparent"
