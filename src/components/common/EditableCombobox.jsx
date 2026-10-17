@@ -10,6 +10,7 @@ import { ChevronDown, Check } from 'lucide-react';
 export const EditableCombobox = forwardRef(
   (
     {
+      inputRef,
       name,
       value = '',
       onChange,
@@ -31,13 +32,18 @@ export const EditableCombobox = forwardRef(
     const containerRef = useRef(null);
     const internalInputRef = useRef(null);
 
-    // Merge external ref with internalInputRef
+    // Merge external ref and inputRef prop with internalInputRef
     const setRefs = (el) => {
       internalInputRef.current = el;
       if (typeof ref === 'function') {
         ref(el);
       } else if (ref) {
         ref.current = el;
+      }
+      if (typeof inputRef === 'function') {
+        inputRef(el);
+      } else if (inputRef) {
+        inputRef.current = el;
       }
     };
 
@@ -136,48 +142,64 @@ export const EditableCombobox = forwardRef(
     const handleInputKeyDown = (e) => {
       if (disabled) return;
 
-      if (isOpen) {
-        if (e.key === 'ArrowDown') {
+      if (e.key === 'ArrowDown') {
+        if (!isOpen) {
+          e.preventDefault();
+          setIsOpen(true);
+          setHighlightedIndex(0);
+          return;
+        } else {
           e.preventDefault();
           setHighlightedIndex((prev) =>
             prev < filteredOptions.length - 1 ? prev + 1 : 0
           );
           return;
         }
+      }
 
-        if (e.key === 'ArrowUp') {
+      if (e.key === 'ArrowUp') {
+        if (isOpen) {
           e.preventDefault();
           setHighlightedIndex((prev) =>
             prev > 0 ? prev - 1 : filteredOptions.length - 1
           );
           return;
         }
+      }
 
-        if (e.key === 'Enter') {
-          if (highlightedIndex >= 0 && filteredOptions[highlightedIndex]) {
-            e.preventDefault();
-            handleSelectOption(filteredOptions[highlightedIndex].value);
-            return;
-          }
-          // If no option highlighted, close dropdown and pass Enter to onKeyDown
-          setIsOpen(false);
-        }
-
-        if (e.key === 'Escape') {
+      if (e.key === 'Escape') {
+        if (isOpen) {
           e.preventDefault();
           setIsOpen(false);
-          return;
-        }
-      } else {
-        if (e.key === 'ArrowDown') {
-          e.preventDefault();
-          setIsOpen(true);
-          setHighlightedIndex(0);
+          setHighlightedIndex(-1);
           return;
         }
       }
 
-      // Delegate to external onKeyDown (e.g. Enter to jump to next input field)
+      // Enter or forward Tab key navigation
+      if (e.key === 'Enter' || (e.key === 'Tab' && !e.shiftKey)) {
+        if (isOpen && highlightedIndex >= 0 && filteredOptions[highlightedIndex]) {
+          triggerChange(filteredOptions[highlightedIndex].value);
+        }
+        setIsOpen(false);
+        setHighlightedIndex(-1);
+        if (onKeyDown) {
+          onKeyDown(e);
+        }
+        return;
+      }
+
+      // Shift+Tab backward navigation
+      if (e.key === 'Tab' && e.shiftKey) {
+        setIsOpen(false);
+        setHighlightedIndex(-1);
+        if (onKeyDown) {
+          onKeyDown(e);
+        }
+        return;
+      }
+
+      // Delegate to external onKeyDown
       if (onKeyDown) {
         onKeyDown(e);
       }

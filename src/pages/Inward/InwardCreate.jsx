@@ -4,7 +4,7 @@ import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 import { Modal } from '../../components/common/Modal';
 import { EditableCombobox } from '../../components/common/EditableCombobox';
-import { Save, Printer, AlertCircle, Plus, Trash2, Edit2, Layers, CheckCircle, X } from 'lucide-react';
+import { Save, Printer, AlertCircle, Trash2, Edit2, Layers, CheckCircle } from 'lucide-react';
 import { getTodayDateString, formatDate } from '../../utils/dateUtils';
 import { formatCurrency } from '../../utils/numberUtils';
 import { printRecordDetails } from '../../services/exportService';
@@ -135,15 +135,38 @@ export const InwardCreate = () => {
 
   const handleKeyDown = (e, index) => {
     if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
-      e.preventDefault();
       return;
     }
-    if (e.key === 'Enter' || (e.key === 'Tab' && !e.shiftKey)) {
-      if (index >= 10) {
+
+    // Ctrl+Enter or Cmd+Enter to quickly save/add row from ANY field
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      handleAddOrUpdateLR();
+      return;
+    }
+
+    // Shift+Tab backward navigation
+    if (e.key === 'Tab' && e.shiftKey) {
+      if (index > 0) {
         e.preventDefault();
+        const prevField = fieldRefs.current[index - 1];
+        if (prevField) {
+          prevField.focus();
+          if (typeof prevField.select === 'function') {
+            prevField.select();
+          }
+        }
+      }
+      return;
+    }
+
+    // Enter or Tab forward navigation
+    if (e.key === 'Enter' || (e.key === 'Tab' && !e.shiftKey)) {
+      e.preventDefault();
+      // Index 9 is paidAmount (the last input). Auto-save & start next LR entry!
+      if (index >= 9) {
         handleAddOrUpdateLR();
       } else {
-        e.preventDefault();
         const nextField = fieldRefs.current[index + 1];
         if (nextField) {
           nextField.focus();
@@ -232,9 +255,10 @@ export const InwardCreate = () => {
   };
 
   // Reset form inputs for next LR entry
-  const resetForm = () => {
+  const resetForm = (nextLength) => {
+    const nextSrNo = typeof nextLength === 'number' ? nextLength + 1 : stagedItems.length + 1;
     setItemForm({
-      srNo: stagedItems.length + 1,
+      srNo: nextSrNo,
       lrNo: '',
       date: getTodayDateString(),
       pkg: '',
@@ -302,7 +326,7 @@ export const InwardCreate = () => {
       }
     }
 
-    resetForm();
+    resetForm(nextItems.length);
     focusLRNoInput();
   };
 
@@ -716,13 +740,24 @@ export const InwardCreate = () => {
               LR Consignment Fast Input Terminal
             </h3>
             {editingIndex !== null && (
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-800">
-                EDITING ROW #{editingIndex + 1}
-              </span>
+              <div className="flex items-center space-x-2 ml-2">
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-800 border border-amber-200 flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                  EDITING ROW #{editingIndex + 1}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => resetForm()}
+                  className="px-2 py-0.5 rounded-lg text-[10px] font-bold bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors cursor-pointer"
+                  title="Cancel editing and start new entry"
+                >
+                  Cancel Edit
+                </button>
+              </div>
             )}
           </div>
-          <span className="text-[11px] text-slate-400 font-medium">
-            Press <kbd className="px-1.5 py-0.5 bg-slate-100 border border-slate-300 rounded text-[10px] font-bold text-slate-600">Enter</kbd> to jump fields &amp; save row
+          <span className="text-[11px] text-slate-500 font-medium">
+            Press <kbd className="px-1.5 py-0.5 bg-slate-100 border border-slate-300 rounded text-[10px] font-bold text-slate-700">Enter</kbd> or <kbd className="px-1.5 py-0.5 bg-slate-100 border border-slate-300 rounded text-[10px] font-bold text-slate-700">Tab</kbd> to jump fields &bull; Auto-saves on last input
           </span>
         </div>
 
@@ -794,6 +829,7 @@ export const InwardCreate = () => {
             <label className="block text-[11px] font-extrabold text-slate-600 uppercase mb-1.5">DESTINATION / CT TO</label>
             <div className="flex items-center space-x-1.5 min-w-0">
               <EditableCombobox
+                ref={(el) => (fieldRefs.current[3] = el)}
                 inputRef={(el) => (fieldRefs.current[3] = el)}
                 onKeyDown={(e) => handleKeyDown(e, 3)}
                 name="ctTo"
@@ -805,6 +841,7 @@ export const InwardCreate = () => {
               />
               <button
                 type="button"
+                tabIndex={-1}
                 onClick={() => handleOpenQuickAdd('stations', 'Station', 'ctTo', false)}
                 className="px-2.5 py-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl font-black text-xs text-slate-700 transition-colors shadow-2xs flex-shrink-0 cursor-pointer"
                 title="Quick Add Station"
@@ -818,6 +855,7 @@ export const InwardCreate = () => {
             <label className="block text-[11px] font-extrabold text-slate-600 uppercase mb-1.5">CONSIGNOR (SENDER)</label>
             <div className="flex items-center space-x-1.5 min-w-0">
               <EditableCombobox
+                ref={(el) => (fieldRefs.current[4] = el)}
                 inputRef={(el) => (fieldRefs.current[4] = el)}
                 onKeyDown={(e) => handleKeyDown(e, 4)}
                 name="consignorName"
@@ -829,6 +867,7 @@ export const InwardCreate = () => {
               />
               <button
                 type="button"
+                tabIndex={-1}
                 onClick={() => handleOpenQuickAdd('consignors', 'Consignor', 'consignorName', false)}
                 className="px-2.5 py-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl font-black text-xs text-slate-700 transition-colors shadow-2xs flex-shrink-0 cursor-pointer"
                 title="Quick Add Consignor"
@@ -842,6 +881,7 @@ export const InwardCreate = () => {
             <label className="block text-[11px] font-extrabold text-slate-600 uppercase mb-1.5">CONSIGNEE (RECEIVER)</label>
             <div className="flex items-center space-x-1.5 min-w-0">
               <EditableCombobox
+                ref={(el) => (fieldRefs.current[5] = el)}
                 inputRef={(el) => (fieldRefs.current[5] = el)}
                 onKeyDown={(e) => handleKeyDown(e, 5)}
                 name="consigneeName"
@@ -853,6 +893,7 @@ export const InwardCreate = () => {
               />
               <button
                 type="button"
+                tabIndex={-1}
                 onClick={() => handleOpenQuickAdd('consignees', 'Consignee', 'consigneeName', false)}
                 className="px-2.5 py-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl font-black text-xs text-slate-700 transition-colors shadow-2xs flex-shrink-0 cursor-pointer"
                 title="Quick Add Consignee"
@@ -878,8 +919,8 @@ export const InwardCreate = () => {
           </div>
         </div>
 
-        {/* Row 3: TO PAY, T.B.B, PAID, TOTAL & ACTION BUTTON */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3.5 items-end pt-1">
+        {/* Row 3: TO PAY, T.B.B, PAID, TOTAL */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3.5 items-end pt-1">
           <div>
             <label className="block text-[11px] font-extrabold text-amber-700 uppercase mb-1.5">TO PAY FREIGHT</label>
             <input
@@ -928,35 +969,12 @@ export const InwardCreate = () => {
           <div>
             <label className="block text-[11px] font-extrabold text-slate-700 uppercase mb-1.5">TOTAL ROW</label>
             <input
-              ref={(el) => (fieldRefs.current[10] = el)}
-              onKeyDown={(e) => handleKeyDown(e, 10)}
               type="text"
               readOnly
-              tabIndex={0}
+              tabIndex={-1}
               value={formatCurrency((Number(itemForm.toPayAmount) || 0) + (Number(itemForm.tbbAmount) || 0) + (Number(itemForm.paidAmount) || 0))}
-              className="w-full px-3 py-2 bg-slate-100 border border-slate-200 rounded-xl text-xs font-black text-slate-900 text-right outline-none"
+              className="w-full px-3 py-2 bg-slate-100 border border-slate-200 rounded-xl text-xs font-black text-slate-900 text-right outline-none cursor-default select-none"
             />
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <button
-              type="button"
-              onClick={handleAddOrUpdateLR}
-              className="w-full py-2 bg-[#1d4ed8] hover:bg-blue-700 active:bg-blue-800 text-white font-extrabold text-xs rounded-xl shadow-xs transition-all flex items-center justify-center space-x-1.5 cursor-pointer"
-            >
-              <Plus className="w-4 h-4" />
-              <span>{editingIndex !== null ? 'Update LR' : 'Add to Grid'}</span>
-            </button>
-            {editingIndex !== null && (
-              <button
-                type="button"
-                onClick={resetForm}
-                className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl transition-colors cursor-pointer"
-                title="Cancel Edit"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            )}
           </div>
         </div>
       </div>

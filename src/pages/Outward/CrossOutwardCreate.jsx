@@ -4,7 +4,7 @@ import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 import { Modal } from '../../components/common/Modal';
 import { EditableCombobox } from '../../components/common/EditableCombobox';
-import { Save, Printer, AlertCircle, Plus, Trash2, Edit2, Layers, CheckCircle } from 'lucide-react';
+import { Save, Printer, AlertCircle, Trash2, Edit2, Layers, CheckCircle } from 'lucide-react';
 import { getTodayDateString, formatDate } from '../../utils/dateUtils';
 import { formatCurrency } from '../../utils/numberUtils';
 import { printRecordDetails } from '../../services/exportService';
@@ -66,15 +66,38 @@ export const CrossOutwardCreate = () => {
 
   const handleKeyDown = (e, index) => {
     if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
-      e.preventDefault();
       return;
     }
-    if (e.key === 'Enter' || (e.key === 'Tab' && !e.shiftKey)) {
-      if (index >= 9) {
+
+    // Ctrl+Enter or Cmd+Enter to quickly save/add row from ANY field
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      handleAddOrUpdateLR();
+      return;
+    }
+
+    // Shift+Tab backward navigation
+    if (e.key === 'Tab' && e.shiftKey) {
+      if (index > 0) {
         e.preventDefault();
+        const prevField = fieldRefs.current[index - 1];
+        if (prevField) {
+          prevField.focus();
+          if (typeof prevField.select === 'function') {
+            prevField.select();
+          }
+        }
+      }
+      return;
+    }
+
+    // Enter or forward Tab
+    if (e.key === 'Enter' || (e.key === 'Tab' && !e.shiftKey)) {
+      e.preventDefault();
+      // Index 9 is paidAmount (the last input)
+      if (index >= 9) {
         handleAddOrUpdateLR();
       } else {
-        e.preventDefault();
         const nextField = fieldRefs.current[index + 1];
         if (nextField) {
           nextField.focus();
@@ -638,11 +661,30 @@ export const CrossOutwardCreate = () => {
           <div className="flex items-center space-x-2">
             <span className="w-1.5 h-4 bg-sky-500 rounded-full" />
             <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-800">
-              LR Entry Details {editingIndex !== null && `(Editing Row #${editingIndex + 1})`}
+              LR Entry Details
             </h3>
+            {editingIndex !== null && (
+              <div className="flex items-center space-x-2 ml-2">
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-800 border border-amber-200 flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                  EDITING ROW #{editingIndex + 1}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditingIndex(null);
+                    focusLRNoInput();
+                  }}
+                  className="px-2 py-0.5 rounded-lg text-[10px] font-bold bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors cursor-pointer"
+                  title="Cancel edit"
+                >
+                  Cancel Edit
+                </button>
+              </div>
+            )}
           </div>
-          <span className="text-[11px] text-slate-400 font-medium">
-            Direct manual LR linehaul dispatch
+          <span className="text-[11px] text-slate-500 font-medium">
+            Press <kbd className="px-1.5 py-0.5 bg-slate-100 border border-slate-300 rounded text-[10px] font-bold text-slate-700">Enter</kbd> or <kbd className="px-1.5 py-0.5 bg-slate-100 border border-slate-300 rounded text-[10px] font-bold text-slate-700">Tab</kbd> to jump fields &bull; Auto-saves on last input
           </span>
         </div>
 
@@ -793,7 +835,7 @@ export const CrossOutwardCreate = () => {
           </div>
 
           {/* Row 3 */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3.5 items-end pt-1">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3.5 items-end pt-1">
             <div>
               <label className="block text-[11px] font-extrabold text-amber-700 uppercase mb-1.5">
                 TO PAY
@@ -850,24 +892,12 @@ export const CrossOutwardCreate = () => {
                 TOTAL ROW
               </label>
               <input
-                ref={(el) => (fieldRefs.current[10] = el)}
-                onKeyDown={(e) => handleKeyDown(e, 10)}
                 type="text"
                 readOnly
-                tabIndex={0}
+                tabIndex={-1}
                 value={itemTotal.toFixed(2)}
-                className="w-full px-3 py-2 bg-slate-100 border border-slate-200 rounded-xl text-xs font-black text-slate-900 text-right outline-none"
+                className="w-full px-3 py-2 bg-slate-100 border border-slate-200 rounded-xl text-xs font-black text-slate-900 text-right outline-none cursor-default select-none"
               />
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <button
-                type="submit"
-                className="w-full py-2 bg-[#1d4ed8] hover:bg-blue-700 active:bg-blue-800 text-white font-extrabold text-xs rounded-xl shadow-xs transition-all flex items-center justify-center space-x-1.5 cursor-pointer"
-              >
-                <Plus className="w-4 h-4" />
-                <span>{editingIndex !== null ? 'Update LR' : 'Add to Grid'}</span>
-              </button>
             </div>
           </div>
         </form>
@@ -909,7 +939,7 @@ export const CrossOutwardCreate = () => {
               {displayLrItems.length === 0 ? (
                 <tr>
                   <td colSpan={12} className="py-12 text-center text-slate-400 font-medium">
-                    No LR items added yet. Fill LR Entry Details above and click &ldquo;Add to Grid&rdquo;.
+                    No LR items added yet. Fill LR Entry Details above to add items.
                   </td>
                 </tr>
               ) : (
