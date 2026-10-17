@@ -43,14 +43,12 @@ export const createOutward = (headerData, selectedPendingItems, currentUser = 'O
   const outwards = getAllOutwards();
   const outwardItems = getAllOutwardItems();
   const inwardItems = getStoredItem(STORAGE_KEYS.INWARD_ITEMS);
-  const isCrossOutward = Boolean(headerData.isCrossOutward);
-
-  // Verify all selected LRs are still pending (for standard Outward from Godown)
-  const selectedIds = new Set(selectedPendingItems.map((item) => item.id).filter(Boolean));
-  const selectedLRs = new Set(
-    selectedPendingItems.map((item) => String(item.lrNo ?? '').trim().toLowerCase()).filter(Boolean)
+  const isCrossOutward = Boolean(
+    headerData.isCrossOutward ||
+      String(headerData.outwardNo || '').toUpperCase().startsWith('STOCK-OUT')
   );
 
+  // For standard Outward from Godown, verify all selected LRs are still pending
   if (!isCrossOutward) {
     for (const item of selectedPendingItems) {
       const existing = inwardItems.find((invItem) => invItem.id === item.id);
@@ -104,9 +102,9 @@ export const createOutward = (headerData, selectedPendingItems, currentUser = 'O
     from: newOutwardHeader.from,
     memoNo: newOutwardHeader.memoNo,
     isCrossOutward,
-    inwardItemId: item.id,
+    inwardItemId: isCrossOutward ? null : item.id,
     lrNo: String(item.lrNo ?? '').trim(),
-    inwardDate: item.date || item.inwardDate || headerData.date,
+    inwardDate: isCrossOutward ? '-' : (item.date || item.inwardDate || headerData.date),
     pkg: Number(item.pkg) || 0,
     invoiceNo: item.invoiceNo || '',
     ctTo: item.ctTo || '',
@@ -116,76 +114,80 @@ export const createOutward = (headerData, selectedPendingItems, currentUser = 'O
     toPayAmount: Number(item.toPayAmount) || 0,
     tbbAmount: Number(item.tbbAmount) || 0,
     paidAmount: Number(item.paidAmount) || 0,
-    status: STATUS.DELIVERED,
+    status: isCrossOutward ? (STATUS.DISPATCHED || 'DISPATCHED') : STATUS.DELIVERED,
     deliveredAt: new Date().toISOString(),
     deliveredBy: currentUser,
   }));
 
-  // Update status and edited amounts in inwardItems collection
-  let inwards = getStoredItem(STORAGE_KEYS.INWARDS);
-  const updatedInwardItems = inwardItems.map((item) => {
-    const lrKey = String(item.lrNo ?? '').trim().toLowerCase();
-    const matchedPending = selectedPendingItems.find(
-      (p) =>
-        p.id === item.id ||
-        (p.inwardItemId && p.inwardItemId === item.id) ||
-        (String(p.lrNo ?? '').trim().toLowerCase() === lrKey)
-    );
+  // Update status and edited amounts in inwardItems collection ONLY for standard Godown Outward
+  // Cross Stock Out is completely standalone manual dispatch with NO connection to Pending Stock or Inward
+  if (!isCrossOutward) {
+    let inwards = getStoredItem(STORAGE_KEYS.INWARDS);
+    const updatedInwardItems = inwardItems.map((item) => {
+      const lrKey = String(item.lrNo ?? '').trim().toLowerCase();
+      const matchedPending = selectedPendingItems.find(
+        (p) =>
+          p.id === item.id ||
+          (p.inwardItemId && p.inwardItemId === item.id) ||
+          (String(p.lrNo ?? '').trim().toLowerCase() === lrKey)
+      );
 
-    if (matchedPending) {
+      if (matchedPending) {
+        return {
+          ...item,
+          lrNo: matchedPending.lrNo ? String(matchedPending.lrNo).trim() : item.lrNo,
+          toPayAmount: Number(matchedPending.toPayAmount) || 0,
+          tbbAmount: Number(matchedPending.tbbAmount) || 0,
+          paidAmount: Number(matchedPending.paidAmount) || 0,
+          pkg: Number(matchedPending.pkg) || item.pkg,
+          invoiceNo: matchedPending.invoiceNo ?? item.invoiceNo,
+          ctTo: matchedPending.ctTo ?? item.ctTo,
+          consignorName: matchedPending.consignorName ?? item.consignorName,
+          consigneeName: matchedPending.consigneeName ?? item.consigneeName,
+          deliveryPersonName:
+            headerData.deliveryPersonName ||
+            matchedPending.deliveryPersonName ||
+            item.deliveryPersonName ||
+            '-',
+          status: STATUS.DELIVERED,
+          deliveredAt: new Date().toISOString(),
+          deliveredBy: currentUser,
+          outwardId,
+          outwardNo: newOutwardHeader.outwardNo,
+          outwardDate: headerData.date,
+        };
+      }
+      return item;
+    });
+
+    // Also recalculate parent inwards totals so Inward Receipts tab and Accounting stay in sync
+    inwards = inwards.map((inv) => {
+      const parentItems = updatedInwardItems.filter(
+        (i) => i.inwardId === inv.id || i.inwardNo === inv.inwardNo
+      );
+      if (parentItems.length === 0) return inv;
+      const inwConsignors = Array.from(new Set(parentItems.map((i) => i.consignorName).filter(Boolean))).join(', ');
+      const inwConsignees = Array.from(new Set(parentItems.map((i) => i.consigneeName).filter(Boolean))).join(', ');
       return {
-        ...item,
-        lrNo: matchedPending.lrNo ? String(matchedPending.lrNo).trim() : item.lrNo,
-        toPayAmount: Number(matchedPending.toPayAmount) || 0,
-        tbbAmount: Number(matchedPending.tbbAmount) || 0,
-        paidAmount: Number(matchedPending.paidAmount) || 0,
-        pkg: Number(matchedPending.pkg) || item.pkg,
-        invoiceNo: matchedPending.invoiceNo ?? item.invoiceNo,
-        ctTo: matchedPending.ctTo ?? item.ctTo,
-        consignorName: matchedPending.consignorName ?? item.consignorName,
-        consigneeName: matchedPending.consigneeName ?? item.consigneeName,
-        deliveryPersonName:
-          headerData.deliveryPersonName ||
-          matchedPending.deliveryPersonName ||
-          item.deliveryPersonName ||
-          '-',
-        status: STATUS.DELIVERED,
-        deliveredAt: new Date().toISOString(),
-        deliveredBy: currentUser,
-        outwardId,
-        outwardNo: newOutwardHeader.outwardNo,
-        outwardDate: headerData.date,
+        ...inv,
+        consignorName: inwConsignors || inv.consignorName,
+        consigneeName: inwConsignees || inv.consigneeName,
+        totalQty: parentItems.reduce((acc, curr) => acc + (Number(curr.pkg) || 0), 0),
+        totalToPay: parentItems.reduce((acc, curr) => acc + (Number(curr.toPayAmount) || 0), 0),
+        totalTbb: parentItems.reduce((acc, curr) => acc + (Number(curr.tbbAmount) || 0), 0),
+        totalPaid: parentItems.reduce((acc, curr) => acc + (Number(curr.paidAmount) || 0), 0),
       };
-    }
-    return item;
-  });
+    });
 
-  // Also recalculate parent inwards totals so Inward Receipts tab and Accounting stay in sync
-  inwards = inwards.map((inv) => {
-    const parentItems = updatedInwardItems.filter(
-      (i) => i.inwardId === inv.id || i.inwardNo === inv.inwardNo
-    );
-    if (parentItems.length === 0) return inv;
-    const inwConsignors = Array.from(new Set(parentItems.map((i) => i.consignorName).filter(Boolean))).join(', ');
-    const inwConsignees = Array.from(new Set(parentItems.map((i) => i.consigneeName).filter(Boolean))).join(', ');
-    return {
-      ...inv,
-      consignorName: inwConsignors || inv.consignorName,
-      consigneeName: inwConsignees || inv.consigneeName,
-      totalQty: parentItems.reduce((acc, curr) => acc + (Number(curr.pkg) || 0), 0),
-      totalToPay: parentItems.reduce((acc, curr) => acc + (Number(curr.toPayAmount) || 0), 0),
-      totalTbb: parentItems.reduce((acc, curr) => acc + (Number(curr.tbbAmount) || 0), 0),
-      totalPaid: parentItems.reduce((acc, curr) => acc + (Number(curr.paidAmount) || 0), 0),
-    };
-  });
+    setStoredItem(STORAGE_KEYS.INWARD_ITEMS, updatedInwardItems);
+    setStoredItem(STORAGE_KEYS.INWARDS, inwards);
+  }
 
   outwards.unshift(newOutwardHeader);
   const updatedOutwardItems = [...newOutwardItemsList, ...outwardItems];
 
   setStoredItem(STORAGE_KEYS.OUTWARDS, outwards);
   setStoredItem(STORAGE_KEYS.OUTWARD_ITEMS, updatedOutwardItems);
-  setStoredItem(STORAGE_KEYS.INWARD_ITEMS, updatedInwardItems);
-  setStoredItem(STORAGE_KEYS.INWARDS, inwards);
 
   return newOutwardHeader;
 };
@@ -193,56 +195,71 @@ export const createOutward = (headerData, selectedPendingItems, currentUser = 'O
 export const deleteOutward = (outwardId) => {
   let outwards = getAllOutwards();
   let outwardItems = getAllOutwardItems();
-  let inwardItems = getStoredItem(STORAGE_KEYS.INWARD_ITEMS);
 
-  // Find outward items to be restored
-  const itemsToRevert = outwardItems.filter((item) => item.outwardId === outwardId);
-  const inwardItemIds = new Set(itemsToRevert.map((item) => item.inwardItemId || item.id));
+  const targetOutward = outwards.find((out) => out.id === outwardId);
+  const isCrossOutward = Boolean(
+    targetOutward?.isCrossOutward ||
+      String(targetOutward?.outwardNo || '').toUpperCase().startsWith('STOCK-OUT')
+  );
 
-  // Revert status in inwardItems back to PENDING
-  inwardItems = inwardItems.map((item) => {
-    if (inwardItemIds.has(item.id) || item.outwardId === outwardId) {
-      const { deliveredAt, outwardId: oId, outwardNo, ...rest } = item;
-      return {
-        ...rest,
-        status: STATUS.PENDING,
-      };
-    }
-    return item;
-  });
+  // Revert status in inwardItems back to PENDING ONLY for standard Godown Outward
+  // Cross Stock Out has NO connections to Pending Stock or Inward
+  if (!isCrossOutward) {
+    let inwardItems = getStoredItem(STORAGE_KEYS.INWARD_ITEMS);
+    const itemsToRevert = outwardItems.filter((item) => item.outwardId === outwardId);
+    const inwardItemIds = new Set(itemsToRevert.map((item) => item.inwardItemId || item.id));
+
+    inwardItems = inwardItems.map((item) => {
+      if (inwardItemIds.has(item.id) || item.outwardId === outwardId) {
+        const { deliveredAt, outwardId: oId, outwardNo, ...rest } = item;
+        return {
+          ...rest,
+          status: STATUS.PENDING,
+        };
+      }
+      return item;
+    });
+    setStoredItem(STORAGE_KEYS.INWARD_ITEMS, inwardItems);
+  }
 
   outwards = outwards.filter((out) => out.id !== outwardId);
   outwardItems = outwardItems.filter((item) => item.outwardId !== outwardId);
 
   setStoredItem(STORAGE_KEYS.OUTWARDS, outwards);
   setStoredItem(STORAGE_KEYS.OUTWARD_ITEMS, outwardItems);
-  setStoredItem(STORAGE_KEYS.INWARD_ITEMS, inwardItems);
   return true;
 };
 
 export const deleteOutwardItem = (outwardItemId) => {
   let outwardItems = getAllOutwardItems();
   let outwards = getAllOutwards();
-  let inwardItems = getStoredItem(STORAGE_KEYS.INWARD_ITEMS);
 
   const targetItem = outwardItems.find((item) => item.id === outwardItemId);
   if (!targetItem) return false;
 
-  // Revert status in inwardItems
-  inwardItems = inwardItems.map((item) => {
-    if (item.id === targetItem.inwardItemId || item.lrNo === targetItem.lrNo) {
-      const { deliveredAt, outwardId, outwardNo, ...rest } = item;
-      return {
-        ...rest,
-        status: STATUS.PENDING,
-      };
-    }
-    return item;
-  });
+  const isCrossOutward = Boolean(
+    targetItem.isCrossOutward ||
+      String(targetItem.outwardNo || '').toUpperCase().startsWith('STOCK-OUT')
+  );
+
+  // Revert status in inwardItems ONLY for standard Godown Outward
+  if (!isCrossOutward && targetItem.inwardItemId) {
+    let inwardItems = getStoredItem(STORAGE_KEYS.INWARD_ITEMS);
+    inwardItems = inwardItems.map((item) => {
+      if (item.id === targetItem.inwardItemId) {
+        const { deliveredAt, outwardId, outwardNo, ...rest } = item;
+        return {
+          ...rest,
+          status: STATUS.PENDING,
+        };
+      }
+      return item;
+    });
+    setStoredItem(STORAGE_KEYS.INWARD_ITEMS, inwardItems);
+  }
 
   outwardItems = outwardItems.filter((item) => item.id !== outwardItemId);
   setStoredItem(STORAGE_KEYS.OUTWARD_ITEMS, outwardItems);
-  setStoredItem(STORAGE_KEYS.INWARD_ITEMS, inwardItems);
 
   // Recalculate totals for parent outward header
   if (targetItem.outwardId) {
@@ -268,7 +285,12 @@ export const deleteOutwardItem = (outwardItemId) => {
 export const updateOutwardHeader = (outwardId, updatedFields) => {
   let outwards = getAllOutwards();
   let outwardItems = getAllOutwardItems();
-  let inwardItems = getStoredItem(STORAGE_KEYS.INWARD_ITEMS);
+
+  const targetOutward = outwards.find((out) => out.id === outwardId);
+  const isCrossOutward = Boolean(
+    targetOutward?.isCrossOutward ||
+      String(targetOutward?.outwardNo || '').toUpperCase().startsWith('STOCK-OUT')
+  );
 
   outwards = outwards.map((out) =>
     out.id === outwardId ? { ...out, ...updatedFields } : out
@@ -288,28 +310,29 @@ export const updateOutwardHeader = (outwardId, updatedFields) => {
     return item;
   });
 
-  inwardItems = inwardItems.map((item) => {
-    if (item.outwardId === outwardId) {
-      return {
-        ...item,
-        outwardDate: updatedFields.date ?? item.outwardDate,
-        deliveryPersonName: updatedFields.deliveryPersonName ?? item.deliveryPersonName,
-      };
-    }
-    return item;
-  });
+  if (!isCrossOutward) {
+    let inwardItems = getStoredItem(STORAGE_KEYS.INWARD_ITEMS);
+    inwardItems = inwardItems.map((item) => {
+      if (item.outwardId === outwardId) {
+        return {
+          ...item,
+          outwardDate: updatedFields.date ?? item.outwardDate,
+          deliveryPersonName: updatedFields.deliveryPersonName ?? item.deliveryPersonName,
+        };
+      }
+      return item;
+    });
+    setStoredItem(STORAGE_KEYS.INWARD_ITEMS, inwardItems);
+  }
 
   setStoredItem(STORAGE_KEYS.OUTWARDS, outwards);
   setStoredItem(STORAGE_KEYS.OUTWARD_ITEMS, outwardItems);
-  setStoredItem(STORAGE_KEYS.INWARD_ITEMS, inwardItems);
   return true;
 };
 
 export const updateOutwardItem = (itemId, updatedFields) => {
   let outwardItems = getAllOutwardItems();
   let outwards = getAllOutwards();
-  let inwardItems = getStoredItem(STORAGE_KEYS.INWARD_ITEMS);
-  let inwards = getStoredItem(STORAGE_KEYS.INWARDS);
 
   const oldItem = outwardItems.find((item) => item.id === itemId);
 
@@ -330,15 +353,18 @@ export const updateOutwardItem = (itemId, updatedFields) => {
   setStoredItem(STORAGE_KEYS.OUTWARD_ITEMS, outwardItems);
 
   const targetItem = outwardItems.find((item) => item.id === itemId);
+  const isCrossOutward = Boolean(
+    targetItem?.isCrossOutward ||
+      String(targetItem?.outwardNo || '').toUpperCase().startsWith('STOCK-OUT')
+  );
 
-  if (targetItem) {
-    // Sync to inwardItems
+  // Sync to inwardItems and recalculate inwards ONLY for standard Godown Outward
+  if (targetItem && !isCrossOutward && targetItem.inwardItemId) {
+    let inwardItems = getStoredItem(STORAGE_KEYS.INWARD_ITEMS);
+    let inwards = getStoredItem(STORAGE_KEYS.INWARDS);
+
     inwardItems = inwardItems.map((inwItem) => {
-      if (
-        inwItem.id === targetItem.inwardItemId ||
-        inwItem.id === targetItem.id ||
-        (oldItem && String(inwItem.lrNo).trim().toLowerCase() === String(oldItem.lrNo).trim().toLowerCase())
-      ) {
+      if (inwItem.id === targetItem.inwardItemId) {
         return {
           ...inwItem,
           lrNo: targetItem.lrNo,
@@ -409,8 +435,6 @@ export const updateFullOutward = (outwardId, headerData, selectedPendingItems, c
 
   let outwards = getAllOutwards();
   let outwardItems = getAllOutwardItems();
-  let inwardItems = getStoredItem(STORAGE_KEYS.INWARD_ITEMS);
-  let inwards = getStoredItem(STORAGE_KEYS.INWARDS);
 
   const existingHeader = outwards.find(
     (out) =>
@@ -418,6 +442,11 @@ export const updateFullOutward = (outwardId, headerData, selectedPendingItems, c
       (headerData.outwardNo && out.outwardNo === headerData.outwardNo)
   );
   const resolvedOutwardId = existingHeader ? existingHeader.id : outwardId || `out-${Date.now()}`;
+  const isCrossOutward = Boolean(
+    headerData.isCrossOutward ??
+      existingHeader?.isCrossOutward ??
+      String(headerData.outwardNo || existingHeader?.outwardNo || '').toUpperCase().startsWith('STOCK-OUT')
+  );
 
   // Find previous outward items belonging to this outward
   const oldOutwardItems = outwardItems.filter(
@@ -429,28 +458,25 @@ export const updateFullOutward = (outwardId, headerData, selectedPendingItems, c
   const oldOutwardItemIds = new Set(oldOutwardItems.map((i) => i.id));
   const oldInwardIds = new Set(oldOutwardItems.map((item) => item.inwardItemId || item.id));
 
-  // Track original LR numbers by inwardItemId / id so renamed LRs still match inwardItems
-  const oldLrByInwardId = new Map();
-  oldOutwardItems.forEach((old) => {
-    if (old.inwardItemId) oldLrByInwardId.set(old.inwardItemId, old.lrNo);
-    if (old.id) oldLrByInwardId.set(old.id, old.lrNo);
-  });
-
-  // First revert any inwardItems previously belonging to this outward back to PENDING
-  inwardItems = inwardItems.map((item) => {
-    if (
-      oldInwardIds.has(item.id) ||
-      item.outwardId === resolvedOutwardId ||
-      (existingHeader && item.outwardNo === existingHeader.outwardNo)
-    ) {
-      const { deliveredAt, outwardId: oId, outwardNo, outwardDate, deliveryPersonName, ...rest } = item;
-      return {
-        ...rest,
-        status: STATUS.PENDING,
-      };
-    }
-    return item;
-  });
+  // ONLY for standard Godown Outward: revert inwardItems previously belonging to this outward back to PENDING
+  if (!isCrossOutward) {
+    let inwardItems = getStoredItem(STORAGE_KEYS.INWARD_ITEMS);
+    inwardItems = inwardItems.map((item) => {
+      if (
+        oldInwardIds.has(item.id) ||
+        item.outwardId === resolvedOutwardId ||
+        (existingHeader && item.outwardNo === existingHeader.outwardNo)
+      ) {
+        const { deliveredAt, outwardId: oId, outwardNo, outwardDate, deliveryPersonName, ...rest } = item;
+        return {
+          ...rest,
+          status: STATUS.PENDING,
+        };
+      }
+      return item;
+    });
+    setStoredItem(STORAGE_KEYS.INWARD_ITEMS, inwardItems);
+  }
 
   const totalQty = selectedPendingItems.reduce((acc, curr) => acc + (Number(curr.pkg) || 0), 0);
   const totalToPay = selectedPendingItems.reduce((acc, curr) => acc + (Number(curr.toPayAmount) || 0), 0);
@@ -460,11 +486,12 @@ export const updateFullOutward = (outwardId, headerData, selectedPendingItems, c
   const consignorName = Array.from(new Set(selectedPendingItems.map((i) => i.consignorName).filter(Boolean))).join(', ');
   const consigneeName = Array.from(new Set(selectedPendingItems.map((i) => i.consigneeName).filter(Boolean))).join(', ');
 
-  const isCrossOutward = Boolean(headerData.isCrossOutward ?? existingHeader?.isCrossOutward);
-
   const updatedHeaderFields = {
     id: resolvedOutwardId,
-    outwardNo: headerData.outwardNo || existingHeader?.outwardNo || `OUT-${outwards.length + 8000}`,
+    outwardNo:
+      headerData.outwardNo ||
+      existingHeader?.outwardNo ||
+      (isCrossOutward ? getNextCrossOutwardNo(outwards) : getNextOutwardNo(outwards)),
     date: headerData.date,
     transporterName: headerData.transporterName || existingHeader?.transporterName || '',
     vehicleNo: headerData.vehicleNo,
@@ -517,82 +544,87 @@ export const updateFullOutward = (outwardId, headerData, selectedPendingItems, c
       from: updatedHeaderFields.from,
       memoNo: updatedHeaderFields.memoNo,
       isCrossOutward,
-      inwardItemId: item.inwardItemId || matchedOld?.inwardItemId || item.id,
+      inwardItemId: isCrossOutward ? null : (item.inwardItemId || matchedOld?.inwardItemId || item.id),
       lrNo: String(item.lrNo ?? '').trim(),
-      inwardDate: item.inwardDate || item.date,
+      inwardDate: isCrossOutward ? '-' : (matchedOld?.inwardDate || item.inwardDate || item.date || headerData.date),
       pkg: Number(item.pkg) || 0,
-      invoiceNo: item.invoiceNo || '',
-      ctTo: item.ctTo || '',
-      deliveryPersonName: item.deliveryPersonName || headerData.deliveryPersonName || '-',
-      consignorName: item.consignorName || '',
-      consigneeName: item.consigneeName || '',
+      invoiceNo: item.invoiceNo ?? matchedOld?.invoiceNo ?? '',
+      ctTo: item.ctTo ?? matchedOld?.ctTo ?? '',
+      deliveryPersonName:
+        headerData.deliveryPersonName ||
+        item.deliveryPersonName ||
+        matchedOld?.deliveryPersonName ||
+        '-',
+      consignorName: item.consignorName ?? matchedOld?.consignorName ?? '',
+      consigneeName: item.consigneeName ?? matchedOld?.consigneeName ?? '',
       toPayAmount: Number(item.toPayAmount) || 0,
       tbbAmount: Number(item.tbbAmount) || 0,
       paidAmount: Number(item.paidAmount) || 0,
-      status: STATUS.DELIVERED,
+      status: isCrossOutward ? (STATUS.DISPATCHED || 'DISPATCHED') : STATUS.DELIVERED,
       deliveredAt: matchedOld?.deliveredAt || new Date().toISOString(),
       deliveredBy: currentUser,
     };
   });
 
-  // Mark selected inwardItems as DELIVERED and sync edited LR fields
-  const selectedByInwardId = new Map();
-  const selectedByLrNo = new Map();
-  newOutwardItemsList.forEach((outItem) => {
-    if (outItem.inwardItemId) selectedByInwardId.set(outItem.inwardItemId, outItem);
-    if (outItem.id) selectedByInwardId.set(outItem.id, outItem);
-    const oldLr = oldLrByInwardId.get(outItem.inwardItemId) || oldLrByInwardId.get(outItem.id);
-    if (oldLr) selectedByLrNo.set(String(oldLr).trim().toLowerCase(), outItem);
-    if (outItem.lrNo) selectedByLrNo.set(String(outItem.lrNo).trim().toLowerCase(), outItem);
-  });
+  // ONLY for standard Godown Outward: sync to inwardItems and recalculate inwards
+  if (!isCrossOutward) {
+    let inwardItems = getStoredItem(STORAGE_KEYS.INWARD_ITEMS);
+    let inwards = getStoredItem(STORAGE_KEYS.INWARDS);
 
-  inwardItems = inwardItems.map((item) => {
-    const matchedOut =
-      selectedByInwardId.get(item.id) ||
-      selectedByLrNo.get(String(item.lrNo ?? '').trim().toLowerCase());
-    if (matchedOut) {
+    const selectedByInwardId = new Map();
+    newOutwardItemsList.forEach((outItem) => {
+      if (outItem.inwardItemId) selectedByInwardId.set(outItem.inwardItemId, outItem);
+    });
+
+    inwardItems = inwardItems.map((item) => {
+      const matchedOut = selectedByInwardId.get(item.id);
+      if (matchedOut) {
+        return {
+          ...item,
+          lrNo: matchedOut.lrNo,
+          inwardDate: matchedOut.inwardDate || item.inwardDate || item.date,
+          date: matchedOut.inwardDate || item.date || item.inwardDate,
+          pkg: matchedOut.pkg,
+          invoiceNo: matchedOut.invoiceNo,
+          ctTo: matchedOut.ctTo,
+          consignorName: matchedOut.consignorName,
+          consigneeName: matchedOut.consigneeName,
+          toPayAmount: matchedOut.toPayAmount,
+          tbbAmount: matchedOut.tbbAmount,
+          paidAmount: matchedOut.paidAmount,
+          status: STATUS.DELIVERED,
+          deliveredAt: matchedOut.deliveredAt,
+          outwardId: resolvedOutwardId,
+          outwardNo: updatedHeaderFields.outwardNo,
+          outwardDate: headerData.date,
+          deliveryPersonName: matchedOut.deliveryPersonName,
+        };
+      }
+      return item;
+    });
+
+    // Recalculate parent inwards totals
+    inwards = inwards.map((inv) => {
+      const parentItems = inwardItems.filter(
+        (i) => i.inwardId === inv.id || i.inwardNo === inv.inwardNo
+      );
+      if (parentItems.length === 0) return inv;
+      const inwConsignors = Array.from(new Set(parentItems.map((i) => i.consignorName).filter(Boolean))).join(', ');
+      const inwConsignees = Array.from(new Set(parentItems.map((i) => i.consigneeName).filter(Boolean))).join(', ');
       return {
-        ...item,
-        lrNo: matchedOut.lrNo,
-        inwardDate: matchedOut.inwardDate || item.inwardDate || item.date,
-        date: matchedOut.inwardDate || item.date || item.inwardDate,
-        pkg: matchedOut.pkg,
-        invoiceNo: matchedOut.invoiceNo,
-        ctTo: matchedOut.ctTo,
-        consignorName: matchedOut.consignorName,
-        consigneeName: matchedOut.consigneeName,
-        toPayAmount: matchedOut.toPayAmount,
-        tbbAmount: matchedOut.tbbAmount,
-        paidAmount: matchedOut.paidAmount,
-        status: STATUS.DELIVERED,
-        deliveredAt: matchedOut.deliveredAt,
-        outwardId: resolvedOutwardId,
-        outwardNo: updatedHeaderFields.outwardNo,
-        outwardDate: headerData.date,
-        deliveryPersonName: matchedOut.deliveryPersonName,
+        ...inv,
+        consignorName: inwConsignors || inv.consignorName,
+        consigneeName: inwConsignees || inv.consigneeName,
+        totalQty: parentItems.reduce((acc, curr) => acc + (Number(curr.pkg) || 0), 0),
+        totalToPay: parentItems.reduce((acc, curr) => acc + (Number(curr.toPayAmount) || 0), 0),
+        totalTbb: parentItems.reduce((acc, curr) => acc + (Number(curr.tbbAmount) || 0), 0),
+        totalPaid: parentItems.reduce((acc, curr) => acc + (Number(curr.paidAmount) || 0), 0),
       };
-    }
-    return item;
-  });
+    });
 
-  // Recalculate parent inwards totals so Inward Receipts tab also stays in sync
-  inwards = inwards.map((inv) => {
-    const parentItems = inwardItems.filter(
-      (i) => i.inwardId === inv.id || i.inwardNo === inv.inwardNo
-    );
-    if (parentItems.length === 0) return inv;
-    const inwConsignors = Array.from(new Set(parentItems.map((i) => i.consignorName).filter(Boolean))).join(', ');
-    const inwConsignees = Array.from(new Set(parentItems.map((i) => i.consigneeName).filter(Boolean))).join(', ');
-    return {
-      ...inv,
-      consignorName: inwConsignors || inv.consignorName,
-      consigneeName: inwConsignees || inv.consigneeName,
-      totalQty: parentItems.reduce((acc, curr) => acc + (Number(curr.pkg) || 0), 0),
-      totalToPay: parentItems.reduce((acc, curr) => acc + (Number(curr.toPayAmount) || 0), 0),
-      totalTbb: parentItems.reduce((acc, curr) => acc + (Number(curr.tbbAmount) || 0), 0),
-      totalPaid: parentItems.reduce((acc, curr) => acc + (Number(curr.paidAmount) || 0), 0),
-    };
-  });
+    setStoredItem(STORAGE_KEYS.INWARD_ITEMS, inwardItems);
+    setStoredItem(STORAGE_KEYS.INWARDS, inwards);
+  }
 
   const newOutwardIds = new Set(newOutwardItemsList.map((i) => i.id));
   const otherOutwardItems = outwardItems.filter(
@@ -605,8 +637,6 @@ export const updateFullOutward = (outwardId, headerData, selectedPendingItems, c
 
   setStoredItem(STORAGE_KEYS.OUTWARDS, outwards);
   setStoredItem(STORAGE_KEYS.OUTWARD_ITEMS, updatedOutwardItems);
-  setStoredItem(STORAGE_KEYS.INWARD_ITEMS, inwardItems);
-  setStoredItem(STORAGE_KEYS.INWARDS, inwards);
 
   return outwards.find((out) => out.id === resolvedOutwardId);
 };

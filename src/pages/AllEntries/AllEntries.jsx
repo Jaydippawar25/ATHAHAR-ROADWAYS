@@ -201,7 +201,7 @@ export const AllEntries = () => {
           returnTab: activeTab,
         },
       });
-    } else if (category === 'outward_item') {
+    } else if (category === 'outward_item' || category === 'stock_out_item') {
       const parentOutward = outwards.find(
         (out) => out.id === row.outwardId || out.outwardNo === row.outwardNo
       );
@@ -211,7 +211,8 @@ export const AllEntries = () => {
           )
         : [row];
       const isCross = Boolean(
-        parentOutward?.isCrossOutward ||
+        category === 'stock_out_item' ||
+          parentOutward?.isCrossOutward ||
           row.isCrossOutward ||
           String(parentOutward?.outwardNo || row.outwardNo || '').startsWith('STOCK-OUT')
       );
@@ -244,7 +245,7 @@ export const AllEntries = () => {
       handleUpdateInwardItem(editingRecord.id, editFormData);
     } else if (editCategory === 'outward_header' || editCategory === 'stock_out_header') {
       handleUpdateOutwardHeader(editingRecord.id, editFormData);
-    } else if (editCategory === 'outward_item') {
+    } else if (editCategory === 'outward_item' || editCategory === 'stock_out_item') {
       handleUpdateOutwardItem(editingRecord.id, editFormData);
     }
     setEditingRecord(null);
@@ -258,7 +259,7 @@ export const AllEntries = () => {
       handleDeleteInwardItem(deleteRecord.id);
     } else if (deleteCategory === 'outward_header' || deleteCategory === 'stock_out_header') {
       handleDeleteOutward(deleteRecord.id);
-    } else if (deleteCategory === 'outward_item') {
+    } else if (deleteCategory === 'outward_item' || deleteCategory === 'stock_out_item') {
       handleDeleteOutwardItem(deleteRecord.id);
     }
     setDeleteRecord(null);
@@ -309,7 +310,7 @@ export const AllEntries = () => {
   // First add all Inward items
   inwardItems.forEach((item) => {
     const parentInw = inwards.find((inw) => inw.id === item.inwardId || inw.inwardNo === item.inwardNo);
-    allLREntriesMap.set(item.lrNo, {
+    allLREntriesMap.set(item.id || item.lrNo, {
       ...item,
       memoNo: item.memoNo || parentInw?.memoNo || '-',
       inwardDate: item.date || item.inwardDate || '-',
@@ -322,19 +323,62 @@ export const AllEntries = () => {
 
   // Merge Outward delivered items
   outwardItems.forEach((item) => {
-    const existing = allLREntriesMap.get(item.lrNo) || {};
-    const parentInw = inwards.find((inw) => inw.id === item.inwardId || inw.inwardNo === item.inwardNo);
-    allLREntriesMap.set(item.lrNo, {
-      ...existing,
-      ...item,
-      memoNo: existing.memoNo && existing.memoNo !== '-' ? existing.memoNo : item.memoNo || parentInw?.memoNo || '-',
-      inwardDate: existing.inwardDate || item.inwardDate || item.date || '-',
-      outwardDate: item.outwardDate || item.date || '-',
-      outwardNo: item.outwardNo || '-',
-      deliveryPersonName: item.deliveryPersonName || '-',
-      status: 'DELIVERED',
-      recordCategory: 'outward_item',
-    });
+    const isStockOut = Boolean(
+      item.isCrossOutward ||
+      String(item.outwardNo || '').toUpperCase().startsWith('STOCK-OUT')
+    );
+
+    if (isStockOut) {
+      // Cross Stock Out is a manual direct dispatch with NO connection to Pending Stock or Inward
+      allLREntriesMap.set(`stockout-${item.id}`, {
+        ...item,
+        memoNo: item.memoNo || '-',
+        inwardDate: '-',
+        inwardNo: '-',
+        outwardDate: item.outwardDate || item.date || '-',
+        outwardNo: item.outwardNo || '-',
+        deliveryPersonName: item.deliveryPersonName || '-',
+        status: 'DISPATCHED',
+        recordCategory: 'stock_out_item',
+      });
+    } else {
+      // Standard Outward delivered from Godown pending stock
+      const inwKey = Array.from(allLREntriesMap.keys()).find((k) => {
+        const val = allLREntriesMap.get(k);
+        return (
+          val.recordCategory === 'inward_item' &&
+          ((item.inwardItemId && val.id === item.inwardItemId) ||
+            val.id === item.id ||
+            String(val.lrNo ?? '').trim().toLowerCase() === String(item.lrNo ?? '').trim().toLowerCase())
+        );
+      });
+
+      if (inwKey) {
+        const existing = allLREntriesMap.get(inwKey);
+        allLREntriesMap.set(inwKey, {
+          ...existing,
+          ...item,
+          inwardDate: existing.inwardDate || item.inwardDate || item.date || '-',
+          outwardDate: item.outwardDate || item.date || '-',
+          outwardNo: item.outwardNo || '-',
+          deliveryPersonName: item.deliveryPersonName || existing.deliveryPersonName || '-',
+          status: 'DELIVERED',
+          recordCategory: 'outward_item',
+        });
+      } else {
+        allLREntriesMap.set(`out-${item.id}`, {
+          ...item,
+          memoNo: item.memoNo || '-',
+          inwardDate: '-',
+          inwardNo: '-',
+          outwardDate: item.outwardDate || item.date || '-',
+          outwardNo: item.outwardNo || '-',
+          deliveryPersonName: item.deliveryPersonName || '-',
+          status: 'DELIVERED',
+          recordCategory: 'outward_item',
+        });
+      }
+    }
   });
 
   const combinedLREntries = Array.from(allLREntriesMap.values());

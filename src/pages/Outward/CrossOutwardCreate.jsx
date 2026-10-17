@@ -433,7 +433,7 @@ export const CrossOutwardCreate = () => {
             </div>
             <p className="text-xs text-slate-500">
               {editingOutwardId
-                ? 'Modify Cross Stock Out header or LR rows and click Update Outward'
+                ? 'Modify Cross Stock Out header or LR rows and click Update Stock-Out'
                 : 'Direct Cross Stock Out Dispatch & LR Entry Screen'}
             </p>
           </div>
