@@ -228,7 +228,7 @@ export const Dashboard = () => {
           </div>
 
           <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
-            Atharva Roadways Operational Hub
+            Atharva Roadways
           </h2>
 
           <p className="text-blue-100 text-xs sm:text-sm font-medium tracking-tight">
