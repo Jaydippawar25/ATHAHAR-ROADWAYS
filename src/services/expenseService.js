@@ -1,4 +1,6 @@
 import { getStoredItem, setStoredItem, STORAGE_KEYS } from './mockStorage';
+import { db } from '../firebase/firebase';
+import { doc, deleteDoc, setDoc, collection, getDocs } from 'firebase/firestore';
 
 export const EXPENSE_CATEGORIES = [
   'Diesel / Fuel Expense',
@@ -12,22 +14,24 @@ export const EXPENSE_CATEGORIES = [
 
 export const PAYMENT_MODES = ['CASH', 'UPI', 'BANK_TRANSFER', 'CHEQUE'];
 
-
 export const getAllExpenses = () => {
   const stored = getStoredItem(STORAGE_KEYS.EXPENSES, []);
   if (!Array.isArray(stored)) {
     return [];
   }
-  // Auto-migrate any existing 'Loading and Unloading' entries
-  return stored.map((item) => {
-    if (item.category === 'Loading and Unloading') {
+  // Auto-migrate any existing 'Loading and Unloading' entries and ensure valid unique ID
+  return stored.map((item, idx) => {
+    let category = item.category;
+    if (category === 'Loading and Unloading') {
       const isUnload = String(item.notes || '').toLowerCase().includes('unload');
-      return {
-        ...item,
-        category: isUnload ? 'Unloading Expense' : 'Loading Expense',
-      };
+      category = isUnload ? 'Unloading Expense' : 'Loading Expense';
     }
-    return item;
+    const resolvedId = item.id || item.voucherNo || `exp-${idx}-${Date.now()}`;
+    return {
+      ...item,
+      id: resolvedId,
+      category,
+    };
   });
 };
 
@@ -73,7 +77,7 @@ export const createExpense = (expenseData, currentUser = 'Operator') => {
 
 export const updateExpense = (id, fields, currentUser = 'Operator') => {
   const expenses = getAllExpenses();
-  const index = expenses.findIndex((e) => e.id === id);
+  const index = expenses.findIndex((e) => String(e.id) === String(id) || String(e.voucherNo) === String(id));
   if (index === -1) {
     throw new Error(`Expense record not found: ${id}`);
   }
@@ -95,9 +99,64 @@ export const updateExpense = (id, fields, currentUser = 'Operator') => {
   return updatedItem;
 };
 
-export const deleteExpense = (id) => {
+export const deleteExpense = async (id) => {
   const expenses = getAllExpenses();
-  const filtered = expenses.filter((e) => e.id !== id);
+  const target = expenses.find(
+    (e, idx) =>
+      String(e.id) === String(id) ||
+      String(e.voucherNo) === String(id) ||
+      String(idx) === String(id)
+  );
+
+  const targetId = target?.id || id;
+  const targetVoucherNo = target?.voucherNo;
+
+  const filtered = expenses.filter(
+    (e, idx) =>
+      String(e.id) !== String(targetId) &&
+      String(e.voucherNo) !== String(targetId) &&
+      (!targetVoucherNo || String(e.voucherNo) !== String(targetVoucherNo)) &&
+      String(idx) !== String(id)
+  );
+
   setStoredItem(STORAGE_KEYS.EXPENSES, filtered);
+
+  if (db) {
+    try {
+      if (targetId) {
+        await deleteDoc(doc(db, STORAGE_KEYS.EXPENSES, String(targetId)));
+      }
+      if (targetVoucherNo && targetVoucherNo !== targetId) {
+        await deleteDoc(doc(db, STORAGE_KEYS.EXPENSES, String(targetVoucherNo)));
+      }
+      await setDoc(doc(db, 'app_data', STORAGE_KEYS.EXPENSES), {
+        data: filtered,
+        updatedAt: new Date().toISOString(),
+      });
+    } catch (e) {
+      console.warn('[Firestore Delete Expense Warning]:', e);
+    }
+  }
+
+  return true;
+};
+
+export const clearAllExpenses = async () => {
+  setStoredItem(STORAGE_KEYS.EXPENSES, []);
+  if (db) {
+    try {
+      await setDoc(doc(db, 'app_data', STORAGE_KEYS.EXPENSES), {
+        data: [],
+        updatedAt: new Date().toISOString(),
+      });
+      const colRef = collection(db, STORAGE_KEYS.EXPENSES);
+      const snap = await getDocs(colRef);
+      for (const d of snap.docs) {
+        await deleteDoc(d.ref);
+      }
+    } catch (e) {
+      console.warn('[Firestore Clear All Expenses Warning]:', e);
+    }
+  }
   return true;
 };

@@ -32,6 +32,7 @@ import {
   createExpense,
   updateExpense,
   deleteExpense,
+  clearAllExpenses,
 } from '../services/expenseService';
 import {
   safeInitializeData,
@@ -340,8 +341,14 @@ export const AppProvider = ({ children }) => {
     return res;
   };
 
-  const handleDeleteExpense = (id) => {
-    const res = deleteExpense(id);
+  const handleDeleteExpense = async (id) => {
+    const res = await deleteExpense(id);
+    refreshData();
+    return res;
+  };
+
+  const handleClearAllExpenses = async () => {
+    const res = await clearAllExpenses();
     refreshData();
     return res;
   };
@@ -384,6 +391,7 @@ export const AppProvider = ({ children }) => {
         handleCreateExpense,
         handleUpdateExpense,
         handleDeleteExpense,
+        handleClearAllExpenses,
       }}
     >
       {children}
