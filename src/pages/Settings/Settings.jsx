@@ -780,12 +780,12 @@ export const Settings = () => {
 
           <div className="space-y-3 text-xs text-slate-700">
             <div className="flex items-center justify-between p-2.5 bg-slate-50 rounded-xl border border-slate-200">
-              <span className="font-bold text-slate-500 uppercase text-[10px]">OPERATOR UID</span>
-              <span className="font-mono text-slate-900 font-bold">{user?.uid || 'local-operator'}</span>
-            </div>
-            <div className="flex items-center justify-between p-2.5 bg-slate-50 rounded-xl border border-slate-200">
               <span className="font-bold text-slate-500 uppercase text-[10px]">OPERATOR EMAIL</span>
               <span className="font-bold text-slate-900">{user?.email || 'admin@atharvaroadways.com'}</span>
+            </div>
+            <div className="flex items-center justify-between p-2.5 bg-slate-50 rounded-xl border border-slate-200">
+              <span className="font-bold text-slate-500 uppercase text-[10px]">OPERATOR NAME</span>
+              <span className="font-bold text-slate-900">{user?.displayName || 'Administrator'}</span>
             </div>
             <div className="flex items-center justify-between p-2.5 bg-slate-50 rounded-xl border border-slate-200">
               <span className="font-bold text-slate-500 uppercase text-[10px]">ACCOUNT STATUS</span>
