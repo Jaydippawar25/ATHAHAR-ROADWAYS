@@ -412,7 +412,7 @@ export const Accounting = () => {
               <Calculator className="w-3.5 h-3.5 mr-1" />
               TRANSPORT FREIGHT ACCOUNTING
             </span>
-            <span className="text-slate-400 font-semibold">&bull; ATHAHAR ROADWAYS SANGLI</span>
+            <span className="text-slate-400 font-semibold">&bull; ATHARVA ROADWAYS SANGLI</span>
           </div>
 
           <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 flex items-center space-x-3">

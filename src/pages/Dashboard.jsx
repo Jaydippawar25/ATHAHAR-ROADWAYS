@@ -80,12 +80,12 @@ export const Dashboard = () => {
               GODOWN SUMMARY
             </span>
             <span className="text-blue-100">
-              SANGLI TERMINAL &mdash; ATHAHAR ROADWAYS
+              SANGLI TERMINAL &mdash; ATHARVA ROADWAYS
             </span>
           </div>
 
           <h2 className="text-2xl sm:text-3xl font-black tracking-tight">
-            ATHAHAR ROADWAYS Dashboard
+            ATHARVA ROADWAYS Dashboard
           </h2>
 
           <p className="text-blue-100 text-xs sm:text-sm font-medium">

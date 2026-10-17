@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { User, Lock, Eye, EyeOff } from 'lucide-react';
 
 export const Login = () => {
-  const [username, setUsername] = useState('admin@athahar.com');
+  const [username, setUsername] = useState('admin@atharva.com');
   const [password, setPassword] = useState('password123');
   const [showPassword, setShowPassword] = useState(false);
   const [remember, setRemember] = useState(true);
@@ -95,7 +95,7 @@ export const Login = () => {
 
           {/* Copyright Footer */}
           <p className="text-[11px] text-slate-400 pt-8 font-normal">
-            Copyright &copy;2026 ATHAHAR ROADWAYS. All rights reserved.
+            Copyright &copy;2026 ATHARVA ROADWAYS. All rights reserved.
           </p>
         </div>
 
@@ -122,7 +122,7 @@ export const Login = () => {
 
             {/* Title */}
             <h1 className="text-xl font-black tracking-wider text-white uppercase">
-              ATHAHAR ROADWAYS
+              ATHARVA ROADWAYS
             </h1>
 
             {/* Address */}

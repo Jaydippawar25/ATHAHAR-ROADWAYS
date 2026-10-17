@@ -13,7 +13,7 @@ export const Header = () => {
             <Truck className="h-6 w-6" />
           </div>
           <div>
-            <h1 className="text-lg font-bold tracking-wide text-white">ATHAHAR ROADWAYS</h1>
+            <h1 className="text-lg font-bold tracking-wide text-white">ATHARVA ROADWAYS</h1>
             <p className="text-xs text-sky-400 font-medium">Transport Management System</p>
           </div>
         </div>

@@ -19,7 +19,7 @@ export const TopHeader = () => {
     <header className="bg-white border-b border-slate-200 px-6 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs sticky top-0 z-30">
       <div>
         <h1 className="text-base font-black tracking-wide text-sky-950 uppercase">
-          ATHAHAR ROADWAYS
+          ATHARVA ROADWAYS
         </h1>
         <p className="text-xs text-slate-500 font-medium">
           NEXT TO PARVATI CRANE, VAKHAR BHAG, SANGLI-416416 &nbsp;|&nbsp;{' '}

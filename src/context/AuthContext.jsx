@@ -4,12 +4,12 @@ const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => {
-    const saved = localStorage.getItem('athahar_user');
+    const saved = localStorage.getItem('atharva_user') || localStorage.getItem('athahar_user');
     return saved
       ? JSON.parse(saved)
       : {
           uid: 'user-001',
-          email: 'admin@athahar.com',
+          email: 'admin@atharva.com',
           displayName: 'Administrator',
         };
   });
@@ -21,12 +21,13 @@ export const AuthProvider = ({ children }) => {
       displayName: email.split('@')[0].toUpperCase(),
     };
     setUser(newUser);
-    localStorage.setItem('athahar_user', JSON.stringify(newUser));
+    localStorage.setItem('atharva_user', JSON.stringify(newUser));
     return newUser;
   };
 
   const logout = () => {
     setUser(null);
+    localStorage.removeItem('atharva_user');
     localStorage.removeItem('athahar_user');
   };
 

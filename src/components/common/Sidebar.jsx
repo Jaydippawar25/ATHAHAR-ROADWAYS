@@ -54,7 +54,7 @@ export const Sidebar = () => {
             <Truck className="h-5 w-5" />
           </div>
           <div>
-            <h1 className="text-base font-bold text-white leading-tight">ATHAHAR ROADWAYS</h1>
+            <h1 className="text-base font-bold text-white leading-tight">ATHARVA ROADWAYS</h1>
             <p className="text-[10px] text-sky-400 font-bold uppercase tracking-wider">SANGLI-416416</p>
           </div>
         </div>
@@ -88,7 +88,7 @@ export const Sidebar = () => {
             </div>
             <div>
               <h1 className="text-sm font-black tracking-wider text-white leading-snug uppercase">
-                ATHAHAR ROADWAYS
+                ATHARVA ROADWAYS
               </h1>
               <p className="text-[11px] text-sky-400 font-bold tracking-wider uppercase">SANGLI-416416</p>
             </div>

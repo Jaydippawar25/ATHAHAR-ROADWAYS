@@ -1,8 +1,8 @@
-# ATHAHAR ROADWAYS — UPDATED IMPLEMENTATION PLAN
+# ATHARVA ROADWAYS — UPDATED IMPLEMENTATION PLAN
 
 ## 1. Objective
 
-Build a modern React + Firebase transport management application for ATHAHAR ROADWAYS using the client's existing LIMRA **Inward and Outward** workflow as the business reference.
+Build a modern React + Firebase transport management application for ATHARVA ROADWAYS using the client's existing LIMRA **Inward and Outward** workflow as the business reference.
 
 The application must preserve the client's transaction fields and working process while improving:
 
