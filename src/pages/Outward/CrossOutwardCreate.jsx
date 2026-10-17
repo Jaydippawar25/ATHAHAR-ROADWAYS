@@ -4,7 +4,7 @@ import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 import { Modal } from '../../components/common/Modal';
 import { EditableCombobox } from '../../components/common/EditableCombobox';
-import { Save, Printer, ArrowLeft, AlertCircle, Plus, Trash2, Edit2, RotateCcw, Eye } from 'lucide-react';
+import { Save, Printer, AlertCircle, Plus, Trash2, Edit2, Layers, CheckCircle } from 'lucide-react';
 import { getTodayDateString, formatDate } from '../../utils/dateUtils';
 import { formatCurrency } from '../../utils/numberUtils';
 import { printRecordDetails } from '../../services/exportService';
@@ -118,39 +118,35 @@ export const CrossOutwardCreate = () => {
       }));
       setLrItems(items);
 
-      if (location.state.focusLrNo) {
-        const targetIndex = items.findIndex((i) => i.lrNo === location.state.focusLrNo);
-        if (targetIndex !== -1) {
-          const item = items[targetIndex];
-          setItemForm({
-            srNo: item.srNo,
-            lrNo: String(item.lrNo ?? ''),
-            date: item.date || getTodayDateString(),
-            invoiceNo: item.invoiceNo || '',
-            consignorName: item.consignorName || '',
-            consigneeName: item.consigneeName || '',
-            ctTo: item.ctTo || '',
-            pkg: item.pkg || '',
-            toPayAmount: item.toPayAmount || '',
-            tbbAmount: item.tbbAmount || '',
-            paidAmount: item.paidAmount || '',
-          });
-          setEditingIndex(targetIndex);
-        }
-      } else {
-        setItemForm((prev) => ({
-          ...prev,
-          srNo: items.length + 1,
-        }));
+      if (items.length > 0) {
+        const first = items[0];
+        setItemForm({
+          srNo: 1,
+          lrNo: first.lrNo,
+          date: first.date,
+          invoiceNo: first.invoiceNo,
+          consignorName: first.consignorName,
+          consigneeName: first.consigneeName,
+          ctTo: first.ctTo,
+          pkg: String(first.pkg || ''),
+          toPayAmount: String(first.toPayAmount || ''),
+          tbbAmount: String(first.tbbAmount || ''),
+          paidAmount: String(first.paidAmount || ''),
+        });
+        setEditingIndex(0);
       }
     }
-  }, [location.state]);
+  }, [location.state, masters]);
 
-  // Staged LR Items List
+  // List of added LR rows
   const [lrItems, setLrItems] = useState([]);
   const [editingIndex, setEditingIndex] = useState(null);
 
-  // Quick Add Master State for [...] buttons
+  // Notifications
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+
+  // Quick Add Master State
   const [quickAddModal, setQuickAddModal] = useState({
     isOpen: false,
     category: '',
@@ -160,47 +156,194 @@ export const CrossOutwardCreate = () => {
   });
   const [quickAddValue, setQuickAddValue] = useState('');
 
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  // Auto-fill owner name whenever vehicleNo changes
+  const handleHeaderChange = (field, value) => {
+    setHeaderData((prev) => {
+      const updated = { ...prev, [field]: value };
+      if (field === 'vehicleNo') {
+        const found = masters.vehicles?.find(
+          (v) => (v.vehicleNo || '').trim().toLowerCase() === String(value).trim().toLowerCase()
+        );
+        if (found?.ownerName) {
+          updated.ownerName = found.ownerName;
+        }
+      }
+      return updated;
+    });
+  };
 
-  const itemTotal =
-    (Number(itemForm.toPayAmount) || 0) +
-    (Number(itemForm.tbbAmount) || 0) +
-    (Number(itemForm.paidAmount) || 0);
+  const handleItemChange = (field, value) => {
+    setItemForm((prev) => ({ ...prev, [field]: value }));
+  };
 
+  // Add or Update row in table
+  const handleAddOrUpdateLR = (e) => {
+    if (e) e.preventDefault();
+    setError('');
+
+    const cleanLR = String(itemForm.lrNo || '').trim();
+    if (!cleanLR) {
+      setError('Please enter a valid LR No.');
+      focusLRNoInput();
+      return;
+    }
+
+    const rowItem = {
+      srNo: editingIndex !== null ? lrItems[editingIndex]?.srNo || editingIndex + 1 : lrItems.length + 1,
+      lrNo: cleanLR,
+      date: itemForm.date || getTodayDateString(),
+      invoiceNo: itemForm.invoiceNo || '',
+      consignorName: itemForm.consignorName || '',
+      consigneeName: itemForm.consigneeName || '',
+      ctTo: itemForm.ctTo || '',
+      pkg: Number(itemForm.pkg) || 0,
+      toPayAmount: Number(itemForm.toPayAmount) || 0,
+      tbbAmount: Number(itemForm.tbbAmount) || 0,
+      paidAmount: Number(itemForm.paidAmount) || 0,
+    };
+
+    if (editingIndex !== null) {
+      setLrItems((prev) => {
+        const copy = [...prev];
+        copy[editingIndex] = rowItem;
+        return copy;
+      });
+      setEditingIndex(null);
+    } else {
+      setLrItems((prev) => [...prev, rowItem]);
+    }
+
+    // Reset Form for next LR entry
+    setItemForm({
+      srNo: (editingIndex !== null ? lrItems.length : lrItems.length + 1) + 1,
+      lrNo: '',
+      date: getTodayDateString(),
+      invoiceNo: '',
+      consignorName: '',
+      consigneeName: '',
+      ctTo: '',
+      pkg: '',
+      toPayAmount: '',
+      tbbAmount: '',
+      paidAmount: '',
+    });
+    focusLRNoInput();
+  };
+
+  const handleEditRow = (idx) => {
+    const item = lrItems[idx];
+    if (!item) return;
+    setItemForm({
+      srNo: item.srNo,
+      lrNo: item.lrNo,
+      date: item.date,
+      invoiceNo: item.invoiceNo,
+      consignorName: item.consignorName,
+      consigneeName: item.consigneeName,
+      ctTo: item.ctTo,
+      pkg: String(item.pkg || ''),
+      toPayAmount: String(item.toPayAmount || ''),
+      tbbAmount: String(item.tbbAmount || ''),
+      paidAmount: String(item.paidAmount || ''),
+    });
+    setEditingIndex(idx);
+    focusLRNoInput();
+  };
+
+  const handleDeleteRow = (idx) => {
+    setLrItems((prev) => {
+      const filtered = prev.filter((_, i) => i !== idx);
+      return filtered.map((item, i) => ({ ...item, srNo: i + 1 }));
+    });
+    if (editingIndex === idx) {
+      setEditingIndex(null);
+      setItemForm({
+        srNo: lrItems.length,
+        lrNo: '',
+        date: getTodayDateString(),
+        invoiceNo: '',
+        consignorName: '',
+        consigneeName: '',
+        ctTo: '',
+        pkg: '',
+        toPayAmount: '',
+        tbbAmount: '',
+        paidAmount: '',
+      });
+    }
+    focusLRNoInput();
+  };
+
+  // Live Draft Preview
+  const currentLrNo = String(itemForm?.lrNo ?? '').trim();
   const hasFormDraft = Boolean(
-    String(itemForm.lrNo ?? '').trim() ||
-      itemForm.pkg ||
-      itemForm.invoiceNo ||
-      String(itemForm.consignorName ?? '').trim() ||
-      String(itemForm.consigneeName ?? '').trim() ||
-      itemForm.toPayAmount ||
-      itemForm.tbbAmount ||
-      itemForm.paidAmount
+    currentLrNo ||
+      itemForm?.pkg ||
+      itemForm?.invoiceNo ||
+      String(itemForm?.consignorName ?? '').trim() ||
+      String(itemForm?.consigneeName ?? '').trim() ||
+      itemForm?.toPayAmount ||
+      itemForm?.tbbAmount ||
+      itemForm?.paidAmount
   );
-
-  const previewRowData = {
-    srNo: editingIndex !== null ? itemForm.srNo : lrItems.length + 1,
-    lrNo: String(itemForm.lrNo ?? '').trim() || '...',
-    date: itemForm.date,
-    pkg: Number(itemForm.pkg) || 0,
-    invoiceNo: itemForm.invoiceNo || '-',
-    ctTo: itemForm.ctTo || '-',
-    consignorName: itemForm.consignorName || '-',
-    consigneeName: itemForm.consigneeName || '-',
-    toPayAmount: Number(itemForm.toPayAmount) || 0,
-    tbbAmount: Number(itemForm.tbbAmount) || 0,
-    paidAmount: Number(itemForm.paidAmount) || 0,
+  const existingPreviewBase = editingIndex !== null && lrItems[editingIndex] ? lrItems[editingIndex] : {};
+  const currentFormPreviewItem = {
+    ...existingPreviewBase,
+    srNo: editingIndex !== null && lrItems[editingIndex] ? lrItems[editingIndex].srNo : lrItems.length + 1,
+    lrNo: currentLrNo || '...',
+    date: itemForm?.date || getTodayDateString(),
+    invoiceNo: itemForm?.invoiceNo || '',
+    consignorName: itemForm?.consignorName || '',
+    consigneeName: itemForm?.consigneeName || '',
+    ctTo: itemForm?.ctTo || masters.stations[0]?.name || '',
+    pkg: Number(itemForm?.pkg) || 0,
+    toPayAmount: Number(itemForm?.toPayAmount) || 0,
+    tbbAmount: Number(itemForm?.tbbAmount) || 0,
+    paidAmount: Number(itemForm?.paidAmount) || 0,
     isDraftPreview: true,
   };
 
-  const displayLrItems =
-    editingIndex !== null
-      ? lrItems.map((item, idx) => (idx === editingIndex ? { ...item, ...previewRowData, isDraftPreview: true } : item))
-      : hasFormDraft
-      ? [...lrItems, previewRowData]
-      : lrItems;
+  const displayLrItems = [...lrItems];
+  if (editingIndex !== null && displayLrItems[editingIndex]) {
+    displayLrItems[editingIndex] = currentFormPreviewItem;
+  } else if (hasFormDraft) {
+    displayLrItems.push(currentFormPreviewItem);
+  }
 
+  // Quick Add Master Handler
+  const openQuickAdd = (category, title, targetField, isHeader = true) => {
+    setQuickAddModal({ isOpen: true, category, title, targetField, isHeader });
+    setQuickAddValue('');
+  };
+
+  const handleSaveQuickAdd = (e) => {
+    e.preventDefault();
+    if (!quickAddValue.trim()) return;
+
+    const val = quickAddValue.trim();
+    let newItem = { name: val };
+    if (quickAddModal.category === 'vehicles') {
+      newItem = { vehicleNo: val, type: 'Own', capacity: '10 Ton' };
+    } else if (quickAddModal.category === 'vehicleOwners') {
+      newItem = { name: val, phone: '9800000000' };
+    } else if (quickAddModal.category === 'stations') {
+      newItem = { name: val, state: 'MH' };
+    } else if (quickAddModal.category === 'drivers') {
+      newItem = { name: val, licenseNo: 'DL-9902', phone: '9800000000' };
+    }
+
+    handleAddMaster(quickAddModal.category, newItem);
+
+    if (quickAddModal.isHeader) {
+      handleHeaderChange(quickAddModal.targetField, val);
+    } else {
+      handleItemChange(quickAddModal.targetField, val);
+    }
+
+    setQuickAddModal({ isOpen: false, category: '', title: '', targetField: '', isHeader: true });
+  };
+
+  // Summary Totals
   const summary = displayLrItems.reduce(
     (acc, curr) => ({
       pkg: acc.pkg + (Number(curr.pkg) || 0),
@@ -211,445 +354,316 @@ export const CrossOutwardCreate = () => {
     { pkg: 0, toPay: 0, tbb: 0, paid: 0 }
   );
 
-  const handleHeaderChange = (field, value) => {
-    setHeaderData((prev) => ({ ...prev, [field]: value }));
-    if (field === 'date') {
-      setItemForm((prev) => ({ ...prev, date: value }));
-    }
-  };
+  const itemTotal =
+    (Number(itemForm.toPayAmount) || 0) +
+    (Number(itemForm.tbbAmount) || 0) +
+    (Number(itemForm.paidAmount) || 0);
 
-  const handleItemChange = (field, value) => {
-    setItemForm((prev) => ({ ...prev, [field]: value }));
-  };
-
-  const resetItemForm = (nextSrNo) => {
-    setItemForm({
-      srNo: nextSrNo,
-      lrNo: '',
-      date: headerData.date,
-      invoiceNo: '',
-      consignorName: '',
-      consigneeName: '',
-      ctTo: '',
-      pkg: '',
-      toPayAmount: '',
-      tbbAmount: '',
-      paidAmount: '',
-    });
-    setEditingIndex(null);
-  };
-
-  const handleAddOrUpdateLR = (e) => {
-    if (e) e.preventDefault();
-    setError('');
-
-    if (!String(itemForm.lrNo ?? '').trim()) {
-      setError('Please enter LR NO.');
-      return;
-    }
-    if (!itemForm.pkg || Number(itemForm.pkg) <= 0) {
-      setError('PKG (Quantity) must be greater than 0.');
-      return;
-    }
-
-    const isDuplicateInList = lrItems.some(
-      (item, idx) =>
-        idx !== editingIndex &&
-        String(item.lrNo ?? '').toLowerCase() === String(itemForm.lrNo ?? '').trim().toLowerCase()
-    );
-    if (isDuplicateInList) {
-      setError(`LR No. "${itemForm.lrNo}" is already added in the current grid.`);
-      return;
-    }
-
-    const formattedItem = {
-      ...itemForm,
-      lrNo: String(itemForm.lrNo ?? '').trim(),
-      pkg: Number(itemForm.pkg) || 0,
-      toPayAmount: Number(itemForm.toPayAmount) || 0,
-      tbbAmount: Number(itemForm.tbbAmount) || 0,
-      paidAmount: Number(itemForm.paidAmount) || 0,
-    };
-
-    if (editingIndex !== null) {
-      const updated = [...lrItems];
-      updated[editingIndex] = { ...formattedItem, srNo: editingIndex + 1 };
-      setLrItems(updated);
-      resetItemForm(updated.length + 1);
-      focusLRNoInput();
-    } else {
-      const updated = [...lrItems, { ...formattedItem, srNo: lrItems.length + 1 }];
-      setLrItems(updated);
-      resetItemForm(updated.length + 1);
-      focusLRNoInput();
-    }
-  };
-
-  const handleEditRow = (index) => {
-    const item = lrItems[index];
-    setItemForm({
-      srNo: item.srNo,
-      lrNo: String(item.lrNo ?? ''),
-      date: item.date || headerData.date,
-      invoiceNo: item.invoiceNo || '',
-      consignorName: item.consignorName || '',
-      consigneeName: item.consigneeName || '',
-      ctTo: item.ctTo || '',
-      pkg: item.pkg,
-      toPayAmount: item.toPayAmount || '',
-      tbbAmount: item.tbbAmount || '',
-      paidAmount: item.paidAmount || '',
-    });
-    setEditingIndex(index);
-    focusLRNoInput();
-  };
-
-  const handleDeleteRow = (index) => {
-    const filtered = lrItems
-      .filter((_, idx) => idx !== index)
-      .map((item, idx) => ({ ...item, srNo: idx + 1 }));
-    setLrItems(filtered);
-    resetItemForm(filtered.length + 1);
-  };
-
-  const openQuickAdd = (category, title, targetField, isHeader = true) => {
-    setQuickAddModal({ isOpen: true, category, title, targetField, isHeader });
-    setQuickAddValue('');
-  };
-
-  const handleSaveQuickAdd = (e) => {
-    e.preventDefault();
-    if (!quickAddValue.trim()) return;
-    const val = quickAddValue.trim().toUpperCase();
-
-    if (quickAddModal.category === 'vehicles') {
-      handleAddMaster('vehicles', { vehicleNo: val, type: 'Truck' });
-    } else {
-      handleAddMaster(quickAddModal.category, { name: val });
-    }
-
-    if (quickAddModal.isHeader) {
-      handleHeaderChange(quickAddModal.targetField, val);
-    } else {
-      handleItemChange(quickAddModal.targetField, val);
-    }
-
-    setQuickAddModal({ isOpen: false, category: '', title: '', targetField: '', isHeader: true });
-    setQuickAddValue('');
-  };
-
+  // Save Stock-Out Transaction
   const handleSaveCrossOutward = () => {
     setError('');
     setSuccess('');
 
-    if (!headerData.vehicleNo) {
-      setError('Please select or add a Vehicle No.');
-      return;
-    }
-
-    let finalItems = [...lrItems];
-    if (String(itemForm.lrNo ?? '').trim() && Number(itemForm.pkg) > 0) {
-      const formattedDraft = {
-        ...(editingIndex !== null ? lrItems[editingIndex] : {}),
-        ...itemForm,
-        lrNo: String(itemForm.lrNo ?? '').trim(),
-        pkg: Number(itemForm.pkg) || 0,
-        toPayAmount: Number(itemForm.toPayAmount) || 0,
-        tbbAmount: Number(itemForm.tbbAmount) || 0,
-        paidAmount: Number(itemForm.paidAmount) || 0,
-      };
-      if (editingIndex !== null) {
-        finalItems[editingIndex] = { ...formattedDraft, srNo: editingIndex + 1 };
-      } else {
-        const alreadyExists = finalItems.some(
-          (i) => String(i.lrNo ?? '').toLowerCase() === formattedDraft.lrNo.toLowerCase()
-        );
-        if (!alreadyExists) {
-          finalItems.push({ ...formattedDraft, srNo: finalItems.length + 1 });
-        }
-      }
-    }
+    let finalItems = displayLrItems
+      .filter((i) => String(i.lrNo ?? '').trim() && String(i.lrNo ?? '').trim() !== '...')
+      .map((item) => ({
+        ...item,
+        pkg: Number(item.pkg) || 0,
+      }));
 
     if (finalItems.length === 0) {
-      setError('Please add at least one LR item to the grid before saving.');
+      setError('Please add at least one LR item before saving.');
+      focusLRNoInput();
       return;
     }
 
     try {
-      const payloadHeader = {
-        ...headerData,
-        from: headerData.fromStation,
-        isCrossOutward: true,
-      };
-
       if (editingOutwardId) {
         handleUpdateFullOutward(
           editingOutwardId,
-          payloadHeader,
+          { ...headerData, isCrossOutward: true },
           finalItems,
-          user?.name || 'Operator'
+          user?.displayName || 'Operator'
         );
-        setSuccess(`Cross Stock Out Entry #${headerData.outwardNo} updated successfully!`);
+        setSuccess(`Cross Stock-Out #${headerData.outwardNo} updated successfully!`);
       } else {
         handleCreateOutward(
-          payloadHeader,
+          { ...headerData, isCrossOutward: true },
           finalItems,
-          user?.name || 'Operator'
+          user?.displayName || 'Operator'
         );
-        setSuccess(`Cross Stock Out Entry #${headerData.outwardNo} saved successfully!`);
+        setSuccess(`Cross Stock-Out #${headerData.outwardNo} recorded successfully!`);
       }
 
       setTimeout(() => {
-        navigate('/all-entries', {
-          state: { tab: location.state?.returnTab || 'stock_out_headers' },
-        });
+        if (location.state?.returnPath) {
+          navigate(location.state.returnPath);
+        } else {
+          navigate('/all-entries', { state: { tab: 'cross_outward_headers' } });
+        }
       }, 300);
     } catch (err) {
-      setError(err.message || 'Failed to save Cross Stock Out entry.');
+      setError(err.message || 'Failed to save Cross Stock-Out transaction.');
     }
   };
 
   return (
-    <div className="space-y-4 pb-6">
-      {/* Top Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 bg-white px-4 py-3 rounded-lg border border-slate-200 shadow-xs">
-        <div className="flex items-center space-x-3">
-          <button
-            onClick={() => navigate('/all-entries', { state: { tab: 'stock_out_headers' } })}
-            className="p-1.5 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-md transition-colors cursor-pointer"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </button>
+    <div className="space-y-5 text-slate-800 max-w-full">
+      {/* ROYAL NAVY HERO BANNER */}
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#0d2358] via-[#102d73] to-[#163a94] p-5 sm:p-6 text-white shadow-lg border border-blue-900/40">
+        <div className="absolute -top-16 -right-16 w-56 h-56 bg-sky-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-16 -left-16 w-56 h-56 bg-blue-400/10 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-lg font-extrabold text-slate-900 tracking-tight uppercase">
-                {editingOutwardId ? `Edit Cross Stock Out #${headerData.outwardNo}` : 'Cross Stock Out Details'}
-              </h1>
-              {editingOutwardId && (
-                <span className="px-2 py-0.5 text-[10px] font-extrabold uppercase bg-amber-100 text-amber-800 border border-amber-300 rounded">
-                  Edit Mode
-                </span>
-              )}
+            <div className="flex items-center space-x-2 text-[10px] font-extrabold tracking-widest uppercase text-sky-300">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span>DIRECT CROSS-DOCK DISPATCH (MANUAL DISPATCH)</span>
+              <span className="text-blue-200/50">•</span>
+              <span className="text-blue-100 font-mono">STANDALONE MANIFEST</span>
             </div>
-            <p className="text-xs text-slate-500">
-              {editingOutwardId
-                ? 'Modify Cross Stock Out header or LR rows and click Update Stock-Out'
-                : 'Direct Cross Stock Out Dispatch & LR Entry Screen'}
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight mt-1">
+              {editingOutwardId ? `Update Cross Stock-Out #${headerData.outwardNo}` : 'Manual Cross Stock-Out'}
+            </h1>
+            <p className="text-xs text-blue-100/80 mt-1 max-w-xl">
+              Manual direct dispatch terminal independent of Godown Pending Stock or Inward batches.
             </p>
           </div>
-        </div>
 
-        <div className="flex items-center space-x-2">
-          <button
-            type="button"
-            onClick={() => navigate('/all-entries', { state: { tab: 'stock_out_headers' } })}
-            className="px-5 py-2.5 text-sm font-extrabold text-slate-800 bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded-lg transition-colors cursor-pointer shadow-xs"
-          >
-            Show All Stock-Out
-          </button>
+          <div className="flex items-center space-x-2.5 self-start sm:self-auto">
+            <button
+              type="button"
+              onClick={() => navigate('/all-entries', { state: { tab: 'cross_outward_headers' } })}
+              className="px-4 py-2.5 bg-white/10 hover:bg-white/20 active:bg-white/30 text-white rounded-xl text-xs font-bold transition-all border border-white/20 flex items-center space-x-2 shadow-xs cursor-pointer"
+            >
+              <Layers className="w-4 h-4 text-sky-300" />
+              <span>Show All Cross Stock-Out</span>
+            </button>
+          </div>
         </div>
       </div>
 
       {error && (
-        <div className="p-3 bg-red-50 border border-red-300 rounded-lg flex items-center text-red-800 text-xs font-semibold">
-          <AlertCircle className="w-4 h-4 mr-2 shrink-0 text-red-600" />
-          {error}
+        <div className="p-3.5 bg-rose-50 border border-rose-200 text-rose-700 rounded-2xl text-xs font-semibold flex items-center space-x-2 shadow-2xs">
+          <AlertCircle className="w-4 h-4 text-rose-500 flex-shrink-0" />
+          <span>{error}</span>
         </div>
       )}
 
       {success && (
-        <div className="p-3 bg-emerald-50 border border-emerald-300 rounded-lg flex items-center text-emerald-800 text-xs font-semibold">
-          <AlertCircle className="w-4 h-4 mr-2 shrink-0 text-emerald-600" />
-          {success}
+        <div className="p-3.5 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl text-xs font-semibold flex items-center space-x-2 shadow-2xs">
+          <CheckCircle className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+          <span>{success}</span>
         </div>
       )}
 
-      {/* SECTION 1: HEADER DETAILS (Matching Screenshot 2) */}
-      <fieldset className="bg-white rounded-lg border-2 border-slate-300 shadow-xs p-3.5">
-        <legend className="px-2 text-xs font-extrabold text-slate-800 uppercase tracking-wider">
-          Header Details
-        </legend>
+      {/* SECTION 1: HEADER DETAILS */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs p-5 space-y-4">
+        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+          <div className="flex items-center space-x-2">
+            <span className="w-1.5 h-4 bg-[#1d4ed8] rounded-full" />
+            <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-800">
+              Cross Stock-Out Header Details
+            </h3>
+          </div>
+          <span className="text-[11px] font-bold text-slate-400">
+            Stock-Out No.: <span className="font-mono text-[#1d4ed8] font-black">{headerData.outwardNo}</span>
+          </span>
+        </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          {/* NO */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 items-end">
           <div>
-            <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">
+            <label className="block text-[11px] font-extrabold text-slate-600 uppercase mb-1.5">
               NO. (STOCK OUT)
             </label>
             <input
               type="text"
               value={headerData.outwardNo}
               onChange={(e) => handleHeaderChange('outwardNo', e.target.value)}
-              className="w-full px-2.5 py-1.5 bg-amber-50/60 border border-slate-300 rounded text-xs font-bold text-slate-900 focus:outline-none focus:border-sky-600"
+              className="w-full px-3 py-2 border border-slate-200 bg-slate-50/70 rounded-xl text-xs font-black text-[#1d4ed8] font-mono focus:ring-2 focus:ring-[#1d4ed8] outline-none"
             />
           </div>
 
-          {/* DATE */}
           <div>
-            <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">
-              Date <span className="text-red-500">*</span>
+            <label className="block text-[11px] font-extrabold text-slate-600 uppercase mb-1.5">
+              Date *
             </label>
             <input
               type="date"
               value={headerData.date}
               onChange={(e) => handleHeaderChange('date', e.target.value)}
-              className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded text-xs font-semibold text-slate-900 focus:outline-none focus:border-sky-600"
+              className="w-full px-3 py-2 border border-slate-200 bg-white rounded-xl text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-[#1d4ed8] outline-none"
             />
           </div>
 
-          {/* TRANSPORTER NAME + [...] */}
           <div>
-            <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">
+            <label className="block text-[11px] font-extrabold text-slate-600 uppercase mb-1.5">
               Transporter Name
             </label>
-            <div className="flex">
+            <div className="flex items-center space-x-1.5 min-w-0">
               <EditableCombobox
                 name="transporterName"
                 value={headerData.transporterName}
                 onChange={(e, val) => handleHeaderChange('transporterName', val)}
                 options={masters.transporters}
                 placeholder=""
-                className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-l text-xs font-semibold text-slate-900 focus:outline-none focus:border-sky-600"
+                className="px-3 py-2 border border-slate-200 bg-white rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-[#1d4ed8]"
               />
               <button
                 type="button"
                 onClick={() => openQuickAdd('transporters', 'Add New Transporter', 'transporterName', true)}
+                className="px-2.5 py-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl font-black text-xs text-slate-700 transition-colors shadow-2xs flex-shrink-0 cursor-pointer"
                 title="Add Transporter"
-                className="px-2.5 py-1.5 bg-slate-200 hover:bg-slate-300 border border-l-0 border-slate-300 rounded-r text-xs font-bold text-slate-800 cursor-pointer"
               >
-                ...
+                +
               </button>
             </div>
           </div>
 
-          {/* FROM (Origin Station) + [...] */}
           <div>
-            <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">
-              From (Origin Station) <span className="text-red-500">*</span>
+            <label className="block text-[11px] font-extrabold text-slate-600 uppercase mb-1.5">
+              From (Origin Station) *
             </label>
-            <div className="flex">
+            <div className="flex items-center space-x-1.5 min-w-0">
               <EditableCombobox
                 name="fromStation"
                 value={headerData.fromStation}
                 onChange={(e, val) => handleHeaderChange('fromStation', val)}
                 options={masters.stations}
                 placeholder=""
-                className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-l text-xs font-semibold text-slate-900 focus:outline-none focus:border-sky-600"
+                className="px-3 py-2 border border-slate-200 bg-white rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-[#1d4ed8]"
               />
               <button
                 type="button"
                 onClick={() => openQuickAdd('stations', 'Add New Station / City', 'fromStation', true)}
+                className="px-2.5 py-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl font-black text-xs text-slate-700 transition-colors shadow-2xs flex-shrink-0 cursor-pointer"
                 title="Add Station"
-                className="px-2.5 py-1.5 bg-slate-200 hover:bg-slate-300 border border-l-0 border-slate-300 rounded-r text-xs font-bold text-slate-800 cursor-pointer"
               >
-                ...
+                +
               </button>
             </div>
           </div>
 
-          {/* VEHICLE NO + [...] */}
           <div>
-            <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">
-              Vehicle No. <span className="text-red-500">*</span>
+            <label className="block text-[11px] font-extrabold text-slate-600 uppercase mb-1.5">
+              Vehicle No. *
             </label>
-            <div className="flex">
+            <div className="flex items-center space-x-1.5 min-w-0">
               <EditableCombobox
                 name="vehicleNo"
                 value={headerData.vehicleNo}
                 onChange={(e, val) => handleHeaderChange('vehicleNo', val)}
                 options={masters.vehicles}
                 placeholder=""
-                className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-l text-xs font-semibold text-slate-900 focus:outline-none focus:border-sky-600"
+                className="px-3 py-2 border border-slate-200 bg-white rounded-xl text-xs font-black text-slate-900 focus:ring-2 focus:ring-[#1d4ed8]"
               />
               <button
                 type="button"
                 onClick={() => openQuickAdd('vehicles', 'Add New Vehicle No.', 'vehicleNo', true)}
+                className="px-2.5 py-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl font-black text-xs text-slate-700 transition-colors shadow-2xs flex-shrink-0 cursor-pointer"
                 title="Add Vehicle"
-                className="px-2.5 py-1.5 bg-slate-200 hover:bg-slate-300 border border-l-0 border-slate-300 rounded-r text-xs font-bold text-slate-800 cursor-pointer"
               >
-                ...
+                +
               </button>
             </div>
           </div>
 
-          {/* DRIVER NAME + [...] */}
           <div>
-            <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">
-              Driver Name <span className="text-red-500">*</span>
+            <label className="block text-[11px] font-extrabold text-slate-600 uppercase mb-1.5">
+              Memo No.
             </label>
-            <div className="flex">
+            <input
+              type="text"
+              name="memoNo"
+              value={headerData.memoNo}
+              onChange={(e) => handleHeaderChange('memoNo', e.target.value)}
+              placeholder="e.g. CR-MM-01"
+              className="w-full px-3 py-2 border border-slate-200 bg-white rounded-xl text-xs font-bold text-slate-800 uppercase focus:ring-2 focus:ring-[#1d4ed8] outline-none placeholder-slate-400"
+            />
+          </div>
+
+          <div>
+            <label className="block text-[11px] font-extrabold text-slate-600 uppercase mb-1.5">
+              Driver Name *
+            </label>
+            <div className="flex items-center space-x-1.5 min-w-0">
               <EditableCombobox
                 name="driverName"
                 value={headerData.driverName}
                 onChange={(e, val) => handleHeaderChange('driverName', val)}
                 options={masters.drivers}
                 placeholder=""
-                className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-l text-xs font-semibold text-slate-900 focus:outline-none focus:border-sky-600"
+                className="px-3 py-2 border border-slate-200 bg-white rounded-xl text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-[#1d4ed8]"
               />
               <button
                 type="button"
                 onClick={() => openQuickAdd('drivers', 'Add New Driver Name', 'driverName', true)}
+                className="px-2.5 py-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl font-black text-xs text-slate-700 transition-colors shadow-2xs flex-shrink-0 cursor-pointer"
                 title="Add Driver"
-                className="px-2.5 py-1.5 bg-slate-200 hover:bg-slate-300 border border-l-0 border-slate-300 rounded-r text-xs font-bold text-slate-800 cursor-pointer"
               >
-                ...
+                +
               </button>
             </div>
           </div>
 
-          {/* VEHICLE OWNER NAME + [...] */}
           <div>
-            <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">
+            <label className="block text-[11px] font-extrabold text-slate-600 uppercase mb-1.5">
               Vehicle Owner Name
             </label>
-            <div className="flex">
+            <div className="flex items-center space-x-1.5 min-w-0">
               <EditableCombobox
                 name="ownerName"
                 value={headerData.ownerName}
                 onChange={(e, val) => handleHeaderChange('ownerName', val)}
                 options={(masters.vehicleOwners || []).map((o) => o.name)}
                 placeholder=""
-                className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-l text-xs font-semibold text-slate-900 focus:outline-none focus:border-sky-600"
+                className="px-3 py-2 border border-slate-200 bg-white rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-[#1d4ed8]"
               />
               <button
                 type="button"
                 onClick={() => openQuickAdd('vehicleOwners', 'Add Vehicle Owner', 'ownerName', true)}
+                className="px-2.5 py-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl font-black text-xs text-slate-700 transition-colors shadow-2xs flex-shrink-0 cursor-pointer"
                 title="Add Owner"
-                className="px-2.5 py-1.5 bg-slate-200 hover:bg-slate-300 border border-l-0 border-slate-300 rounded-r text-xs font-bold text-slate-800 cursor-pointer"
               >
-                ...
+                +
               </button>
             </div>
           </div>
         </div>
-      </fieldset>
+      </div>
 
-      {/* SECTION 2: LR ENTRY DETAILS (Matching Screenshot 3) */}
-      <fieldset className="bg-slate-50 rounded-lg border-2 border-slate-300 shadow-xs p-3.5">
-        <legend className="px-2 text-xs font-extrabold text-sky-800 uppercase tracking-wider">
-          LR Entry Details {editingIndex !== null && `(Editing Row #${editingIndex + 1})`}
-        </legend>
+      {/* SECTION 2: LR ENTRY DETAILS */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs p-5 space-y-4">
+        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+          <div className="flex items-center space-x-2">
+            <span className="w-1.5 h-4 bg-sky-500 rounded-full" />
+            <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-800">
+              LR Entry Details {editingIndex !== null && `(Editing Row #${editingIndex + 1})`}
+            </h3>
+          </div>
+          <span className="text-[11px] text-slate-400 font-medium">
+            Direct manual LR linehaul dispatch
+          </span>
+        </div>
 
-        <form onSubmit={handleAddOrUpdateLR} className="space-y-3">
-          {/* Row 1 of LR Form */}
-          <div className="grid grid-cols-2 sm:grid-cols-6 lg:grid-cols-12 gap-2.5">
-            {/* SRNO */}
-            <div className="col-span-1 sm:col-span-1 lg:col-span-2">
-              <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">
-                SRNO:
+        <form onSubmit={handleAddOrUpdateLR} className="space-y-3.5">
+          {/* Row 1 */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3.5 items-end">
+            <div>
+              <label className="block text-[11px] font-extrabold text-slate-600 uppercase mb-1.5">
+                SR NO.
               </label>
               <input
                 type="text"
                 readOnly
                 value={itemForm.srNo}
-                className="w-full px-2.5 py-1.5 bg-slate-200 border border-slate-300 rounded text-xs font-extrabold text-center text-slate-800"
+                className="w-full px-3 py-2 bg-slate-100 border border-slate-200 rounded-xl text-xs font-black text-center text-slate-500 outline-none"
               />
             </div>
 
-            {/* LR NO */}
-            <div className="col-span-1 sm:col-span-2 lg:col-span-4">
-              <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">
-                LR NO: <span className="text-red-500">*</span>
+            <div>
+              <label className="block text-[11px] font-extrabold text-[#1d4ed8] uppercase mb-1.5">
+                LR NO. *
               </label>
               <input
                 ref={(el) => (fieldRefs.current[0] = el)}
@@ -658,14 +672,13 @@ export const CrossOutwardCreate = () => {
                 onChange={(e) => handleItemChange('lrNo', e.target.value)}
                 onKeyDown={(e) => handleKeyDown(e, 0)}
                 placeholder="Enter LR No."
-                className="w-full px-2.5 py-1.5 bg-amber-50 border border-slate-400 rounded text-xs font-bold text-slate-900 focus:outline-none focus:border-sky-600 focus:bg-white"
+                className="w-full px-3 py-2 bg-sky-50/70 border border-blue-200 rounded-xl text-xs font-black text-[#1d4ed8] uppercase focus:ring-2 focus:ring-[#1d4ed8] outline-none placeholder-slate-400"
               />
             </div>
 
-            {/* DATE */}
-            <div className="col-span-1 sm:col-span-1 lg:col-span-3">
-              <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">
-                DATE:
+            <div>
+              <label className="block text-[11px] font-extrabold text-slate-600 uppercase mb-1.5">
+                DATE
               </label>
               <input
                 ref={(el) => (fieldRefs.current[1] = el)}
@@ -673,14 +686,13 @@ export const CrossOutwardCreate = () => {
                 value={itemForm.date}
                 onChange={(e) => handleItemChange('date', e.target.value)}
                 onKeyDown={(e) => handleKeyDown(e, 1)}
-                className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded text-xs font-semibold text-slate-900 focus:outline-none focus:border-sky-600"
+                className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-[#1d4ed8] outline-none"
               />
             </div>
 
-            {/* INVOICE NO */}
-            <div className="col-span-1 sm:col-span-2 lg:col-span-3">
-              <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">
-                INVOICE NO:
+            <div>
+              <label className="block text-[11px] font-extrabold text-slate-600 uppercase mb-1.5">
+                INVOICE NO.
               </label>
               <input
                 ref={(el) => (fieldRefs.current[2] = el)}
@@ -689,17 +701,16 @@ export const CrossOutwardCreate = () => {
                 onChange={(e) => handleItemChange('invoiceNo', e.target.value)}
                 onKeyDown={(e) => handleKeyDown(e, 2)}
                 placeholder="Invoice No."
-                className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded text-xs font-semibold text-slate-900 focus:outline-none focus:border-sky-600"
+                className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 uppercase focus:ring-2 focus:ring-[#1d4ed8] outline-none placeholder-slate-400"
               />
             </div>
           </div>
 
-          {/* Row 2 of LR Form */}
-          <div className="grid grid-cols-1 sm:grid-cols-6 lg:grid-cols-12 gap-2.5">
-            {/* CONSIGNER */}
-            <div className="sm:col-span-3 lg:col-span-4">
-              <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">
-                CONSIGNER:
+          {/* Row 2 */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3.5 items-end">
+            <div>
+              <label className="block text-[11px] font-extrabold text-slate-600 uppercase mb-1.5">
+                CONSIGNOR
               </label>
               <input
                 ref={(el) => (fieldRefs.current[3] = el)}
@@ -708,8 +719,8 @@ export const CrossOutwardCreate = () => {
                 value={itemForm.consignorName}
                 onChange={(e) => handleItemChange('consignorName', e.target.value)}
                 onKeyDown={(e) => handleKeyDown(e, 3)}
-                placeholder="Type Consigner Name"
-                className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded text-xs font-semibold text-slate-900 focus:outline-none focus:border-sky-600"
+                placeholder="Type Consignor"
+                className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-[#1d4ed8] outline-none placeholder-slate-400"
               />
               <datalist id="cross-consignors-datalist">
                 {masters.consignors.map((c) => (
@@ -718,10 +729,9 @@ export const CrossOutwardCreate = () => {
               </datalist>
             </div>
 
-            {/* CONSIGNEE */}
-            <div className="sm:col-span-3 lg:col-span-4">
-              <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">
-                CONSIGNEE:
+            <div>
+              <label className="block text-[11px] font-extrabold text-slate-600 uppercase mb-1.5">
+                CONSIGNEE
               </label>
               <input
                 ref={(el) => (fieldRefs.current[4] = el)}
@@ -730,8 +740,8 @@ export const CrossOutwardCreate = () => {
                 value={itemForm.consigneeName}
                 onChange={(e) => handleItemChange('consigneeName', e.target.value)}
                 onKeyDown={(e) => handleKeyDown(e, 4)}
-                placeholder="Type Consignee Name"
-                className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded text-xs font-semibold text-slate-900 focus:outline-none focus:border-sky-600"
+                placeholder="Type Consignee"
+                className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-[#1d4ed8] outline-none placeholder-slate-400"
               />
               <datalist id="cross-consignees-datalist">
                 {masters.consignees.map((c) => (
@@ -740,12 +750,11 @@ export const CrossOutwardCreate = () => {
               </datalist>
             </div>
 
-            {/* CT TO + [...] */}
-            <div className="sm:col-span-6 lg:col-span-4">
-              <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">
-                CT TO:
+            <div>
+              <label className="block text-[11px] font-extrabold text-slate-600 uppercase mb-1.5">
+                DESTINATION / CT TO
               </label>
-              <div className="flex">
+              <div className="flex items-center space-x-1.5 min-w-0">
                 <EditableCombobox
                   ref={(el) => (fieldRefs.current[5] = el)}
                   name="ctTo"
@@ -754,25 +763,21 @@ export const CrossOutwardCreate = () => {
                   onKeyDown={(e) => handleKeyDown(e, 5)}
                   options={masters.stations}
                   placeholder=""
-                  className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-l text-xs font-semibold text-slate-900 focus:outline-none focus:border-sky-600"
+                  className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-[#1d4ed8]"
                 />
                 <button
                   type="button"
                   onClick={() => openQuickAdd('stations', 'Add Destination City (CT TO)', 'ctTo', false)}
-                  className="px-2.5 py-1.5 bg-slate-200 hover:bg-slate-300 border border-l-0 border-slate-300 rounded-r text-xs font-bold text-slate-800 cursor-pointer"
+                  className="px-2.5 py-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl font-black text-xs text-slate-700 transition-colors shadow-2xs flex-shrink-0 cursor-pointer"
                 >
-                  ...
+                  +
                 </button>
               </div>
             </div>
-          </div>
 
-          {/* Row 3 of LR Form: Amounts & Action Buttons */}
-          <div className="grid grid-cols-2 sm:grid-cols-6 lg:grid-cols-12 gap-2.5 items-end">
-            {/* PKG */}
-            <div className="col-span-1 sm:col-span-1 lg:col-span-2">
-              <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">
-                PKG:
+            <div>
+              <label className="block text-[11px] font-extrabold text-slate-900 uppercase mb-1.5">
+                PACKAGES (PKG)
               </label>
               <input
                 ref={(el) => (fieldRefs.current[6] = el)}
@@ -781,15 +786,17 @@ export const CrossOutwardCreate = () => {
                 value={itemForm.pkg}
                 onChange={(e) => handleItemChange('pkg', e.target.value)}
                 onKeyDown={(e) => handleKeyDown(e, 6)}
-                placeholder="0"
-                className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded text-xs font-bold text-right text-slate-900 focus:outline-none focus:border-sky-600"
+                placeholder="1"
+                className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-black text-slate-900 focus:ring-2 focus:ring-[#1d4ed8] outline-none"
               />
             </div>
+          </div>
 
-            {/* TO PAY */}
-            <div className="col-span-1 sm:col-span-2 lg:col-span-2">
-              <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">
-                TO PAY:
+          {/* Row 3 */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3.5 items-end pt-1">
+            <div>
+              <label className="block text-[11px] font-extrabold text-amber-700 uppercase mb-1.5">
+                TO PAY
               </label>
               <input
                 ref={(el) => (fieldRefs.current[7] = el)}
@@ -800,14 +807,13 @@ export const CrossOutwardCreate = () => {
                 onChange={(e) => handleItemChange('toPayAmount', e.target.value)}
                 onKeyDown={(e) => handleKeyDown(e, 7)}
                 placeholder="0.00"
-                className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded text-xs font-bold text-right text-slate-900 focus:outline-none focus:border-sky-600"
+                className="w-full px-3 py-2 bg-amber-50/60 border border-amber-200 rounded-xl text-xs font-black text-amber-900 focus:ring-2 focus:ring-amber-500 outline-none"
               />
             </div>
 
-            {/* TBB */}
-            <div className="col-span-1 sm:col-span-2 lg:col-span-2">
-              <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">
-                TBB:
+            <div>
+              <label className="block text-[11px] font-extrabold text-sky-700 uppercase mb-1.5">
+                T.B.B.
               </label>
               <input
                 ref={(el) => (fieldRefs.current[8] = el)}
@@ -818,14 +824,13 @@ export const CrossOutwardCreate = () => {
                 onChange={(e) => handleItemChange('tbbAmount', e.target.value)}
                 onKeyDown={(e) => handleKeyDown(e, 8)}
                 placeholder="0.00"
-                className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded text-xs font-bold text-right text-slate-900 focus:outline-none focus:border-sky-600"
+                className="w-full px-3 py-2 bg-sky-50/60 border border-sky-200 rounded-xl text-xs font-black text-sky-900 focus:ring-2 focus:ring-sky-500 outline-none"
               />
             </div>
 
-            {/* PAID */}
-            <div className="col-span-1 sm:col-span-2 lg:col-span-3">
-              <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">
-                PAID:
+            <div>
+              <label className="block text-[11px] font-extrabold text-emerald-700 uppercase mb-1.5">
+                PAID
               </label>
               <input
                 ref={(el) => (fieldRefs.current[9] = el)}
@@ -836,14 +841,13 @@ export const CrossOutwardCreate = () => {
                 onChange={(e) => handleItemChange('paidAmount', e.target.value)}
                 onKeyDown={(e) => handleKeyDown(e, 9)}
                 placeholder="0.00"
-                className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded text-xs font-bold text-right text-slate-900 focus:outline-none focus:border-sky-600"
+                className="w-full px-3 py-2 bg-emerald-50/60 border border-emerald-200 rounded-xl text-xs font-black text-emerald-900 focus:ring-2 focus:ring-emerald-500 outline-none"
               />
             </div>
 
-            {/* TOTAL */}
-            <div className="col-span-2 sm:col-span-4 lg:col-span-3">
-              <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">
-                TOTAL:
+            <div>
+              <label className="block text-[11px] font-extrabold text-slate-700 uppercase mb-1.5">
+                TOTAL ROW
               </label>
               <input
                 ref={(el) => (fieldRefs.current[10] = el)}
@@ -852,38 +856,60 @@ export const CrossOutwardCreate = () => {
                 readOnly
                 tabIndex={0}
                 value={itemTotal.toFixed(2)}
-                className="w-full px-2.5 py-1.5 bg-slate-200 border border-slate-300 rounded text-xs font-extrabold text-right text-slate-900 focus:outline-none focus:border-sky-600 cursor-pointer"
+                className="w-full px-3 py-2 bg-slate-100 border border-slate-200 rounded-xl text-xs font-black text-slate-900 text-right outline-none"
               />
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <button
+                type="submit"
+                className="w-full py-2 bg-[#1d4ed8] hover:bg-blue-700 active:bg-blue-800 text-white font-extrabold text-xs rounded-xl shadow-xs transition-all flex items-center justify-center space-x-1.5 cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                <span>{editingIndex !== null ? 'Update LR' : 'Add to Grid'}</span>
+              </button>
             </div>
           </div>
         </form>
-      </fieldset>
+      </div>
 
-      {/* SECTION 3: DATA GRID TABLE (Matching Screenshot 3) */}
-      <div className="bg-white rounded-lg border-2 border-slate-300 shadow-xs overflow-hidden">
-        <div className="overflow-x-auto min-h-[220px] max-h-[340px]">
+      {/* SECTION 3: DATA GRID TABLE */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden">
+        <div className="px-5 py-3.5 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <span className="text-xs font-extrabold uppercase tracking-wider text-slate-800">
+              Cross Stock-Out Staged Entries
+            </span>
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-blue-100 text-[#1d4ed8]">
+              {displayLrItems.length} Entries
+            </span>
+          </div>
+          <span className="text-xs text-slate-400">Review all LR items before saving or printing</span>
+        </div>
+
+        <div className="overflow-x-auto min-h-[200px] max-h-[380px]">
           <table className="w-full text-left border-collapse">
-            <thead className="bg-slate-800 text-white sticky top-0 z-10">
-              <tr className="text-[11px] font-bold uppercase tracking-wider">
-                <th className="py-2 px-2.5 border-r border-slate-700 w-12 text-center">SRNO</th>
-                <th className="py-2 px-2.5 border-r border-slate-700">LR NO</th>
-                <th className="py-2 px-2.5 border-r border-slate-700">INDATE</th>
-                <th className="py-2 px-2.5 border-r border-slate-700 text-right">PKG</th>
-                <th className="py-2 px-2.5 border-r border-slate-700">INV NO</th>
-                <th className="py-2 px-2.5 border-r border-slate-700">CT TO</th>
-                <th className="py-2 px-2.5 border-r border-slate-700">CONSIGNER</th>
-                <th className="py-2 px-2.5 border-r border-slate-700">CONSIGNEE</th>
-                <th className="py-2 px-2.5 border-r border-slate-700 text-right">TO PAY</th>
-                <th className="py-2 px-2.5 border-r border-slate-700 text-right">TBB</th>
-                <th className="py-2 px-2.5 border-r border-slate-700 text-right">PAID</th>
-                <th className="py-2 px-2.5 text-center w-20">Action</th>
+            <thead className="bg-[#0d2358] text-white sticky top-0 z-10">
+              <tr className="text-[10px] font-extrabold uppercase tracking-wider">
+                <th className="py-2.5 px-3 border-r border-blue-900/60 w-12 text-center">SR</th>
+                <th className="py-2.5 px-3 border-r border-blue-900/60">LR NO.</th>
+                <th className="py-2.5 px-3 border-r border-blue-900/60">DATE</th>
+                <th className="py-2.5 px-3 border-r border-blue-900/60 text-right">PKG</th>
+                <th className="py-2.5 px-3 border-r border-blue-900/60">INV NO.</th>
+                <th className="py-2.5 px-3 border-r border-blue-900/60">DESTINATION</th>
+                <th className="py-2.5 px-3 border-r border-blue-900/60">CONSIGNOR</th>
+                <th className="py-2.5 px-3 border-r border-blue-900/60">CONSIGNEE</th>
+                <th className="py-2.5 px-3 border-r border-blue-900/60 text-right">TO PAY</th>
+                <th className="py-2.5 px-3 border-r border-blue-900/60 text-right">T.B.B.</th>
+                <th className="py-2.5 px-3 border-r border-blue-900/60 text-right">PAID</th>
+                <th className="py-2.5 px-3 text-center w-20">ACTIONS</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-200 text-xs">
+            <tbody className="divide-y divide-slate-100 text-xs">
               {displayLrItems.length === 0 ? (
                 <tr>
                   <td colSpan={12} className="py-12 text-center text-slate-400 font-medium">
-                    No LR items added yet. Fill LR Entry Details above and press Enter or click &ldquo;Add&rdquo;.
+                    No LR items added yet. Fill LR Entry Details above and click &ldquo;Add to Grid&rdquo;.
                   </td>
                 </tr>
               ) : (
@@ -892,53 +918,53 @@ export const CrossOutwardCreate = () => {
                     key={idx}
                     className={`transition-colors ${
                       item.isDraftPreview
-                        ? 'bg-sky-50/90 border-l-4 border-sky-500 animate-pulse'
+                        ? 'bg-sky-50/70 border-l-4 border-[#1d4ed8]'
                         : editingIndex === idx
-                        ? 'bg-amber-50'
+                        ? 'bg-amber-50/80 border-l-4 border-amber-500'
                         : 'hover:bg-slate-50'
                     }`}
                   >
-                    <td className="py-1.5 px-2.5 border-r border-slate-200 text-center font-bold text-slate-700">
+                    <td className="py-2 px-3 border-r border-slate-100 text-center font-bold text-slate-600">
                       {item.srNo}
                     </td>
-                    <td className="py-1.5 px-2.5 border-r border-slate-200 font-extrabold text-sky-800">
+                    <td className="py-2 px-3 border-r border-slate-100 font-extrabold text-[#1d4ed8]">
                       <div className="flex items-center gap-1.5">
                         <span>{item.lrNo}</span>
                         {item.isDraftPreview && (
-                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-sky-100 text-sky-700 border border-sky-300">
-                            <Eye className="w-2.5 h-2.5 mr-0.5" /> Live
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-black bg-blue-100 text-[#1d4ed8] border border-blue-200">
+                            Live
                           </span>
                         )}
                       </div>
                     </td>
-                    <td className="py-1.5 px-2.5 border-r border-slate-200 text-slate-700">
+                    <td className="py-2 px-3 border-r border-slate-100 text-slate-600">
                       {formatDate(item.date)}
                     </td>
-                    <td className="py-1.5 px-2.5 border-r border-slate-200 text-right font-bold text-slate-900">
+                    <td className="py-2 px-3 border-r border-slate-100 text-right font-black text-slate-900">
                       {item.pkg}
                     </td>
-                    <td className="py-1.5 px-2.5 border-r border-slate-200 text-slate-700">
+                    <td className="py-2 px-3 border-r border-slate-100 text-slate-600">
                       {item.invoiceNo || '-'}
                     </td>
-                    <td className="py-1.5 px-2.5 border-r border-slate-200 font-semibold text-slate-800">
+                    <td className="py-2 px-3 border-r border-slate-100 font-semibold text-slate-800">
                       {item.ctTo || '-'}
                     </td>
-                    <td className="py-1.5 px-2.5 border-r border-slate-200 text-slate-700">
+                    <td className="py-2 px-3 border-r border-slate-100 text-slate-600 truncate max-w-[130px]">
                       {item.consignorName || '-'}
                     </td>
-                    <td className="py-1.5 px-2.5 border-r border-slate-200 text-slate-700">
+                    <td className="py-2 px-3 border-r border-slate-100 text-slate-600 truncate max-w-[130px]">
                       {item.consigneeName || '-'}
                     </td>
-                    <td className="py-1.5 px-2.5 border-r border-slate-200 text-right font-semibold text-slate-800">
-                      {Number(item.toPayAmount).toFixed(2)}
+                    <td className="py-2 px-3 border-r border-slate-100 text-right font-extrabold text-amber-700">
+                      {Number(item.toPayAmount) > 0 ? Number(item.toPayAmount).toFixed(2) : '-'}
                     </td>
-                    <td className="py-1.5 px-2.5 border-r border-slate-200 text-right font-semibold text-slate-800">
-                      {Number(item.tbbAmount).toFixed(2)}
+                    <td className="py-2 px-3 border-r border-slate-100 text-right font-extrabold text-sky-700">
+                      {Number(item.tbbAmount) > 0 ? Number(item.tbbAmount).toFixed(2) : '-'}
                     </td>
-                    <td className="py-1.5 px-2.5 border-r border-slate-200 text-right font-semibold text-slate-800">
-                      {Number(item.paidAmount).toFixed(2)}
+                    <td className="py-2 px-3 border-r border-slate-100 text-right font-extrabold text-emerald-700">
+                      {Number(item.paidAmount) > 0 ? Number(item.paidAmount).toFixed(2) : '-'}
                     </td>
-                    <td className="py-1.5 px-2.5 text-center">
+                    <td className="py-2 px-3 text-center">
                       {item.isDraftPreview ? (
                         <span className="text-[10px] font-semibold text-sky-600 italic">Typing...</span>
                       ) : (
@@ -947,7 +973,7 @@ export const CrossOutwardCreate = () => {
                             type="button"
                             onClick={() => handleEditRow(idx)}
                             title="Edit Row"
-                            className="p-1 text-sky-600 hover:bg-sky-50 rounded cursor-pointer"
+                            className="p-1 text-blue-600 hover:bg-blue-50 rounded-lg cursor-pointer transition-colors"
                           >
                             <Edit2 className="w-3.5 h-3.5" />
                           </button>
@@ -955,7 +981,7 @@ export const CrossOutwardCreate = () => {
                             type="button"
                             onClick={() => handleDeleteRow(idx)}
                             title="Delete Row"
-                            className="p-1 text-red-600 hover:bg-red-50 rounded cursor-pointer"
+                            className="p-1 text-rose-600 hover:bg-rose-50 rounded-lg cursor-pointer transition-colors"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
@@ -970,17 +996,17 @@ export const CrossOutwardCreate = () => {
         </div>
       </div>
 
-      {/* SECTION 4: BOTTOM ACTION BUTTONS & SUMMARY TOTALS (Matching Screenshot 3) */}
-      <div className="bg-slate-100 rounded-lg border-2 border-slate-300 p-3 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+      {/* SECTION 4: BOTTOM ACTION BUTTONS & SUMMARY TOTALS */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-lg p-4 flex flex-col lg:flex-row items-center justify-between gap-4 sticky bottom-4 z-20">
         {/* Left Action Buttons */}
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2.5 w-full lg:w-auto">
           <button
             type="button"
             onClick={handleSaveCrossOutward}
-            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded shadow-xs flex items-center cursor-pointer"
+            className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-xl shadow-xs flex items-center space-x-1.5 cursor-pointer transition-all"
           >
-            <Save className="w-4 h-4 mr-1.5" />
-            {editingOutwardId ? 'Update Stock-Out' : 'Save'}
+            <Save className="w-4 h-4" />
+            <span>{editingOutwardId ? 'Update Stock-Out' : 'Save Stock-Out'}</span>
           </button>
 
           <button
@@ -1005,33 +1031,33 @@ export const CrossOutwardCreate = () => {
                 items: itemsToPrint,
               });
             }}
-            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded shadow-xs flex items-center cursor-pointer"
+            className="px-5 py-2.5 bg-[#1d4ed8] hover:bg-blue-700 text-white font-extrabold text-xs rounded-xl shadow-xs flex items-center space-x-1.5 cursor-pointer transition-all"
           >
-            <Printer className="w-4 h-4 mr-1.5" />
-            Print
+            <Printer className="w-4 h-4" />
+            <span>Save &amp; Print Memo</span>
           </button>
         </div>
 
         {/* Right Summary Totals */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div className="bg-white px-3 py-1.5 rounded border border-slate-300 flex items-center justify-between space-x-3">
-            <span className="text-[11px] font-extrabold text-slate-600 uppercase">PKG:</span>
-            <span className="text-sm font-black text-slate-900">{summary.pkg}</span>
+        <div className="flex flex-wrap items-center gap-2.5 text-xs font-black text-slate-800 w-full lg:w-auto justify-end">
+          <div className="flex items-center space-x-2 bg-slate-100 px-3.5 py-2 rounded-xl border border-slate-200">
+            <span className="text-slate-500 uppercase text-[10px] tracking-wider">TOTAL PKG</span>
+            <span className="text-slate-900 font-black text-sm">{summary.pkg}</span>
           </div>
 
-          <div className="bg-white px-3 py-1.5 rounded border border-slate-300 flex items-center justify-between space-x-3">
-            <span className="text-[11px] font-extrabold text-slate-600 uppercase">TO PAY:</span>
-            <span className="text-sm font-black text-amber-700">{summary.toPay.toFixed(2)}</span>
+          <div className="flex items-center space-x-2 bg-amber-50 px-3.5 py-2 rounded-xl border border-amber-200 text-amber-900">
+            <span className="text-amber-700 uppercase text-[10px] tracking-wider">TO PAY</span>
+            <span className="font-black text-sm">{summary.toPay.toFixed(2)}</span>
           </div>
 
-          <div className="bg-white px-3 py-1.5 rounded border border-slate-300 flex items-center justify-between space-x-3">
-            <span className="text-[11px] font-extrabold text-slate-600 uppercase">T.B.B:</span>
-            <span className="text-sm font-black text-sky-700">{summary.tbb.toFixed(2)}</span>
+          <div className="flex items-center space-x-2 bg-sky-50 px-3.5 py-2 rounded-xl border border-sky-200 text-sky-900">
+            <span className="text-sky-700 uppercase text-[10px] tracking-wider">T.B.B.</span>
+            <span className="font-black text-sm">{summary.tbb.toFixed(2)}</span>
           </div>
 
-          <div className="bg-white px-3 py-1.5 rounded border border-slate-300 flex items-center justify-between space-x-3">
-            <span className="text-[11px] font-extrabold text-slate-600 uppercase">PAID:</span>
-            <span className="text-sm font-black text-emerald-700">{summary.paid.toFixed(2)}</span>
+          <div className="flex items-center space-x-2 bg-emerald-50 px-3.5 py-2 rounded-xl border border-emerald-200 text-emerald-900">
+            <span className="text-emerald-700 uppercase text-[10px] tracking-wider">PAID</span>
+            <span className="font-black text-sm">{summary.paid.toFixed(2)}</span>
           </div>
         </div>
       </div>
@@ -1041,12 +1067,11 @@ export const CrossOutwardCreate = () => {
         isOpen={quickAddModal.isOpen}
         onClose={() => setQuickAddModal({ isOpen: false, category: '', title: '', targetField: '', isHeader: true })}
         title={quickAddModal.title}
-        size="sm"
       >
         <form onSubmit={handleSaveQuickAdd} className="space-y-4">
           <div>
-            <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
-              Enter Name / Number
+            <label className="block text-xs font-bold text-slate-700 uppercase mb-1.5">
+              Enter Name / Number: *
             </label>
             <input
               type="text"
@@ -1055,22 +1080,22 @@ export const CrossOutwardCreate = () => {
               value={quickAddValue}
               onChange={(e) => setQuickAddValue(e.target.value)}
               placeholder="Type here..."
-              className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm font-semibold focus:outline-none focus:border-sky-600"
+              className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm font-semibold focus:ring-2 focus:ring-[#1d4ed8] outline-none"
             />
           </div>
           <div className="flex justify-end space-x-2">
             <button
               type="button"
               onClick={() => setQuickAddModal({ isOpen: false, category: '', title: '', targetField: '', isHeader: true })}
-              className="px-4 py-1.5 text-xs font-bold text-slate-600 bg-slate-100 rounded hover:bg-slate-200 cursor-pointer"
+              className="px-4 py-2 text-xs font-bold text-slate-600 bg-slate-100 rounded-xl hover:bg-slate-200 cursor-pointer transition-all"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-1.5 text-xs font-bold text-white bg-sky-600 rounded hover:bg-sky-700 cursor-pointer"
+              className="px-5 py-2 text-xs font-bold text-white bg-[#1d4ed8] rounded-xl hover:bg-blue-700 shadow-xs cursor-pointer transition-all"
             >
-              Add & Select
+              Add &amp; Select
             </button>
           </div>
         </form>

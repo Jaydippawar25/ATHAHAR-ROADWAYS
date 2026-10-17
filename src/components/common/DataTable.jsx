@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, FileSpreadsheet, FileText } from 'lucide-react';
+import { Search, FileSpreadsheet, FileText, Calendar, MapPin, Tag } from 'lucide-react';
 import { StatusBadge } from './StatusBadge';
 import { formatDate } from '../../utils/dateUtils';
 import { formatCurrency } from '../../utils/numberUtils';
@@ -95,7 +95,9 @@ export const DataTable = ({
         } else if (dateFilter === 'THIS_MONTH') {
           const rowDateObj = new Date(rowDateStrClean);
           const todayObj = new Date();
-          const isSameMonth = rowDateObj.getMonth() === todayObj.getMonth() && rowDateObj.getFullYear() === todayObj.getFullYear();
+          const isSameMonth =
+            rowDateObj.getMonth() === todayObj.getMonth() &&
+            rowDateObj.getFullYear() === todayObj.getFullYear();
           if (!isSameMonth) return false;
         } else if (dateFilter === 'CUSTOM') {
           if (startDate && rowDateStrClean < startDate) return false;
@@ -106,46 +108,53 @@ export const DataTable = ({
 
     // 3. Station Filter
     if (stationFilter !== 'ALL') {
-      const rowStation = row.from || row.ctTo || row.toStation || row.station || row.fromStation;
-      if (String(rowStation || '').toLowerCase() !== String(stationFilter).toLowerCase()) {
-        return false;
-      }
+      const rowStations = [
+        row.from,
+        row.ctTo,
+        row.toStation,
+        row.station,
+        row.fromStation,
+      ]
+        .filter(Boolean)
+        .map((s) => String(s).toLowerCase());
+      if (!rowStations.some((s) => s.includes(stationFilter.toLowerCase()))) return false;
     }
 
     // 4. Status Filter
     if (statusFilter !== 'ALL') {
-      const rowStatus = row.status || 'PENDING';
-      if (String(rowStatus).toUpperCase() !== String(statusFilter).toUpperCase()) {
-        return false;
-      }
+      const rowStatus = String(row.status || '').toUpperCase();
+      if (rowStatus !== statusFilter) return false;
     }
 
     // 5. Consigner Filter
     if (consignerFilter !== 'ALL') {
-      const rowConsigner = String(row.consignorName || row.consignor || row.consigners || '').toLowerCase();
-      if (!rowConsigner.includes(consignerFilter.toLowerCase())) {
-        return false;
-      }
+      const rowConsigner = String(row.consignorName || row.consignor || row.consigners || '');
+      if (!rowConsigner.toLowerCase().includes(consignerFilter.toLowerCase())) return false;
     }
 
     // 6. Consignee Filter
     if (consigneeFilter !== 'ALL') {
-      const rowConsignee = String(row.consigneeName || row.consignee || row.consignees || '').toLowerCase();
-      if (!rowConsignee.includes(consigneeFilter.toLowerCase())) {
-        return false;
-      }
+      const rowConsignee = String(row.consigneeName || row.consignee || row.consignees || '');
+      if (!rowConsignee.toLowerCase().includes(consigneeFilter.toLowerCase())) return false;
     }
 
     return true;
   });
 
-  const allSelected =
-    filteredData.length > 0 &&
-    filteredData.every((row) => selectedIds.includes(row.id));
+  const handleSelectAllChange = (e) => {
+    if (onSelectAll) {
+      onSelectAll(e.target.checked, filteredData);
+    }
+  };
 
-  // Determine which columns have total values
+  const isAllSelected =
+    filteredData.length > 0 && filteredData.every((r) => selectedIds.includes(r.id));
+  const isSomeSelected =
+    filteredData.some((r) => selectedIds.includes(r.id)) && !isAllSelected;
+
+  // Determine which columns are numeric totals
   const isTotalColumn = (col) => {
-    if (col.type === 'currency') return true;
+    if (col.type === 'currency' || col.showTotal) return true;
     const k = (col.key || '').toLowerCase();
     return (
       k.includes('pkg') ||
@@ -167,16 +176,17 @@ export const DataTable = ({
   const labelIndex = firstTotalIndex > 0 ? firstTotalIndex - 1 : 0;
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden space-y-0">
-      {/* Table Filter Controls Header Bar (Matching media_1791444487889.png) */}
-      <div className="px-4 py-3 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center gap-4 text-xs font-bold text-slate-700">
+    <div className={`bg-white rounded-2xl shadow-2xs border border-slate-200/90 overflow-hidden ${className}`}>
+      {/* Table Filter Controls Header Bar */}
+      <div className="px-4 py-3 bg-slate-50/80 border-b border-slate-200 flex flex-wrap items-center gap-3 text-xs font-bold text-slate-700">
         {/* Date Filter */}
-        <div className="flex flex-wrap items-center gap-2">
-          <label className="text-slate-600 font-bold">Date:</label>
+        <div className="flex flex-wrap items-center gap-1.5">
+          <Calendar className="w-3.5 h-3.5 text-slate-400" />
+          <span className="text-slate-500 font-bold">Date:</span>
           <select
             value={dateFilter}
             onChange={(e) => setDateFilter(e.target.value)}
-            className="px-3 py-1.5 bg-white border border-slate-300 rounded-lg font-bold text-slate-800 focus:outline-none focus:ring-1 focus:ring-sky-500 shadow-2xs"
+            className="px-2.5 py-1 bg-white border border-slate-200 rounded-lg font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-600 shadow-2xs text-xs"
           >
             <option value="ALL">All Dates</option>
             <option value="TODAY">Today</option>
@@ -186,32 +196,33 @@ export const DataTable = ({
           </select>
 
           {dateFilter === 'CUSTOM' && (
-            <div className="flex items-center space-x-2 bg-white px-2 py-1 border border-slate-300 rounded-lg shadow-2xs">
-              <span className="text-slate-500 text-[11px] font-bold">From:</span>
+            <div className="flex items-center space-x-1.5 bg-white px-2 py-1 border border-slate-200 rounded-lg shadow-2xs">
+              <span className="text-slate-400 text-[10px]">From</span>
               <input
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                className="px-1.5 py-0.5 border border-slate-200 rounded text-xs font-semibold text-slate-800"
+                className="px-1 py-0.5 border border-slate-200 rounded text-xs font-semibold text-slate-800"
               />
-              <span className="text-slate-500 text-[11px] font-bold">To:</span>
+              <span className="text-slate-400 text-[10px]">To</span>
               <input
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
-                className="px-1.5 py-0.5 border border-slate-200 rounded text-xs font-semibold text-slate-800"
+                className="px-1 py-0.5 border border-slate-200 rounded text-xs font-semibold text-slate-800"
               />
             </div>
           )}
         </div>
 
         {/* Station Filter */}
-        <div className="flex items-center space-x-2">
-          <label className="text-slate-600 font-bold">Station:</label>
+        <div className="flex items-center space-x-1.5">
+          <MapPin className="w-3.5 h-3.5 text-slate-400" />
+          <span className="text-slate-500 font-bold">Station:</span>
           <select
             value={stationFilter}
             onChange={(e) => setStationFilter(e.target.value)}
-            className="px-3 py-1.5 bg-white border border-slate-300 rounded-lg font-bold text-slate-800 focus:outline-none focus:ring-1 focus:ring-sky-500 shadow-2xs"
+            className="px-2.5 py-1 bg-white border border-slate-200 rounded-lg font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-600 shadow-2xs text-xs"
           >
             <option value="ALL">All Stations</option>
             {stationOptions.map((st) => (
@@ -223,12 +234,13 @@ export const DataTable = ({
         </div>
 
         {/* Status Filter */}
-        <div className="flex items-center space-x-2">
-          <label className="text-slate-600 font-bold">Status:</label>
+        <div className="flex items-center space-x-1.5">
+          <Tag className="w-3.5 h-3.5 text-slate-400" />
+          <span className="text-slate-500 font-bold">Status:</span>
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-3 py-1.5 bg-white border border-slate-300 rounded-lg font-bold text-slate-800 focus:outline-none focus:ring-1 focus:ring-sky-500 shadow-2xs"
+            className="px-2.5 py-1 bg-white border border-slate-200 rounded-lg font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-600 shadow-2xs text-xs"
           >
             <option value="ALL">All Status</option>
             <option value="PENDING">PENDING</option>
@@ -239,12 +251,12 @@ export const DataTable = ({
 
         {/* Consigner Filter */}
         {consignerOptions.length > 0 && (
-          <div className="flex items-center space-x-2">
-            <label className="text-slate-600 font-bold">Consigner:</label>
+          <div className="flex items-center space-x-1.5">
+            <span className="text-slate-500 font-bold">Consigner:</span>
             <select
               value={consignerFilter}
               onChange={(e) => setConsignerFilter(e.target.value)}
-              className="px-3 py-1.5 bg-white border border-slate-300 rounded-lg font-bold text-slate-800 focus:outline-none focus:ring-1 focus:ring-sky-500 shadow-2xs max-w-[180px] truncate"
+              className="px-2.5 py-1 bg-white border border-slate-200 rounded-lg font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-600 shadow-2xs text-xs max-w-[150px] truncate"
             >
               <option value="ALL">All Consigners</option>
               {consignerOptions.map((c) => (
@@ -258,12 +270,12 @@ export const DataTable = ({
 
         {/* Consignee Filter */}
         {consigneeOptions.length > 0 && (
-          <div className="flex items-center space-x-2">
-            <label className="text-slate-600 font-bold">Consignee:</label>
+          <div className="flex items-center space-x-1.5">
+            <span className="text-slate-500 font-bold">Consignee:</span>
             <select
               value={consigneeFilter}
               onChange={(e) => setConsigneeFilter(e.target.value)}
-              className="px-3 py-1.5 bg-white border border-slate-300 rounded-lg font-bold text-slate-800 focus:outline-none focus:ring-1 focus:ring-sky-500 shadow-2xs max-w-[180px] truncate"
+              className="px-2.5 py-1 bg-white border border-slate-200 rounded-lg font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-600 shadow-2xs text-xs max-w-[150px] truncate"
             >
               <option value="ALL">All Consignees</option>
               {consigneeOptions.map((c) => (
@@ -277,7 +289,7 @@ export const DataTable = ({
       </div>
 
       {/* Table Toolbar */}
-      <div className="p-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white">
+      <div className="p-3.5 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white">
         {searchable && (
           <div className="relative flex-1 max-w-md">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -286,18 +298,18 @@ export const DataTable = ({
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder={searchPlaceholder}
-              className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-300 rounded-lg text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
+              className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition-all shadow-inner"
             />
           </div>
         )}
 
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-2 flex-wrap">
           {onExportExcel && (
             <button
               onClick={() => onExportExcel(filteredData)}
-              className="inline-flex items-center space-x-1.5 px-3 py-2 border border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-lg text-xs font-semibold transition-colors"
+              className="inline-flex items-center space-x-1.5 px-3 py-1.5 border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 rounded-xl text-xs font-bold transition-all shadow-2xs"
             >
-              <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+              <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
               <span>Export Excel</span>
             </button>
           )}
@@ -305,9 +317,9 @@ export const DataTable = ({
           {onExportPDF && (
             <button
               onClick={() => onExportPDF(filteredData)}
-              className="inline-flex items-center space-x-1.5 px-3 py-2 border border-rose-300 bg-rose-50 text-rose-700 hover:bg-rose-100 rounded-lg text-xs font-semibold transition-colors"
+              className="inline-flex items-center space-x-1.5 px-3 py-1.5 border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-800 rounded-xl text-xs font-bold transition-all shadow-2xs"
             >
-              <FileText className="w-4 h-4 text-rose-600" />
+              <FileText className="w-3.5 h-3.5 text-rose-600" />
               <span>Export PDF</span>
             </button>
           )}
@@ -318,37 +330,121 @@ export const DataTable = ({
 
       {/* Table Container */}
       <div className="w-full overflow-x-auto">
-        <table className={`w-full text-left text-slate-700 border-collapse ${tableLayout === 'fixed' ? 'table-fixed' : 'table-auto'} ${className}`}>
-          <thead className={`bg-slate-100 text-slate-800 font-extrabold border-b border-slate-200 ${isCompact ? 'text-[10px]' : 'text-[10.5px]'} uppercase tracking-tight`}>
+        <table className={`w-full text-slate-800 border-collapse table-${tableLayout}`}>
+          <thead className="bg-[#f8fafc] text-slate-500 uppercase font-black text-[10px] tracking-wider border-b border-slate-200">
             <tr>
               {selectable && (
-                <th className={`${isCompact ? 'px-1 py-2 w-7' : 'px-2 py-3 w-8'} text-center`}>
+                <th className="p-3 w-8 text-center">
                   <input
                     type="checkbox"
-                    checked={allSelected}
-                    onChange={(e) => onSelectAll && onSelectAll(e.target.checked, filteredData)}
-                    className="rounded border-slate-300 text-sky-600 focus:ring-sky-500 cursor-pointer"
+                    checked={isAllSelected}
+                    ref={(input) => {
+                      if (input) input.indeterminate = isSomeSelected;
+                    }}
+                    onChange={handleSelectAllChange}
+                    className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
                   />
                 </th>
               )}
+
               {columns.map((col, idx) => {
                 const isAction = col.key === 'actions';
-                const isCenter = isAction || col.type === 'status' || col.align === 'center' || col.key === 'pkg';
+                const isCenter =
+                  isAction || col.type === 'status' || col.align === 'center' || col.key === 'pkg';
                 const isRight = col.type === 'currency' || col.align === 'right';
+                const alignCls = isRight ? 'text-right' : isCenter ? 'text-center' : 'text-left';
+                const widthCls = col.width
+                  ? col.width
+                  : isAction
+                  ? isCompact
+                    ? 'w-16 min-w-[62px]'
+                    : 'w-20 min-w-[76px]'
+                  : '';
 
                 return (
                   <th
                     key={idx}
-                    className={`${isCompact ? 'px-1.5 py-2' : 'px-2 py-3'} leading-tight whitespace-nowrap ${
-                      isAction
-                        ? 'text-center'
-                        : isRight
-                        ? 'text-right'
-                        : isCenter
-                        ? 'text-center'
-                        : 'text-left'
-                    } ${
-                      col.width
+                    className={`p-3 ${alignCls} ${widthCls} whitespace-nowrap select-none`}
+                  >
+                    {col.label}
+                  </th>
+                );
+              })}
+            </tr>
+          </thead>
+
+          <tbody className="divide-y divide-slate-100">
+            {filteredData.length === 0 ? (
+              <tr>
+                <td
+                  colSpan={columns.length + (selectable ? 1 : 0)}
+                  className="p-8 text-center text-slate-400 font-medium text-xs"
+                >
+                  No records found matching filters.
+                </td>
+              </tr>
+            ) : (
+              filteredData.map((row, rowIdx) => {
+                const isRowSelected = selectedIds.includes(row.id);
+                return (
+                  <tr
+                    key={row.id || rowIdx}
+                    className={`hover:bg-slate-50/80 transition-colors ${
+                      isRowSelected ? 'bg-blue-50/40' : rowIdx % 2 === 1 ? 'bg-slate-50/30' : 'bg-white'
+                    }`}
+                  >
+                    {selectable && (
+                      <td className="p-3 text-center">
+                        <input
+                          type="checkbox"
+                          checked={isRowSelected}
+                          onChange={() => onSelectRow && onSelectRow(row)}
+                          className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                        />
+                      </td>
+                    )}
+
+                    {columns.map((col, colIdx) => {
+                      let cellVal = row[col.key];
+
+                      if (col.render) {
+                        cellVal = col.render(row);
+                      } else if (col.type === 'status') {
+                        cellVal = <StatusBadge status={cellVal} />;
+                      } else if (col.type === 'currency') {
+                        cellVal = formatCurrency(cellVal);
+                      } else if (col.type === 'date') {
+                        cellVal = formatDate(cellVal);
+                      }
+
+                      const isAction = col.key === 'actions';
+                      const isCenter =
+                        isAction || col.type === 'status' || col.align === 'center' || col.key === 'pkg';
+                      const isRight = col.type === 'currency' || col.align === 'right';
+                      const isNumOrDate =
+                        col.nowrap ||
+                        col.type === 'status' ||
+                        col.type === 'currency' ||
+                        col.type === 'date' ||
+                        col.key === 'type' ||
+                        col.key === 'receiptNo' ||
+                        col.key === 'lrNo' ||
+                        col.key === 'inwardNo' ||
+                        col.key === 'outwardNo' ||
+                        col.key === 'vehicleNo' ||
+                        col.key === 'pkg' ||
+                        col.key === 'totalQty' ||
+                        col.key === 'srNo';
+
+                      const paddingCls = isCompact ? 'px-2 py-2' : 'px-3 py-2.5';
+                      const textCls = isCompact ? 'text-[11px]' : 'text-xs';
+                      const alignCls = isRight ? 'text-right font-black' : isCenter ? 'text-center' : 'text-left';
+                      const isBadgeCol = col.type === 'status' || col.key === 'type';
+                      const wrapCls =
+                        isAction || isRight || isCenter || isNumOrDate || isBadgeCol
+                          ? 'whitespace-nowrap'
+                          : 'truncate';
+                      const widthCls = col.width
                         ? col.width
                         : isAction
                         ? isCompact
@@ -358,107 +454,27 @@ export const DataTable = ({
                         ? 'min-w-[96px]'
                         : col.key === 'type'
                         ? 'min-w-[105px]'
-                        : ''
-                    }`}
-                  >
-                    {col.label}
-                  </th>
+                        : isNumOrDate
+                        ? 'whitespace-nowrap'
+                        : isCompact
+                        ? 'max-w-[110px] truncate'
+                        : 'max-w-[140px] truncate';
+
+                      return (
+                        <td
+                          key={colIdx}
+                          className={`${paddingCls} font-semibold text-slate-800 ${textCls} leading-snug ${alignCls} ${wrapCls} ${widthCls} ${
+                            col.className || ''
+                          }`}
+                          title={!col.render && typeof row[col.key] === 'string' ? row[col.key] : undefined}
+                        >
+                          {cellVal ?? '-'}
+                        </td>
+                      );
+                    })}
+                  </tr>
                 );
-              })}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-200 bg-white">
-            {filteredData.length === 0 ? (
-              <tr>
-                <td
-                  colSpan={columns.length + (selectable ? 1 : 0)}
-                  className="p-8 text-center text-slate-500 font-medium text-sm"
-                >
-                  No records found.
-                </td>
-              </tr>
-            ) : (
-              filteredData.map((row, rowIdx) => (
-                <tr
-                  key={row.id || rowIdx}
-                  className={`hover:bg-sky-50/50 transition-colors ${
-                    selectedIds.includes(row.id) ? 'bg-sky-50/80' : ''
-                  }`}
-                >
-                  {selectable && (
-                    <td className={`${isCompact ? 'px-1 py-1.5' : 'px-2 py-2.5'} text-center`}>
-                      <input
-                        type="checkbox"
-                        checked={selectedIds.includes(row.id)}
-                        onChange={() => onSelectRow && onSelectRow(row)}
-                        className="rounded border-slate-300 text-sky-600 focus:ring-sky-500 cursor-pointer"
-                      />
-                    </td>
-                  )}
-                  {columns.map((col, colIdx) => {
-                    let cellVal = row[col.key];
-
-                    if (col.render) {
-                      cellVal = col.render(row);
-                    } else if (col.type === 'status') {
-                      cellVal = <StatusBadge status={cellVal} />;
-                    } else if (col.type === 'currency') {
-                      cellVal = formatCurrency(cellVal);
-                    } else if (col.type === 'date') {
-                      cellVal = formatDate(cellVal);
-                    }
-
-                    const isAction = col.key === 'actions';
-                    const isCenter = isAction || col.type === 'status' || col.align === 'center' || col.key === 'pkg';
-                    const isRight = col.type === 'currency' || col.align === 'right';
-                    const isNumOrDate =
-                      col.nowrap ||
-                      col.type === 'status' ||
-                      col.type === 'currency' ||
-                      col.type === 'date' ||
-                      col.key === 'type' ||
-                      col.key === 'receiptNo' ||
-                      col.key === 'lrNo' ||
-                      col.key === 'inwardNo' ||
-                      col.key === 'outwardNo' ||
-                      col.key === 'vehicleNo' ||
-                      col.key === 'pkg' ||
-                      col.key === 'totalQty' ||
-                      col.key === 'srNo';
-
-                    const paddingCls = isCompact ? 'px-1.5 py-1.5' : 'px-2 py-2.5';
-                    const textCls = isCompact ? 'text-[10.5px]' : 'text-[11px]';
-                    const alignCls = isRight ? 'text-right font-bold' : isCenter ? 'text-center' : 'text-left';
-                    const isBadgeCol = col.type === 'status' || col.key === 'type';
-                    const wrapCls = isAction || isRight || isCenter || isNumOrDate || isBadgeCol ? 'whitespace-nowrap' : 'truncate';
-                    const widthCls = col.width
-                      ? col.width
-                      : isAction
-                      ? isCompact
-                        ? 'w-16 min-w-[62px]'
-                        : 'w-20 min-w-[76px]'
-                      : col.type === 'status'
-                      ? 'min-w-[96px]'
-                      : col.key === 'type'
-                      ? 'min-w-[105px]'
-                      : isNumOrDate
-                      ? 'whitespace-nowrap'
-                      : isCompact
-                      ? 'max-w-[110px] truncate'
-                      : 'max-w-[140px] truncate';
-
-                    return (
-                      <td
-                        key={colIdx}
-                        className={`${paddingCls} font-semibold text-slate-800 ${textCls} leading-snug ${alignCls} ${wrapCls} ${widthCls} ${col.className || ''}`}
-                        title={!col.render && typeof row[col.key] === 'string' ? row[col.key] : undefined}
-                      >
-                        {cellVal ?? '-'}
-                      </td>
-                    );
-                  })}
-                </tr>
-              ))
+              })
             )}
           </tbody>
 
@@ -472,28 +488,37 @@ export const DataTable = ({
               return acc + (sum || Number(curr.totalFreight || curr.freight) || 0);
             }, 0);
 
-            const lastTotalIndex = totalColIndices.length > 0 ? totalColIndices[totalColIndices.length - 1] : -1;
+            const lastTotalIndex =
+              totalColIndices.length > 0 ? totalColIndices[totalColIndices.length - 1] : -1;
             const hasExplicitTotalCol = columns.some((c) =>
-              ['totalfreight', 'totalmoney', 'grandtotal', 'netamount'].includes((c.key || '').toLowerCase())
+              ['totalfreight', 'totalmoney', 'grandtotal', 'netamount'].includes(
+                (c.key || '').toLowerCase()
+              )
             );
             const grandTotalColIndex =
-              !hasExplicitTotalCol && lastTotalIndex !== -1 && lastTotalIndex + 1 < columns.length && columns[lastTotalIndex + 1].key !== 'actions'
+              !hasExplicitTotalCol &&
+              lastTotalIndex !== -1 &&
+              lastTotalIndex + 1 < columns.length &&
+              columns[lastTotalIndex + 1].key !== 'actions'
                 ? lastTotalIndex + 1
                 : -1;
 
-            const padCls = isCompact ? 'px-1.5 py-1.5' : 'px-2 py-2.5';
-            const fTextCls = isCompact ? 'text-[10.5px]' : 'text-[11px]';
+            const padCls = isCompact ? 'px-2 py-2' : 'px-3 py-2.5';
+            const fTextCls = isCompact ? 'text-[11px]' : 'text-xs';
 
             return (
-              <tfoot className={`bg-sky-50/90 border-t-2 border-slate-300 font-extrabold text-slate-900 ${fTextCls}`}>
+              <tfoot className={`bg-blue-50/80 border-t-2 border-slate-300 font-black text-slate-900 ${fTextCls}`}>
                 <tr>
-                  {selectable && <td className={`${isCompact ? 'px-1 py-1.5' : 'px-2 py-2.5'}`}></td>}
+                  {selectable && <td className="p-3"></td>}
                   {columns.map((col, colIdx) => {
                     const isAction = col.key === 'actions';
 
                     if (colIdx === labelIndex) {
                       return (
-                        <td key={colIdx} className={`${padCls} text-right font-black tracking-wider uppercase text-slate-900 whitespace-nowrap`}>
+                        <td
+                          key={colIdx}
+                          className={`${padCls} text-right font-black tracking-wider uppercase text-slate-900 whitespace-nowrap`}
+                        >
                           TOTAL:
                         </td>
                       );
@@ -508,14 +533,20 @@ export const DataTable = ({
 
                       if (k.includes('pkg') || k.includes('qty')) {
                         return (
-                          <td key={colIdx} className={`${padCls} font-black text-slate-900 text-center whitespace-nowrap`}>
+                          <td
+                            key={colIdx}
+                            className={`${padCls} font-black text-slate-900 text-center whitespace-nowrap`}
+                          >
                             {sum} Pkgs
                           </td>
                         );
                       }
 
                       return (
-                        <td key={colIdx} className={`${padCls} font-extrabold text-[#1e295b] text-right whitespace-nowrap`}>
+                        <td
+                          key={colIdx}
+                          className={`${padCls} font-black text-[#1d4ed8] text-right whitespace-nowrap`}
+                        >
                           {formatCurrency(sum)}
                         </td>
                       );
@@ -523,12 +554,15 @@ export const DataTable = ({
 
                     if (colIdx === grandTotalColIndex) {
                       return (
-                        <td key={colIdx} className={`${isCompact ? 'px-1 py-1.5' : 'px-2 py-2'} text-center whitespace-nowrap`}>
+                        <td
+                          key={colIdx}
+                          className={`${isCompact ? 'px-1 py-1.5' : 'px-2 py-2'} text-center whitespace-nowrap`}
+                        >
                           <span
-                            className={`inline-flex items-center ${isCompact ? 'px-1.5 py-0.5 text-[9.5px]' : 'px-2 py-0.5 text-[10px]'} font-black text-emerald-950 bg-emerald-100 rounded border border-emerald-300 shadow-2xs`}
+                            className="inline-flex items-center px-2 py-0.5 text-[10px] font-black text-emerald-950 bg-emerald-100 rounded border border-emerald-300 shadow-2xs"
                             title="Total Freight (To Pay + TBB + Paid)"
                           >
-                            {isCompact ? formatCurrency(grandTotalSum) : `Total: ${formatCurrency(grandTotalSum)}`}
+                            Total: {formatCurrency(grandTotalSum)}
                           </span>
                         </td>
                       );

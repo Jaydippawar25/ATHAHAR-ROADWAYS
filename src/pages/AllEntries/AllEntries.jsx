@@ -779,117 +779,140 @@ export const AllEntries = () => {
   ];
 
   return (
-    <div className="space-y-6 text-slate-800 max-w-full">
-      {/* Top Header Title & Navigation Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
-        <div>
-          <h2 className="text-2xl font-black text-slate-900 tracking-tight flex items-center space-x-2.5">
-            <ArrowLeftRight className="w-7 h-7 text-sky-600" />
-            <span>All Inward & Outward Entries</span>
+    <div className="space-y-5 text-slate-800 max-w-full">
+      {/* Top Banner with Logistics Registry details */}
+      <div className="bg-gradient-to-r from-[#0d2358] via-[#102d73] to-[#163a94] rounded-2xl p-6 text-white shadow-lg border border-blue-900/40 flex flex-col md:flex-row md:items-center justify-between gap-4 relative overflow-hidden">
+        <div className="space-y-1.5 z-10">
+          <div className="flex items-center space-x-2 text-[10px] font-black tracking-widest uppercase text-blue-200">
+            <span className="bg-white/10 px-2.5 py-0.5 rounded-full border border-white/20">
+              CENTRAL LOGISTICS REGISTRY
+            </span>
+            <span>&bull; SANGLI TERMINAL &mdash; ATHARVA ROADWAYS</span>
+          </div>
+
+          <h2 className="text-2xl sm:text-3xl font-black tracking-tight flex items-center space-x-2.5 text-white">
+            <ArrowLeftRight className="w-7 h-7 text-sky-400" />
+            <span>All Inward &amp; Outward Entries</span>
           </h2>
-          <p className="text-xs text-slate-500 font-medium mt-0.5">
+
+          <p className="text-blue-100 text-xs sm:text-sm font-medium">
             Complete transaction register of all inward receipts, outward dispatches, stock-out entries, and individual LR records
           </p>
+        </div>
+
+        <div className="flex items-center space-x-2.5 flex-shrink-0 z-10">
+          <button
+            onClick={() => navigate('/inward/new')}
+            className="inline-flex items-center space-x-1.5 bg-white text-[#0d2358] hover:bg-slate-100 font-bold px-4 py-2.5 rounded-xl text-xs shadow-sm transition-all"
+          >
+            <span>+ New Inward</span>
+          </button>
+          <button
+            onClick={() => navigate('/outward/new')}
+            className="inline-flex items-center space-x-1.5 bg-[#0284c7] hover:bg-[#0369a1] text-white font-bold px-4 py-2.5 rounded-xl text-xs shadow-sm transition-all"
+          >
+            <span>+ New Outward</span>
+          </button>
         </div>
       </div>
 
       {/* Summary KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3.5">
-        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
+        <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-2xs">
           <div className="flex items-center justify-between text-slate-500 mb-1">
-            <span className="text-xs font-bold uppercase tracking-wider">Inward Receipts</span>
+            <span className="text-[10.5px] font-black uppercase text-slate-400 tracking-wider">Inward Receipts</span>
             <ArrowDownLeft className="w-4 h-4 text-sky-600" />
           </div>
-          <p className="text-xl font-black text-slate-900">{enrichedInwards.length}</p>
-          <p className="text-[11px] text-sky-700 font-semibold mt-0.5">{totalInwardPkg} Total PKG</p>
+          <p className="text-2xl font-black text-slate-900">{enrichedInwards.length}</p>
+          <p className="text-[11px] text-sky-700 font-bold mt-0.5">{totalInwardPkg} Total PKG</p>
         </div>
 
-        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
+        <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-2xs">
           <div className="flex items-center justify-between text-slate-500 mb-1">
-            <span className="text-xs font-bold uppercase tracking-wider">Outward Receipts</span>
+            <span className="text-[10.5px] font-black uppercase text-slate-400 tracking-wider">Outward Receipts</span>
             <ArrowUpRight className="w-4 h-4 text-emerald-600" />
           </div>
-          <p className="text-xl font-black text-slate-900">{enrichedOutwards.length}</p>
-          <p className="text-[11px] text-emerald-700 font-semibold mt-0.5">{totalOutwardPkg} Total PKG</p>
+          <p className="text-2xl font-black text-slate-900">{enrichedOutwards.length}</p>
+          <p className="text-[11px] text-emerald-700 font-bold mt-0.5">{totalOutwardPkg} Total PKG</p>
         </div>
 
-        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
+        <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-2xs">
           <div className="flex items-center justify-between text-slate-500 mb-1">
-            <span className="text-xs font-bold uppercase tracking-wider">Stock-Out Receipts</span>
+            <span className="text-[10.5px] font-black uppercase text-slate-400 tracking-wider">Stock-Out Receipts</span>
             <Shuffle className="w-4 h-4 text-indigo-600" />
           </div>
-          <p className="text-xl font-black text-slate-900">{enrichedStockOuts.length}</p>
-          <p className="text-[11px] text-indigo-700 font-semibold mt-0.5">{totalStockOutPkg} Total PKG</p>
+          <p className="text-2xl font-black text-slate-900">{enrichedStockOuts.length}</p>
+          <p className="text-[11px] text-indigo-700 font-bold mt-0.5">{totalStockOutPkg} Total PKG</p>
         </div>
 
-        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
+        <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-2xs">
           <div className="flex items-center justify-between text-slate-500 mb-1">
-            <span className="text-xs font-bold uppercase tracking-wider">Total LR Entries</span>
-            <Layers className="w-4 h-4 text-indigo-600" />
+            <span className="text-[10.5px] font-black uppercase text-slate-400 tracking-wider">Total LR Entries</span>
+            <Layers className="w-4 h-4 text-blue-600" />
           </div>
-          <p className="text-xl font-black text-slate-900">{combinedLREntries.length}</p>
-          <p className="text-[11px] text-indigo-700 font-semibold mt-0.5">Combined In & Out LRs</p>
+          <p className="text-2xl font-black text-blue-700">{combinedLREntries.length}</p>
+          <p className="text-[11px] text-blue-600 font-bold mt-0.5">Combined LRs</p>
         </div>
 
-        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
+        <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-2xs">
           <div className="flex items-center justify-between text-slate-500 mb-1">
-            <span className="text-xs font-bold uppercase tracking-wider">Pending Stock</span>
+            <span className="text-[10.5px] font-black uppercase text-slate-400 tracking-wider">Pending Stock</span>
             <PackageCheck className="w-4 h-4 text-amber-600" />
           </div>
-          <p className="text-xl font-black text-slate-900">{pendingStock.length}</p>
-          <p className="text-[11px] text-amber-700 font-semibold mt-0.5">In Godown Stock</p>
+          <p className="text-2xl font-black text-amber-600">{pendingStock.length}</p>
+          <p className="text-[11px] text-amber-700 font-bold mt-0.5">In Godown Stock</p>
         </div>
       </div>
 
       {/* Main Tab Controls & Data Table */}
       <div className="space-y-4">
         {/* Tab Selection Buttons */}
-        <div className="flex flex-wrap items-center gap-3 border-b border-slate-200 pb-3">
+        <div className="flex flex-wrap items-center gap-2.5 border-b border-slate-200 pb-3">
           <button
             onClick={() => setActiveTab('all_lrs')}
-            className={`px-7 py-3.5 min-w-[210px] justify-center rounded-xl font-extrabold text-sm transition-all flex items-center space-x-2.5 cursor-pointer ${
+            className={`px-5 py-2.5 rounded-xl font-black text-xs transition-all flex items-center space-x-2 cursor-pointer shadow-2xs ${
               activeTab === 'all_lrs'
-                ? 'bg-slate-900 text-white shadow-md'
-                : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200 shadow-2xs'
+                ? 'bg-[#1d4ed8] text-white shadow-sm'
+                : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'
             }`}
           >
-            <Layers className="w-5 h-5" />
+            <Layers className="w-4 h-4" />
             <span>All LR Entries ({combinedLREntries.length})</span>
           </button>
 
           <button
             onClick={() => setActiveTab('inward_headers')}
-            className={`px-7 py-3.5 min-w-[210px] justify-center rounded-xl font-extrabold text-sm transition-all flex items-center space-x-2.5 cursor-pointer ${
+            className={`px-5 py-2.5 rounded-xl font-black text-xs transition-all flex items-center space-x-2 cursor-pointer shadow-2xs ${
               activeTab === 'inward_headers'
-                ? 'bg-sky-600 text-white shadow-md'
-                : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200 shadow-2xs'
+                ? 'bg-sky-600 text-white shadow-sm'
+                : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'
             }`}
           >
-            <ArrowDownLeft className="w-5 h-5" />
+            <ArrowDownLeft className="w-4 h-4" />
             <span>Inward Receipts ({enrichedInwards.length})</span>
           </button>
 
           <button
             onClick={() => setActiveTab('outward_headers')}
-            className={`px-7 py-3.5 min-w-[210px] justify-center rounded-xl font-extrabold text-sm transition-all flex items-center space-x-2.5 cursor-pointer ${
+            className={`px-5 py-2.5 rounded-xl font-black text-xs transition-all flex items-center space-x-2 cursor-pointer shadow-2xs ${
               activeTab === 'outward_headers'
-                ? 'bg-emerald-600 text-white shadow-md'
-                : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200 shadow-2xs'
+                ? 'bg-emerald-600 text-white shadow-sm'
+                : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'
             }`}
           >
-            <ArrowUpRight className="w-5 h-5" />
+            <ArrowUpRight className="w-4 h-4" />
             <span>Outward Receipts ({enrichedOutwards.length})</span>
           </button>
 
           <button
             onClick={() => setActiveTab('stock_out_headers')}
-            className={`px-7 py-3.5 min-w-[210px] justify-center rounded-xl font-extrabold text-sm transition-all flex items-center space-x-2.5 cursor-pointer ${
+            className={`px-5 py-2.5 rounded-xl font-black text-xs transition-all flex items-center space-x-2 cursor-pointer shadow-2xs ${
               activeTab === 'stock_out_headers'
-                ? 'bg-indigo-600 text-white shadow-md'
-                : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200 shadow-2xs'
+                ? 'bg-indigo-600 text-white shadow-sm'
+                : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'
             }`}
           >
-            <Shuffle className="w-5 h-5" />
+            <Shuffle className="w-4 h-4" />
             <span>Stock-Out Receipts ({enrichedStockOuts.length})</span>
           </button>
         </div>

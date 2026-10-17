@@ -4,7 +4,7 @@ import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 import { Modal } from '../../components/common/Modal';
 import { EditableCombobox } from '../../components/common/EditableCombobox';
-import { Save, Printer, ArrowLeft, AlertCircle, Plus, Trash2, Edit2, RotateCcw, Eye, X } from 'lucide-react';
+import { Save, Printer, AlertCircle, Plus, Trash2, Edit2, Layers, CheckCircle } from 'lucide-react';
 import { getTodayDateString, formatDate } from '../../utils/dateUtils';
 import { formatCurrency } from '../../utils/numberUtils';
 import { printRecordDetails } from '../../services/exportService';
@@ -139,7 +139,7 @@ export const InwardCreate = () => {
       return;
     }
     if (e.key === 'Enter' || (e.key === 'Tab' && !e.shiftKey)) {
-      if (index >= 9) {
+      if (index >= 10) {
         e.preventDefault();
         handleAddOrUpdateLR();
       } else {
@@ -168,32 +168,29 @@ export const InwardCreate = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
+  // Auto-fill owner name whenever vehicleNo changes
   const handleHeaderChange = (e) => {
     const { name, value } = e.target;
-    if (name === 'vehicleNo') {
-      const selectedVehicle = masters.vehicles?.find((v) => v.vehicleNo === value);
-      setHeaderData((prev) => ({
-        ...prev,
-        vehicleNo: value,
-        ownerName: selectedVehicle?.ownerName || prev.ownerName,
-      }));
-    } else {
-      setHeaderData((prev) => ({ ...prev, [name]: value }));
-    }
+    setHeaderData((prev) => {
+      const updated = { ...prev, [name]: value };
+      if (name === 'vehicleNo') {
+        const found = masters.vehicles?.find(
+          (v) => (v.vehicleNo || '').trim().toLowerCase() === value.trim().toLowerCase()
+        );
+        if (found?.ownerName) {
+          updated.ownerName = found.ownerName;
+        }
+      }
+      return updated;
+    });
   };
 
   const handleItemChange = (e) => {
     const { name, value } = e.target;
-    if (name === 'pkg') {
-      if (value !== '' && !/^\d*$/.test(value)) return;
-    }
-    if (['toPayAmount', 'tbbAmount', 'paidAmount'].includes(name)) {
-      if (value !== '' && !/^\d*\.?\d*$/.test(value)) return;
-    }
     setItemForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Open Quick Add Modal for [...] buttons
+  // Open Quick Add Dialog
   const handleOpenQuickAdd = (category, title, targetField, isHeader = true) => {
     setQuickAddModal({
       isOpen: true,
@@ -356,7 +353,6 @@ export const InwardCreate = () => {
       return;
     }
 
-    // If the LR was only a live preview (not yet added to stagedItems), stage it first so editing works seamlessly
     if (!stagedItems[index]) {
       setStagedItems((prev) => [...prev, { ...item, srNo: prev.length + 1 }]);
     }
@@ -477,189 +473,213 @@ export const InwardCreate = () => {
   };
 
   return (
-    <div className="space-y-4 text-slate-800 max-w-full">
-      {/* Top Header Title & Back Navigation */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 pb-3">
-        <div>
-          <h2 className="text-xl font-black text-slate-900 tracking-tight">
-            {editingInwardId ? `Edit Inward Details (#${headerData.inwardNo})` : 'Inward Details'}
-          </h2>
-          <p className="text-xs text-slate-500 font-medium">
-            {editingInwardId
-              ? 'Update inward receipt memo and transport LR entries'
-              : 'Record inward receipt memo and transport LR entries'}
-          </p>
-        </div>
+    <div className="space-y-5 text-slate-800 max-w-full">
+      {/* ROYAL NAVY HERO BANNER */}
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#0d2358] via-[#102d73] to-[#163a94] p-5 sm:p-6 text-white shadow-lg border border-blue-900/40">
+        <div className="absolute -top-16 -right-16 w-56 h-56 bg-sky-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-16 -left-16 w-56 h-56 bg-blue-400/10 rounded-full blur-3xl pointer-events-none" />
 
-        <button
-          type="button"
-          onClick={() => navigate('/all-entries', { state: { tab: 'inward_headers' } })}
-          className="inline-flex items-center justify-center bg-sky-600 hover:bg-sky-700 text-white font-extrabold px-6 py-2.5 rounded-xl text-sm shadow-md transition-all self-end sm:self-auto cursor-pointer"
-        >
-          <span>Show All Inward</span>
-        </button>
+        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <div className="flex items-center space-x-2 text-[10px] font-extrabold tracking-widest uppercase text-sky-300">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span>GATE-01 INWARD MANIFEST DOCK</span>
+              <span className="text-blue-200/50">•</span>
+              <span className="text-blue-100 font-mono">
+                {editingInwardId ? `EDITING INW #${headerData.inwardNo}` : 'NEW RECEIPT'}
+              </span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight mt-1">
+              {editingInwardId ? `Update Inward Entry #${headerData.inwardNo}` : 'New Inward Consignment'}
+            </h1>
+            <p className="text-xs text-blue-100/80 mt-1 max-w-xl">
+              Log incoming linehaul truckload, attach physical memo numbers, and register individual LR items into godown stock.
+            </p>
+          </div>
+
+          <div className="flex items-center space-x-2.5 self-start sm:self-auto">
+            <button
+              type="button"
+              onClick={() => navigate('/all-entries', { state: { tab: 'inward_headers' } })}
+              className="px-4 py-2.5 bg-white/10 hover:bg-white/20 active:bg-white/30 text-white rounded-xl text-xs font-bold transition-all border border-white/20 flex items-center space-x-2 shadow-xs cursor-pointer"
+            >
+              <Layers className="w-4 h-4 text-sky-300" />
+              <span>Show All Inward</span>
+            </button>
+          </div>
+        </div>
       </div>
 
       {error && (
-        <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-xs font-semibold flex items-center space-x-2">
+        <div className="p-3.5 bg-rose-50 border border-rose-200 text-rose-700 rounded-2xl text-xs font-semibold flex items-center space-x-2 shadow-2xs">
           <AlertCircle className="w-4 h-4 text-rose-500 flex-shrink-0" />
           <span>{error}</span>
         </div>
       )}
 
       {success && (
-        <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-xl text-xs font-semibold">
-          {success}
+        <div className="p-3.5 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl text-xs font-semibold flex items-center space-x-2 shadow-2xs">
+          <CheckCircle className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+          <span>{success}</span>
         </div>
       )}
 
-      {/* HEADER SECTION FIELDSET: Inward Header Details */}
-      <fieldset className="bg-slate-100/90 rounded-xl border border-slate-300 p-3.5 pt-2 shadow-2xs">
-        <legend className="px-2.5 py-0.5 text-[11px] font-black uppercase tracking-wider text-sky-900 bg-white border border-slate-300 rounded-md shadow-2xs">
-          Inward Header Details
-        </legend>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3.5 items-end mt-1">
+      {/* HEADER SECTION: Inward Header Details */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs p-5 space-y-4">
+        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+          <div className="flex items-center space-x-2">
+            <span className="w-1.5 h-4 bg-[#1d4ed8] rounded-full" />
+            <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-800">
+              Trip & Linehaul Header Details
+            </h3>
+          </div>
+          <span className="text-[11px] font-bold text-slate-400">
+            Auto-assigned Inward: <span className="font-mono text-[#1d4ed8] font-black">{headerData.inwardNo}</span>
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 items-end">
           <div>
-            <label className="block text-[11px] font-black text-slate-700 uppercase mb-1">
-              NO. (INWARD NO)
+            <label className="block text-[11px] font-extrabold text-slate-600 uppercase mb-1.5">
+              Inward No.
             </label>
             <input
               type="text"
               name="inwardNo"
               value={headerData.inwardNo}
               onChange={handleHeaderChange}
-              className="w-full px-2.5 py-1.5 border border-slate-300 bg-slate-200/70 rounded text-xs font-black text-[#1e295b]"
+              className="w-full px-3 py-2 border border-slate-200 bg-slate-50/70 rounded-xl text-xs font-black text-[#1d4ed8] font-mono focus:ring-2 focus:ring-[#1d4ed8] outline-none"
             />
           </div>
 
           <div>
-            <label className="block text-[11px] font-black text-slate-700 uppercase mb-1">
-              DATE *
+            <label className="block text-[11px] font-extrabold text-slate-600 uppercase mb-1.5">
+              Arrival Date *
             </label>
             <input
               type="date"
               name="date"
               value={headerData.date}
               onChange={handleHeaderChange}
-              className="w-full px-2.5 py-1.5 border border-slate-300 bg-white rounded text-xs font-semibold text-slate-800"
+              className="w-full px-3 py-2 border border-slate-200 bg-white rounded-xl text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-[#1d4ed8] outline-none"
             />
           </div>
 
           <div>
-            <label className="block text-[11px] font-black text-slate-700 uppercase mb-1">
-              TRANSPORTER NAME
+            <label className="block text-[11px] font-extrabold text-slate-600 uppercase mb-1.5">
+              Transporter Name
             </label>
-            <div className="flex items-center space-x-1 min-w-0">
+            <div className="flex items-center space-x-1.5 min-w-0">
               <EditableCombobox
                 name="transporterName"
                 value={headerData.transporterName}
                 onChange={handleHeaderChange}
                 options={masters.transporters}
                 placeholder=""
-                className="px-2.5 py-1.5 border border-slate-300 bg-white rounded text-xs font-bold text-slate-800 focus:ring-1 focus:ring-sky-500"
+                className="px-3 py-2 border border-slate-200 bg-white rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-[#1d4ed8]"
               />
               <button
                 type="button"
                 onClick={() => handleOpenQuickAdd('transporters', 'Transporter', 'transporterName', true)}
-                className="px-2 py-1.5 bg-slate-200 hover:bg-slate-300 border border-slate-300 rounded font-black text-xs text-slate-700 transition-colors shadow-2xs flex-shrink-0 cursor-pointer"
+                className="px-2.5 py-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl font-black text-xs text-slate-700 transition-colors shadow-2xs flex-shrink-0 cursor-pointer"
                 title="Quick Add Transporter"
               >
-                ...
+                +
               </button>
             </div>
           </div>
 
           <div>
-            <label className="block text-[11px] font-black text-slate-700 uppercase mb-1">
-              FROM (ORIGIN STATION) *
+            <label className="block text-[11px] font-extrabold text-slate-600 uppercase mb-1.5">
+              Origin Station *
             </label>
-            <div className="flex items-center space-x-1 min-w-0">
+            <div className="flex items-center space-x-1.5 min-w-0">
               <EditableCombobox
                 name="fromStation"
                 value={headerData.fromStation}
                 onChange={handleHeaderChange}
                 options={masters.stations}
                 placeholder=""
-                className="px-2.5 py-1.5 border border-slate-300 bg-white rounded text-xs font-bold text-slate-800 focus:ring-1 focus:ring-sky-500"
+                className="px-3 py-2 border border-slate-200 bg-white rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-[#1d4ed8]"
               />
               <button
                 type="button"
                 onClick={() => handleOpenQuickAdd('stations', 'Origin Station', 'fromStation', true)}
-                className="px-2 py-1.5 bg-slate-200 hover:bg-slate-300 border border-slate-300 rounded font-black text-xs text-slate-700 transition-colors shadow-2xs flex-shrink-0 cursor-pointer"
+                className="px-2.5 py-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl font-black text-xs text-slate-700 transition-colors shadow-2xs flex-shrink-0 cursor-pointer"
                 title="Quick Add Station"
               >
-                ...
+                +
               </button>
             </div>
           </div>
 
           <div>
-            <label className="block text-[11px] font-black text-slate-700 uppercase mb-1">
-              VEHICLE NO. *
+            <label className="block text-[11px] font-extrabold text-slate-600 uppercase mb-1.5">
+              Vehicle No. *
             </label>
-            <div className="flex items-center space-x-1 min-w-0">
+            <div className="flex items-center space-x-1.5 min-w-0">
               <EditableCombobox
                 name="vehicleNo"
                 value={headerData.vehicleNo}
                 onChange={handleHeaderChange}
                 options={masters.vehicles}
                 placeholder=""
-                className="px-2.5 py-1.5 border border-slate-300 bg-white rounded text-xs font-extrabold text-[#1e295b] focus:ring-1 focus:ring-sky-500"
+                className="px-3 py-2 border border-slate-200 bg-white rounded-xl text-xs font-black text-slate-900 focus:ring-2 focus:ring-[#1d4ed8]"
               />
               <button
                 type="button"
                 onClick={() => handleOpenQuickAdd('vehicles', 'Vehicle Number', 'vehicleNo', true)}
-                className="px-2 py-1.5 bg-slate-200 hover:bg-slate-300 border border-slate-300 rounded font-black text-xs text-slate-700 transition-colors shadow-2xs flex-shrink-0 cursor-pointer"
+                className="px-2.5 py-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl font-black text-xs text-slate-700 transition-colors shadow-2xs flex-shrink-0 cursor-pointer"
                 title="Quick Add Vehicle"
               >
-                ...
+                +
               </button>
             </div>
           </div>
 
           <div>
-            <label className="block text-[11px] font-black text-slate-700 uppercase mb-1">
-              MEMO NO.
+            <label className="block text-[11px] font-extrabold text-slate-600 uppercase mb-1.5">
+              Memo No.
             </label>
             <input
               type="text"
               name="memoNo"
               value={headerData.memoNo}
               onChange={handleHeaderChange}
-              placeholder="E.G. MM-8801"
-              className="w-full px-2.5 py-1.5 border border-slate-300 bg-white rounded text-xs font-bold text-slate-800 uppercase focus:ring-1 focus:ring-sky-500 placeholder-slate-400"
+              placeholder="e.g. MM-8801"
+              className="w-full px-3 py-2 border border-slate-200 bg-white rounded-xl text-xs font-bold text-slate-800 uppercase focus:ring-2 focus:ring-[#1d4ed8] outline-none placeholder-slate-400"
             />
           </div>
 
           <div>
-            <label className="block text-[11px] font-black text-slate-700 uppercase mb-1">
-              DRIVER NAME *
+            <label className="block text-[11px] font-extrabold text-slate-600 uppercase mb-1.5">
+              Driver Name *
             </label>
-            <div className="flex items-center space-x-1 min-w-0">
+            <div className="flex items-center space-x-1.5 min-w-0">
               <EditableCombobox
                 name="driverName"
                 value={headerData.driverName}
                 onChange={handleHeaderChange}
                 options={masters.drivers}
                 placeholder=""
-                className="px-2.5 py-1.5 border border-slate-300 bg-white rounded text-xs font-semibold text-slate-800 focus:ring-1 focus:ring-sky-500"
+                className="px-3 py-2 border border-slate-200 bg-white rounded-xl text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-[#1d4ed8]"
               />
               <button
                 type="button"
                 onClick={() => handleOpenQuickAdd('drivers', 'Driver Name', 'driverName', true)}
-                className="px-2 py-1.5 bg-slate-200 hover:bg-slate-300 border border-slate-300 rounded font-black text-xs text-slate-700 transition-colors shadow-2xs flex-shrink-0 cursor-pointer"
+                className="px-2.5 py-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl font-black text-xs text-slate-700 transition-colors shadow-2xs flex-shrink-0 cursor-pointer"
                 title="Quick Add Driver"
               >
-                ...
+                +
               </button>
             </div>
           </div>
 
           <div>
-            <label className="block text-[11px] font-black text-slate-700 uppercase mb-1">
-              VEHICLE OWNER NAME
+            <label className="block text-[11px] font-extrabold text-slate-600 uppercase mb-1.5">
+              Vehicle Owner Name
             </label>
-            <div className="flex items-center space-x-1 min-w-0">
+            <div className="flex items-center space-x-1.5 min-w-0">
               <EditableCombobox
                 name="ownerName"
                 value={headerData.ownerName}
@@ -672,30 +692,44 @@ export const InwardCreate = () => {
                   ].filter(Boolean))
                 )}
                 placeholder=""
-                className="px-2.5 py-1.5 border border-slate-300 bg-white rounded text-xs font-bold text-slate-800 focus:ring-1 focus:ring-sky-500"
+                className="px-3 py-2 border border-slate-200 bg-white rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-[#1d4ed8]"
               />
               <button
                 type="button"
                 onClick={() => handleOpenQuickAdd('owners', 'Vehicle Owner', 'ownerName', true)}
-                className="px-2 py-1.5 bg-slate-200 hover:bg-slate-300 border border-slate-300 rounded font-black text-xs text-slate-700 transition-colors shadow-2xs flex-shrink-0 cursor-pointer"
+                className="px-2.5 py-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl font-black text-xs text-slate-700 transition-colors shadow-2xs flex-shrink-0 cursor-pointer"
                 title="Quick Add Vehicle Owner"
               >
-                ...
+                +
               </button>
             </div>
           </div>
         </div>
-      </fieldset>
+      </div>
 
-      {/* ITEM DETAILS FORM FIELDSET: LR Entry Details */}
-      <fieldset className="bg-slate-50 rounded-xl border border-slate-300 p-3.5 pt-2 space-y-3 shadow-2xs">
-        <legend className="px-2.5 py-0.5 text-[11px] font-black uppercase tracking-wider text-sky-900 bg-white border border-slate-300 rounded-md shadow-2xs">
-          LR Entry Details
-        </legend>
+      {/* LR ENTRY DETAILS FORM */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs p-5 space-y-4">
+        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+          <div className="flex items-center space-x-2">
+            <span className="w-1.5 h-4 bg-sky-500 rounded-full" />
+            <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-800">
+              LR Consignment Fast Input Terminal
+            </h3>
+            {editingIndex !== null && (
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-800">
+                EDITING ROW #{editingIndex + 1}
+              </span>
+            )}
+          </div>
+          <span className="text-[11px] text-slate-400 font-medium">
+            Press <kbd className="px-1.5 py-0.5 bg-slate-100 border border-slate-300 rounded text-[10px] font-bold text-slate-600">Enter</kbd> to jump fields &amp; save row
+          </span>
+        </div>
+
         {/* Row 1: SRNO, LR NO, DATE, INVOICE NO */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 items-end">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3.5 items-end">
           <div>
-            <label className="block text-[11px] font-black text-slate-700 uppercase mb-1">SRNO:</label>
+            <label className="block text-[11px] font-extrabold text-slate-600 uppercase mb-1.5">SR NO.</label>
             <input
               type="text"
               readOnly
@@ -707,12 +741,12 @@ export const InwardCreate = () => {
                   ? editingIndex + 1
                   : stagedItems.length + 1
               }
-              className="w-full px-2 py-1.5 bg-slate-200 border border-slate-300 rounded text-xs font-bold text-center text-slate-600"
+              className="w-full px-3 py-2 bg-slate-100 border border-slate-200 rounded-xl text-xs font-black text-center text-slate-500 outline-none"
             />
           </div>
 
           <div>
-            <label className="block text-[11px] font-black text-[#1e295b] uppercase mb-1">LR NO: *</label>
+            <label className="block text-[11px] font-extrabold text-[#1d4ed8] uppercase mb-1.5">LR NO. *</label>
             <input
               ref={(el) => (fieldRefs.current[0] = el)}
               onKeyDown={(e) => handleKeyDown(e, 0)}
@@ -720,14 +754,14 @@ export const InwardCreate = () => {
               name="lrNo"
               value={itemForm.lrNo}
               onChange={handleItemChange}
-              placeholder="E.G. 13941"
+              placeholder="e.g. 13941"
               autoFocus
-              className="w-full px-2.5 py-1.5 bg-sky-50/80 border border-slate-300 rounded text-xs font-black text-[#1e295b] uppercase focus:ring-1 focus:ring-sky-500 placeholder-slate-400"
+              className="w-full px-3 py-2 bg-sky-50/70 border border-blue-200 rounded-xl text-xs font-black text-[#1d4ed8] uppercase focus:ring-2 focus:ring-[#1d4ed8] outline-none placeholder-slate-400"
             />
           </div>
 
           <div>
-            <label className="block text-[11px] font-black text-slate-700 uppercase mb-1">DATE:</label>
+            <label className="block text-[11px] font-extrabold text-slate-600 uppercase mb-1.5">DATE</label>
             <input
               ref={(el) => (fieldRefs.current[1] = el)}
               onKeyDown={(e) => handleKeyDown(e, 1)}
@@ -735,12 +769,12 @@ export const InwardCreate = () => {
               name="date"
               value={itemForm.date}
               onChange={handleItemChange}
-              className="w-full px-2 py-1.5 bg-white border border-slate-300 rounded text-xs font-semibold text-slate-800"
+              className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-[#1d4ed8] outline-none"
             />
           </div>
 
           <div>
-            <label className="block text-[11px] font-black text-slate-700 uppercase mb-1">INVOICE NO:</label>
+            <label className="block text-[11px] font-extrabold text-slate-600 uppercase mb-1.5">INVOICE NO.</label>
             <input
               ref={(el) => (fieldRefs.current[2] = el)}
               onKeyDown={(e) => handleKeyDown(e, 2)}
@@ -748,84 +782,88 @@ export const InwardCreate = () => {
               name="invoiceNo"
               value={itemForm.invoiceNo}
               onChange={handleItemChange}
-              placeholder="INV-5542"
-              className="w-full px-2 py-1.5 bg-white border border-slate-300 rounded text-xs font-semibold uppercase placeholder-slate-400"
+              placeholder="e.g. INV-902"
+              className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 uppercase focus:ring-2 focus:ring-[#1d4ed8] outline-none placeholder-slate-400"
             />
           </div>
         </div>
 
-        {/* Row 2: CONSIGNER, CONSIGNEE, CT TO */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 items-end">
+        {/* Row 2: CT TO, CONSIGNOR, CONSIGNEE, PKG */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3.5 items-end">
           <div>
-            <label className="block text-[11px] font-black text-slate-700 uppercase mb-1">CONSIGNER:</label>
-            <input
-              ref={(el) => (fieldRefs.current[3] = el)}
-              onKeyDown={(e) => handleKeyDown(e, 3)}
-              type="text"
-              name="consignorName"
-              value={itemForm.consignorName}
-              onChange={handleItemChange}
-              list="consignors-list"
-              placeholder="Enter Consigner"
-              className="w-full px-2 py-1.5 bg-white border border-slate-300 rounded text-xs font-bold text-slate-800 uppercase placeholder-slate-400"
-            />
-            <datalist id="consignors-list">
-              {masters.consignors?.map((c) => (
-                <option key={c.id} value={c.name} />
-              ))}
-            </datalist>
-          </div>
-
-          <div>
-            <label className="block text-[11px] font-black text-slate-700 uppercase mb-1">CONSIGNEE:</label>
-            <input
-              ref={(el) => (fieldRefs.current[4] = el)}
-              onKeyDown={(e) => handleKeyDown(e, 4)}
-              type="text"
-              name="consigneeName"
-              value={itemForm.consigneeName}
-              onChange={handleItemChange}
-              list="consignees-list"
-              placeholder="Enter Consignee"
-              className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded text-xs font-bold text-slate-800 uppercase placeholder-slate-400"
-            />
-            <datalist id="consignees-list">
-              {masters.consignees?.map((c) => (
-                <option key={c.id} value={c.name} />
-              ))}
-            </datalist>
-          </div>
-
-          <div>
-            <label className="block text-[11px] font-black text-slate-700 uppercase mb-1">CT TO:</label>
-            <div className="flex items-center space-x-1 min-w-0">
+            <label className="block text-[11px] font-extrabold text-slate-600 uppercase mb-1.5">DESTINATION / CT TO</label>
+            <div className="flex items-center space-x-1.5 min-w-0">
               <EditableCombobox
-                ref={(el) => (fieldRefs.current[5] = el)}
-                onKeyDown={(e) => handleKeyDown(e, 5)}
+                inputRef={(el) => (fieldRefs.current[3] = el)}
+                onKeyDown={(e) => handleKeyDown(e, 3)}
                 name="ctTo"
                 value={itemForm.ctTo}
                 onChange={handleItemChange}
                 options={masters.stations}
                 placeholder=""
-                className="px-2 py-1.5 bg-white border border-slate-300 rounded text-xs font-bold text-[#1e295b]"
+                className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-[#1d4ed8]"
               />
               <button
                 type="button"
-                tabIndex={-1}
-                onClick={() => handleOpenQuickAdd('stations', 'Destination Station', 'ctTo', false)}
-                className="px-1.5 py-1.5 bg-slate-200 hover:bg-slate-300 border border-slate-300 rounded font-black text-xs text-slate-700 transition-colors shadow-2xs flex-shrink-0 cursor-pointer"
+                onClick={() => handleOpenQuickAdd('stations', 'Station', 'ctTo', false)}
+                className="px-2.5 py-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl font-black text-xs text-slate-700 transition-colors shadow-2xs flex-shrink-0 cursor-pointer"
                 title="Quick Add Station"
               >
-                ...
+                +
               </button>
             </div>
           </div>
-        </div>
 
-        {/* Row 3: PKG, TO PAY, TBB, PAID, TOTAL (5 inputs in 1 row) */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-5 gap-2.5 items-end">
           <div>
-            <label className="block text-[11px] font-black text-slate-700 uppercase mb-1">PKG:</label>
+            <label className="block text-[11px] font-extrabold text-slate-600 uppercase mb-1.5">CONSIGNOR (SENDER)</label>
+            <div className="flex items-center space-x-1.5 min-w-0">
+              <EditableCombobox
+                inputRef={(el) => (fieldRefs.current[4] = el)}
+                onKeyDown={(e) => handleKeyDown(e, 4)}
+                name="consignorName"
+                value={itemForm.consignorName}
+                onChange={handleItemChange}
+                options={masters.consignors}
+                placeholder=""
+                className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-[#1d4ed8]"
+              />
+              <button
+                type="button"
+                onClick={() => handleOpenQuickAdd('consignors', 'Consignor', 'consignorName', false)}
+                className="px-2.5 py-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl font-black text-xs text-slate-700 transition-colors shadow-2xs flex-shrink-0 cursor-pointer"
+                title="Quick Add Consignor"
+              >
+                +
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-[11px] font-extrabold text-slate-600 uppercase mb-1.5">CONSIGNEE (RECEIVER)</label>
+            <div className="flex items-center space-x-1.5 min-w-0">
+              <EditableCombobox
+                inputRef={(el) => (fieldRefs.current[5] = el)}
+                onKeyDown={(e) => handleKeyDown(e, 5)}
+                name="consigneeName"
+                value={itemForm.consigneeName}
+                onChange={handleItemChange}
+                options={masters.consignees}
+                placeholder=""
+                className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-[#1d4ed8]"
+              />
+              <button
+                type="button"
+                onClick={() => handleOpenQuickAdd('consignees', 'Consignee', 'consigneeName', false)}
+                className="px-2.5 py-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl font-black text-xs text-slate-700 transition-colors shadow-2xs flex-shrink-0 cursor-pointer"
+                title="Quick Add Consignee"
+              >
+                +
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-[11px] font-extrabold text-slate-900 uppercase mb-1.5">PACKAGES (PKG) *</label>
             <input
               ref={(el) => (fieldRefs.current[6] = el)}
               onKeyDown={(e) => handleKeyDown(e, 6)}
@@ -834,14 +872,16 @@ export const InwardCreate = () => {
               name="pkg"
               value={itemForm.pkg}
               onChange={handleItemChange}
-              onWheel={(e) => e.target.blur()}
-              placeholder="Qty"
-              className="w-full px-2 py-1.5 bg-white border border-slate-300 rounded text-xs font-bold text-center placeholder-slate-400"
+              placeholder="1"
+              className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-black text-slate-900 focus:ring-2 focus:ring-[#1d4ed8] outline-none"
             />
           </div>
+        </div>
 
+        {/* Row 3: TO PAY, T.B.B, PAID, TOTAL & ACTION BUTTON */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3.5 items-end pt-1">
           <div>
-            <label className="block text-[11px] font-black text-slate-700 uppercase mb-1">TO PAY:</label>
+            <label className="block text-[11px] font-extrabold text-amber-700 uppercase mb-1.5">TO PAY FREIGHT</label>
             <input
               ref={(el) => (fieldRefs.current[7] = el)}
               onKeyDown={(e) => handleKeyDown(e, 7)}
@@ -850,14 +890,13 @@ export const InwardCreate = () => {
               name="toPayAmount"
               value={itemForm.toPayAmount}
               onChange={handleItemChange}
-              onWheel={(e) => e.target.blur()}
               placeholder="0.00"
-              className="w-full px-2 py-1.5 bg-white border border-slate-300 rounded text-xs font-black text-amber-900 placeholder-slate-400"
+              className="w-full px-3 py-2 bg-amber-50/60 border border-amber-200 rounded-xl text-xs font-black text-amber-900 focus:ring-2 focus:ring-amber-500 outline-none"
             />
           </div>
 
           <div>
-            <label className="block text-[11px] font-black text-slate-700 uppercase mb-1">TBB:</label>
+            <label className="block text-[11px] font-extrabold text-sky-700 uppercase mb-1.5">T.B.B. FREIGHT</label>
             <input
               ref={(el) => (fieldRefs.current[8] = el)}
               onKeyDown={(e) => handleKeyDown(e, 8)}
@@ -866,14 +905,13 @@ export const InwardCreate = () => {
               name="tbbAmount"
               value={itemForm.tbbAmount}
               onChange={handleItemChange}
-              onWheel={(e) => e.target.blur()}
               placeholder="0.00"
-              className="w-full px-2 py-1.5 bg-white border border-slate-300 rounded text-xs font-black text-sky-900 placeholder-slate-400"
+              className="w-full px-3 py-2 bg-sky-50/60 border border-sky-200 rounded-xl text-xs font-black text-sky-900 focus:ring-2 focus:ring-sky-500 outline-none"
             />
           </div>
 
           <div>
-            <label className="block text-[11px] font-black text-slate-700 uppercase mb-1">PAID:</label>
+            <label className="block text-[11px] font-extrabold text-emerald-700 uppercase mb-1.5">PAID FREIGHT</label>
             <input
               ref={(el) => (fieldRefs.current[9] = el)}
               onKeyDown={(e) => handleKeyDown(e, 9)}
@@ -882,14 +920,13 @@ export const InwardCreate = () => {
               name="paidAmount"
               value={itemForm.paidAmount}
               onChange={handleItemChange}
-              onWheel={(e) => e.target.blur()}
               placeholder="0.00"
-              className="w-full px-2 py-1.5 bg-white border border-slate-300 rounded text-xs font-black text-emerald-900 placeholder-slate-400"
+              className="w-full px-3 py-2 bg-emerald-50/60 border border-emerald-200 rounded-xl text-xs font-black text-emerald-900 focus:ring-2 focus:ring-emerald-500 outline-none"
             />
           </div>
 
           <div>
-            <label className="block text-[11px] font-black text-slate-700 uppercase mb-1">TOTAL:</label>
+            <label className="block text-[11px] font-extrabold text-slate-700 uppercase mb-1.5">TOTAL ROW</label>
             <input
               ref={(el) => (fieldRefs.current[10] = el)}
               onKeyDown={(e) => handleKeyDown(e, 10)}
@@ -897,37 +934,70 @@ export const InwardCreate = () => {
               readOnly
               tabIndex={0}
               value={formatCurrency((Number(itemForm.toPayAmount) || 0) + (Number(itemForm.tbbAmount) || 0) + (Number(itemForm.paidAmount) || 0))}
-              className="w-full px-2 py-1.5 bg-slate-200/80 border border-slate-300 rounded text-xs font-black text-[#1e295b] text-right focus:ring-2 focus:ring-sky-500 cursor-pointer"
+              className="w-full px-3 py-2 bg-slate-100 border border-slate-200 rounded-xl text-xs font-black text-slate-900 text-right outline-none"
             />
           </div>
-        </div>
-      </fieldset>
 
-      {/* STAGED ITEMS TABLE (LIMRA Grid View) */}
-      <div className="bg-white rounded-lg border-2 border-slate-300 shadow-xs overflow-hidden">
-        <div className="overflow-x-auto min-h-[220px] max-h-[340px]">
+          <div className="flex items-center space-x-2">
+            <button
+              type="button"
+              onClick={handleAddOrUpdateLR}
+              className="w-full py-2 bg-[#1d4ed8] hover:bg-blue-700 active:bg-blue-800 text-white font-extrabold text-xs rounded-xl shadow-xs transition-all flex items-center justify-center space-x-1.5 cursor-pointer"
+            >
+              <Plus className="w-4 h-4" />
+              <span>{editingIndex !== null ? 'Update LR' : 'Add to Grid'}</span>
+            </button>
+            {editingIndex !== null && (
+              <button
+                type="button"
+                onClick={resetForm}
+                className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl transition-colors cursor-pointer"
+                title="Cancel Edit"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* STAGED ITEMS TABLE */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden">
+        <div className="px-5 py-3.5 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <span className="text-xs font-extrabold uppercase tracking-wider text-slate-800">
+              Inward Freight Staging Manifest
+            </span>
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-blue-100 text-[#1d4ed8]">
+              {allLRs.length} Total Rows
+            </span>
+          </div>
+          <span className="text-xs text-slate-400">Review all LR items before saving or printing</span>
+        </div>
+
+        <div className="overflow-x-auto min-h-[200px] max-h-[380px]">
           <table className="w-full text-left border-collapse">
-            <thead className="bg-slate-800 text-white sticky top-0 z-10">
-              <tr className="text-[11px] font-bold uppercase tracking-wider">
-                <th className="py-2 px-2.5 border-r border-slate-700 w-12 text-center">SRNO</th>
-                <th className="py-2 px-2.5 border-r border-slate-700">LR NO</th>
-                <th className="py-2 px-2.5 border-r border-slate-700">INDATE</th>
-                <th className="py-2 px-2.5 border-r border-slate-700 text-right">PKG</th>
-                <th className="py-2 px-2.5 border-r border-slate-700">INV NO</th>
-                <th className="py-2 px-2.5 border-r border-slate-700">CT TO</th>
-                <th className="py-2 px-2.5 border-r border-slate-700">CONSIGNER</th>
-                <th className="py-2 px-2.5 border-r border-slate-700">CONSIGNEE</th>
-                <th className="py-2 px-2.5 border-r border-slate-700 text-right">TO PAY</th>
-                <th className="py-2 px-2.5 border-r border-slate-700 text-right">TBB</th>
-                <th className="py-2 px-2.5 border-r border-slate-700 text-right">PAID</th>
-                <th className="py-2 px-2.5 text-center w-24">ACTION</th>
+            <thead className="bg-[#0d2358] text-white sticky top-0 z-10">
+              <tr className="text-[10px] font-extrabold uppercase tracking-wider">
+                <th className="py-2.5 px-3 border-r border-blue-900/60 w-12 text-center">SR</th>
+                <th className="py-2.5 px-3 border-r border-blue-900/60">LR NO.</th>
+                <th className="py-2.5 px-3 border-r border-blue-900/60">DATE</th>
+                <th className="py-2.5 px-3 border-r border-blue-900/60 text-right">PKG</th>
+                <th className="py-2.5 px-3 border-r border-blue-900/60">INV NO.</th>
+                <th className="py-2.5 px-3 border-r border-blue-900/60">DESTINATION</th>
+                <th className="py-2.5 px-3 border-r border-blue-900/60">CONSIGNOR</th>
+                <th className="py-2.5 px-3 border-r border-blue-900/60">CONSIGNEE</th>
+                <th className="py-2.5 px-3 border-r border-blue-900/60 text-right">TO PAY</th>
+                <th className="py-2.5 px-3 border-r border-blue-900/60 text-right">T.B.B.</th>
+                <th className="py-2.5 px-3 border-r border-blue-900/60 text-right">PAID</th>
+                <th className="py-2.5 px-3 text-center w-20">ACTIONS</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-200 text-xs">
+            <tbody className="divide-y divide-slate-100 text-xs">
               {allLRs.length === 0 ? (
                 <tr>
                   <td colSpan="12" className="py-12 text-center text-slate-400 font-medium">
-                    No LR entries added yet. Fill LR details above to populate grid.
+                    No LR entries staged yet. Fill LR details above to populate grid.
                   </td>
                 </tr>
               ) : (
@@ -936,63 +1006,61 @@ export const InwardCreate = () => {
                     key={idx}
                     className={`transition-colors ${
                       item.isDraftPreview
-                        ? 'bg-sky-50/90 border-l-4 border-sky-500 animate-pulse'
+                        ? 'bg-sky-50/70 border-l-4 border-[#1d4ed8]'
                         : editingIndex === idx
-                        ? 'bg-amber-50'
+                        ? 'bg-amber-50/80 border-l-4 border-amber-500'
                         : 'hover:bg-slate-50'
                     }`}
                   >
-                    <td className="py-1.5 px-2.5 border-r border-slate-200 text-center font-bold text-slate-700">
+                    <td className="py-2 px-3 border-r border-slate-100 text-center font-bold text-slate-600">
                       {item.srNo}
                     </td>
-                    <td className="py-1.5 px-2.5 border-r border-slate-200 font-extrabold text-sky-800">
+                    <td className="py-2 px-3 border-r border-slate-100 font-extrabold text-[#1d4ed8]">
                       <div className="flex items-center gap-1.5">
-                        <span>{item.lrNo}</span>
+                        <span className="tracking-tight">{item.lrNo}</span>
                         {item.isDraftPreview && (
-                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-sky-100 text-sky-700 border border-sky-300">
-                            <Eye className="w-2.5 h-2.5 mr-0.5" /> Live
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-black bg-blue-100 text-[#1d4ed8] border border-blue-200">
+                            Live
                           </span>
                         )}
                       </div>
                     </td>
-                    <td className="py-1.5 px-2.5 border-r border-slate-200 text-slate-700">
+                    <td className="py-2 px-3 border-r border-slate-100 text-slate-600">
                       {formatDate(item.date)}
                     </td>
-                    <td className="py-1.5 px-2.5 border-r border-slate-200 text-right font-bold text-slate-900">
+                    <td className="py-2 px-3 border-r border-slate-100 text-right font-black text-slate-900">
                       {item.pkg}
                     </td>
-                    <td className="py-1.5 px-2.5 border-r border-slate-200 text-slate-700">
+                    <td className="py-2 px-3 border-r border-slate-100 text-slate-600">
                       {item.invoiceNo || '-'}
                     </td>
-                    <td className="py-1.5 px-2.5 border-r border-slate-200 font-semibold text-slate-800">
+                    <td className="py-2 px-3 border-r border-slate-100 font-semibold text-slate-800">
                       {item.ctTo || '-'}
                     </td>
-                    <td className="py-1.5 px-2.5 border-r border-slate-200 text-slate-700">
+                    <td className="py-2 px-3 border-r border-slate-100 text-slate-600 truncate max-w-[140px]">
                       {item.consignorName || '-'}
                     </td>
-                    <td className="py-1.5 px-2.5 border-r border-slate-200 text-slate-700">
+                    <td className="py-2 px-3 border-r border-slate-100 text-slate-600 truncate max-w-[140px]">
                       {item.consigneeName || '-'}
                     </td>
-                    <td className="py-1.5 px-2.5 border-r border-slate-200 text-right font-semibold text-slate-800">
-                      {Number(item.toPayAmount || 0).toFixed(2)}
+                    <td className="py-2 px-3 border-r border-slate-100 text-right font-extrabold text-amber-700">
+                      {Number(item.toPayAmount || 0) > 0 ? Number(item.toPayAmount).toFixed(2) : '-'}
                     </td>
-                    <td className="py-1.5 px-2.5 border-r border-slate-200 text-right font-semibold text-slate-800">
-                      {Number(item.tbbAmount || 0).toFixed(2)}
+                    <td className="py-2 px-3 border-r border-slate-100 text-right font-extrabold text-sky-700">
+                      {Number(item.tbbAmount || 0) > 0 ? Number(item.tbbAmount).toFixed(2) : '-'}
                     </td>
-                    <td className="py-1.5 px-2.5 border-r border-slate-200 text-right font-semibold text-slate-800">
-                      {Number(item.paidAmount || 0).toFixed(2)}
+                    <td className="py-2 px-3 border-r border-slate-100 text-right font-extrabold text-emerald-700">
+                      {Number(item.paidAmount || 0) > 0 ? Number(item.paidAmount).toFixed(2) : '-'}
                     </td>
-                    <td className="py-1.5 px-2.5 text-center">
+                    <td className="py-2 px-3 text-center">
                       {item.isDraftPreview ? (
-                        <div className="flex items-center justify-center space-x-1">
-                          <span className="text-[10px] font-semibold text-sky-600 italic">Typing...</span>
-                        </div>
+                        <span className="text-[10px] font-semibold text-sky-600 italic">Typing...</span>
                       ) : (
                         <div className="flex items-center justify-center space-x-1">
                           <button
                             type="button"
                             onClick={() => handleEditStagedItem(idx)}
-                            className="p-1 text-sky-600 hover:bg-sky-50 rounded cursor-pointer"
+                            className="p-1 text-blue-600 hover:bg-blue-50 rounded-lg cursor-pointer transition-colors"
                             title="Edit LR"
                           >
                             <Edit2 className="w-3.5 h-3.5" />
@@ -1000,7 +1068,7 @@ export const InwardCreate = () => {
                           <button
                             type="button"
                             onClick={() => handleDeleteStagedItem(idx)}
-                            className="p-1 text-red-600 hover:bg-red-50 rounded cursor-pointer"
+                            className="p-1 text-rose-600 hover:bg-rose-50 rounded-lg cursor-pointer transition-colors"
                             title="Delete LR"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -1016,49 +1084,49 @@ export const InwardCreate = () => {
         </div>
       </div>
 
-      {/* BOTTOM SUMMARY & ACTIONS (LIMRA Footer Controls - Single Clean Line) */}
-      <div className="bg-slate-200/90 rounded-xl border border-slate-300 p-3 flex flex-col lg:flex-row items-center justify-between gap-3 shadow-2xs">
+      {/* BOTTOM SUMMARY & ACTIONS */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-lg p-4 flex flex-col lg:flex-row items-center justify-between gap-4 sticky bottom-4 z-20">
         {/* Left Action Buttons (Save, Print) */}
-        <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
+        <div className="flex flex-wrap items-center gap-2.5 w-full lg:w-auto">
           <button
             type="button"
             onClick={() => handleFinalSubmit(false)}
-            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded shadow-xs flex items-center cursor-pointer"
+            className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-xl shadow-xs flex items-center space-x-1.5 cursor-pointer transition-all"
           >
-            <Save className="w-4 h-4 mr-1.5" />
-            {editingInwardId ? 'Update Inward' : 'Save'}
+            <Save className="w-4 h-4" />
+            <span>{editingInwardId ? 'Update Inward' : 'Save & Post to Stock'}</span>
           </button>
 
           <button
             type="button"
             onClick={() => handleFinalSubmit(true)}
-            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded shadow-xs flex items-center cursor-pointer"
+            className="px-5 py-2.5 bg-[#1d4ed8] hover:bg-blue-700 text-white font-extrabold text-xs rounded-xl shadow-xs flex items-center space-x-1.5 cursor-pointer transition-all"
           >
-            <Printer className="w-4 h-4 mr-1.5" />
-            Print
+            <Printer className="w-4 h-4" />
+            <span>Save &amp; Print Manifest</span>
           </button>
         </div>
 
         {/* Right Summary Totals (PKG, TO PAY, T.B.B, PAID) */}
-        <div className="flex flex-wrap items-center gap-2 text-xs font-black text-slate-800 w-full lg:w-auto justify-end">
-          <div className="flex items-center space-x-1.5 bg-white px-3 py-1.5 rounded border border-slate-300 shadow-2xs">
-            <span className="text-slate-600 uppercase text-[11px]">PKG:</span>
-            <span className="text-slate-900 font-black text-xs">{totalQty}</span>
+        <div className="flex flex-wrap items-center gap-2.5 text-xs font-black text-slate-800 w-full lg:w-auto justify-end">
+          <div className="flex items-center space-x-2 bg-slate-100 px-3.5 py-2 rounded-xl border border-slate-200">
+            <span className="text-slate-500 uppercase text-[10px] tracking-wider">TOTAL PKG</span>
+            <span className="text-slate-900 font-black text-sm">{totalQty}</span>
           </div>
 
-          <div className="flex items-center space-x-1.5 bg-amber-50 px-3 py-1.5 rounded border border-amber-300 text-amber-900 shadow-2xs">
-            <span className="text-amber-800 uppercase text-[11px]">TO PAY:</span>
-            <span className="font-black text-xs">{formatCurrency(totalToPay)}</span>
+          <div className="flex items-center space-x-2 bg-amber-50 px-3.5 py-2 rounded-xl border border-amber-200 text-amber-900">
+            <span className="text-amber-700 uppercase text-[10px] tracking-wider">TO PAY</span>
+            <span className="font-black text-sm">{formatCurrency(totalToPay)}</span>
           </div>
 
-          <div className="flex items-center space-x-1.5 bg-sky-50 px-3 py-1.5 rounded border border-sky-300 text-sky-900 shadow-2xs">
-            <span className="text-sky-800 uppercase text-[11px]">T.B.B:</span>
-            <span className="font-black text-xs">{formatCurrency(totalTbb)}</span>
+          <div className="flex items-center space-x-2 bg-sky-50 px-3.5 py-2 rounded-xl border border-sky-200 text-sky-900">
+            <span className="text-sky-700 uppercase text-[10px] tracking-wider">T.B.B.</span>
+            <span className="font-black text-sm">{formatCurrency(totalTbb)}</span>
           </div>
 
-          <div className="flex items-center space-x-1.5 bg-emerald-50 px-3 py-1.5 rounded border border-emerald-300 text-emerald-900 shadow-2xs">
-            <span className="text-emerald-800 uppercase text-[11px]">PAID:</span>
-            <span className="font-black text-xs">{formatCurrency(totalPaid)}</span>
+          <div className="flex items-center space-x-2 bg-emerald-50 px-3.5 py-2 rounded-xl border border-emerald-200 text-emerald-900">
+            <span className="text-emerald-700 uppercase text-[10px] tracking-wider">PAID</span>
+            <span className="font-black text-sm">{formatCurrency(totalPaid)}</span>
           </div>
         </div>
       </div>
@@ -1071,15 +1139,15 @@ export const InwardCreate = () => {
       >
         <form onSubmit={handleSaveQuickAdd} className="space-y-4">
           <div>
-            <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
-              Enter {quickAddModal.title} Name / Details: *
+            <label className="block text-xs font-extrabold text-slate-700 uppercase mb-1.5">
+              Enter {quickAddModal.title} Name / Identifier: *
             </label>
             <input
               type="text"
               value={quickAddValue}
               onChange={(e) => setQuickAddValue(e.target.value)}
               placeholder={`e.g. New ${quickAddModal.title}`}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm font-semibold focus:ring-2 focus:ring-sky-500"
+              className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm font-semibold focus:ring-2 focus:ring-[#1d4ed8] outline-none"
               required
               autoFocus
             />
@@ -1089,13 +1157,13 @@ export const InwardCreate = () => {
             <button
               type="button"
               onClick={() => setQuickAddModal({ isOpen: false, category: '', title: '', targetField: '', isHeader: true })}
-              className="px-4 py-2 bg-slate-100 text-slate-700 font-bold rounded-lg text-xs"
+              className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs cursor-pointer transition-all"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-5 py-2 bg-sky-600 hover:bg-sky-700 text-white font-bold rounded-lg text-xs shadow"
+              className="px-5 py-2 bg-[#1d4ed8] hover:bg-blue-700 text-white font-bold rounded-xl text-xs shadow-xs cursor-pointer transition-all"
             >
               Save &amp; Select
             </button>

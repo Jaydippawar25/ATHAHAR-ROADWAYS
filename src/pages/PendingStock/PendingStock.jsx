@@ -156,28 +156,109 @@ export const PendingStock = () => {
     navigate('/outward/new', { state: { selectedPendingItems: selectedItems } });
   };
 
+  // Statistics
+  const totalPendingPkg = pendingStock.reduce((sum, i) => sum + (Number(i.pkg) || 0), 0);
+  const totalToPay = pendingStock.reduce((sum, i) => sum + (Number(i.toPayAmount) || 0), 0);
+  const totalTbb = pendingStock.reduce((sum, i) => sum + (Number(i.tbbAmount) || 0), 0);
+  const totalPaid = pendingStock.reduce((sum, i) => sum + (Number(i.paidAmount) || 0), 0);
+
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-xl font-bold text-slate-900 flex items-center space-x-2">
-            <PackageCheck className="w-6 h-6 text-amber-500" />
+    <div className="space-y-5">
+      {/* Top Banner with Godown Inventory metrics & Quick Actions */}
+      <div className="bg-gradient-to-r from-[#0d2358] via-[#102d73] to-[#163a94] rounded-2xl p-6 text-white shadow-lg border border-blue-900/40 flex flex-col md:flex-row md:items-center justify-between gap-4 relative overflow-hidden">
+        <div className="space-y-1.5 z-10">
+          <div className="flex items-center space-x-2 text-[10px] font-black tracking-widest uppercase text-blue-200">
+            <span className="bg-white/10 px-2.5 py-0.5 rounded-full border border-white/20">
+              GODOWN INVENTORY
+            </span>
+            <span>&bull; SANGLI TERMINAL &mdash; ATHARVA ROADWAYS</span>
+          </div>
+
+          <h2 className="text-2xl sm:text-3xl font-black tracking-tight flex items-center space-x-2.5 text-white">
+            <PackageCheck className="w-7 h-7 text-sky-400" />
             <span>Pending Stock Register</span>
           </h2>
-          <p className="text-xs text-slate-500">
-            All Inward LRs currently awaiting Outward dispatch & delivery
+
+          <p className="text-blue-100 text-xs sm:text-sm font-medium">
+            All Inward LRs currently stored in warehouse bays awaiting Outward dispatch &amp; delivery
           </p>
         </div>
 
-        {selectedIds.length > 0 && (
-          <button
-            onClick={handleProceedToOutward}
-            className="inline-flex items-center space-x-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-4 py-2.5 rounded-lg text-sm shadow-lg transition-all animate-bounce"
-          >
-            <ArrowUpRight className="w-4 h-4" />
-            <span>Process Outward ({selectedIds.length} LRs Selected)</span>
-          </button>
-        )}
+        <div className="flex items-center space-x-3 flex-shrink-0 z-10">
+          {selectedIds.length > 0 ? (
+            <button
+              onClick={handleProceedToOutward}
+              className="inline-flex items-center space-x-2 bg-amber-400 hover:bg-amber-300 text-slate-950 font-black px-5 py-3 rounded-xl text-xs shadow-md transition-all active:scale-[0.98]"
+            >
+              <ArrowUpRight className="w-4 h-4" />
+              <span>Process Outward ({selectedIds.length} LRs Selected)</span>
+            </button>
+          ) : (
+            <button
+              onClick={() => {
+                if (pendingStock.length > 0) {
+                  navigate('/outward/new');
+                }
+              }}
+              className="inline-flex items-center space-x-2 bg-white/10 hover:bg-white/20 text-white font-bold px-4 py-2.5 rounded-xl text-xs border border-white/20 transition-all"
+            >
+              <ArrowUpRight className="w-4 h-4" />
+              <span>Create Outward Dispatch</span>
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Summary KPI Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5">
+        <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-2xs">
+          <span className="text-[10.5px] font-black uppercase text-slate-400 tracking-wider block mb-1">
+            Pending LRs
+          </span>
+          <div className="flex items-baseline space-x-1.5">
+            <span className="text-2xl font-black text-blue-700">{pendingStock.length}</span>
+            <span className="text-xs font-semibold text-slate-400">LRs</span>
+          </div>
+          <span className="text-[11px] text-slate-500 font-semibold mt-1 block">
+            {totalPendingPkg} Total Packages
+          </span>
+        </div>
+
+        <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-2xs">
+          <span className="text-[10.5px] font-black uppercase text-slate-400 tracking-wider block mb-1">
+            To Pay Freight
+          </span>
+          <div className="flex items-baseline space-x-1">
+            <span className="text-2xl font-black text-rose-600">{formatCurrency(totalToPay)}</span>
+          </div>
+          <span className="text-[11px] text-rose-700 font-bold mt-1 block">
+            Awaiting Collection
+          </span>
+        </div>
+
+        <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-2xs">
+          <span className="text-[10.5px] font-black uppercase text-slate-400 tracking-wider block mb-1">
+            T.B.B. Freight
+          </span>
+          <div className="flex items-baseline space-x-1">
+            <span className="text-2xl font-black text-indigo-700">{formatCurrency(totalTbb)}</span>
+          </div>
+          <span className="text-[11px] text-indigo-700 font-bold mt-1 block">
+            To Be Billed
+          </span>
+        </div>
+
+        <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-2xs">
+          <span className="text-[10.5px] font-black uppercase text-slate-400 tracking-wider block mb-1">
+            Paid Freight
+          </span>
+          <div className="flex items-baseline space-x-1">
+            <span className="text-2xl font-black text-emerald-700">{formatCurrency(totalPaid)}</span>
+          </div>
+          <span className="text-[11px] text-emerald-700 font-bold mt-1 block">
+            Pre-paid at Origin
+          </span>
+        </div>
       </div>
 
       <DataTable

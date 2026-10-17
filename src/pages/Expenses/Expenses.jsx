@@ -392,47 +392,48 @@ export const Expenses = () => {
   return (
     <div className="space-y-5 text-slate-800 max-w-full">
       {/* PAGE HEADER */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-white p-4 sm:p-5 rounded-2xl shadow-xs border border-slate-200">
-        <div className="flex items-center space-x-3.5">
-          <div className="bg-gradient-to-br from-[#072440] to-sky-700 text-white p-3 rounded-xl shadow-md flex items-center justify-center">
-            <Receipt className="w-6 h-6" />
+      <div className="bg-gradient-to-r from-[#0d2358] via-[#102d73] to-[#163a94] rounded-2xl p-6 text-white shadow-lg border border-blue-900/40 flex flex-col md:flex-row md:items-center justify-between gap-4 relative overflow-hidden">
+        <div className="space-y-1.5 z-10">
+          <div className="flex items-center space-x-2 text-[10px] font-black tracking-widest uppercase text-blue-200">
+            <span className="bg-white/10 px-2.5 py-0.5 rounded-full border border-white/20 flex items-center">
+              OPERATIONAL EXPENSES
+            </span>
+            <span>&bull; SANGLI TERMINAL &mdash; ATHARVA ROADWAYS</span>
           </div>
-          <div>
-            <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
-              Expenses
-              <span className="text-xs font-bold text-sky-700 bg-sky-50 px-2.5 py-0.5 rounded-full border border-sky-200">
-                {filteredExpenses.length} Records
-              </span>
-            </h1>
-            <p className="text-xs text-slate-500 font-medium">
-              Record and track Diesel/Fuel, Vehicle Maintenance, Toll, Driver Advances, Loading/Unloading, and Other operational expenses.
-            </p>
-          </div>
+
+          <h2 className="text-2xl sm:text-3xl font-black tracking-tight flex items-center space-x-2.5 text-white">
+            <Receipt className="w-7 h-7 text-sky-400" />
+            <span>Operating Expense Management</span>
+          </h2>
+
+          <p className="text-blue-100 text-xs sm:text-sm font-medium">
+            Record and track Diesel/Fuel, Vehicle Maintenance, Toll, Driver Advances, Loading/Unloading, and Other operational expenses.
+          </p>
         </div>
 
         {/* Header Action Buttons */}
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 z-10">
           <button
             onClick={handleExportExcel}
-            className="flex items-center space-x-1.5 px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-all shadow-xs cursor-pointer"
+            className="flex items-center space-x-1.5 px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer"
             title="Export to Excel"
           >
             <FileSpreadsheet className="w-4 h-4" />
-            <span className="hidden sm:inline">Excel</span>
+            <span>Excel</span>
           </button>
           <button
             onClick={handleExportPDF}
-            className="flex items-center space-x-1.5 px-3 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold transition-all shadow-xs cursor-pointer"
+            className="flex items-center space-x-1.5 px-3 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer"
             title="Export to PDF"
           >
             <FileText className="w-4 h-4" />
-            <span className="hidden sm:inline">PDF</span>
+            <span>PDF</span>
           </button>
           <button
             onClick={handleOpenCreateModal}
-            className="flex items-center space-x-1.5 px-3.5 py-2 bg-sky-600 hover:bg-sky-700 active:scale-95 text-white rounded-lg text-xs font-extrabold transition-all shadow-md shadow-sky-600/20 cursor-pointer"
+            className="flex items-center space-x-1.5 px-4 py-2 bg-white text-[#0d2358] hover:bg-slate-100 font-black rounded-xl text-xs shadow-md transition-all active:scale-95 cursor-pointer"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-4 h-4 text-[#0d2358]" />
             <span>+ Add Expense</span>
           </button>
         </div>

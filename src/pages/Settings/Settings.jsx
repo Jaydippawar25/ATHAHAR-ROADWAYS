@@ -1,10 +1,8 @@
 import React, { useState } from 'react';
 import {
-  Settings as SettingsIcon,
   ShieldCheck,
   Users,
   CheckCircle2,
-  Database,
   RefreshCw,
   AlertTriangle,
   Check,
@@ -12,6 +10,7 @@ import {
   UploadCloud,
   Wifi,
   Trash2,
+  Cloud,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useApp } from '../../context/AppContext';
@@ -133,41 +132,61 @@ export const Settings = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-xl font-bold text-slate-900 flex items-center space-x-2">
-          <SettingsIcon className="w-6 h-6 text-sky-600" />
-          <span>System Settings & Governance</span>
-        </h2>
-        <p className="text-xs text-slate-500">
-          Configure system security, multi-device sync, and backend parameters
-        </p>
+      {/* ROYAL NAVY HERO BANNER */}
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#0d2358] via-[#102d73] to-[#163a94] p-6 text-white shadow-lg border border-blue-900/40">
+        <div className="absolute -top-16 -right-16 w-56 h-56 bg-sky-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-16 -left-16 w-56 h-56 bg-blue-400/10 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <div className="flex items-center space-x-2 text-[10px] font-extrabold tracking-widest uppercase text-sky-300">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span>SYSTEM CONFIGURATION &amp; CLOUD HUB</span>
+              <span className="text-blue-200/50">•</span>
+              <span className="text-blue-100 font-mono">ATHARVA SYSTEM NODE</span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight mt-1">
+              System Settings &amp; Governance
+            </h1>
+            <p className="text-xs text-blue-100/80 mt-1 max-w-xl">
+              Configure multi-device cloud synchronization, manage active operator credentials, and review critical transport business guardrails.
+            </p>
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Firebase Cloud Firestore Card */}
-        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4 md:col-span-2">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-100 pb-3 gap-3">
-            <div className="flex items-center space-x-2">
-              <Database className="w-5 h-5 text-amber-500" />
-              <h3 className="font-bold text-slate-900">
-                Cloud Firestore Real-Time Multi-Device Sync
-              </h3>
+        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-2xs space-y-4 md:col-span-2">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-100 pb-4 gap-3">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#1d4ed8] flex items-center justify-center">
+                <Cloud className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-extrabold text-sm text-slate-900">
+                  Cloud Firestore Real-Time Multi-Device Sync
+                </h3>
+                <p className="text-xs text-slate-400">
+                  Instant bidirectional sync across all computers, tablets, and mobile devices
+                </p>
+              </div>
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
               <button
                 onClick={handleTestConnection}
                 disabled={isProcessing}
-                className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold flex items-center space-x-1.5 transition disabled:opacity-50"
+                className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-extrabold flex items-center space-x-1.5 transition-all cursor-pointer disabled:opacity-50"
               >
                 <Wifi className="w-3.5 h-3.5" />
-                <span>Test Connection</span>
+                <span>Test Link</span>
               </button>
 
               <button
                 onClick={handlePullData}
                 disabled={isProcessing}
-                className="px-3 py-1.5 bg-sky-600 hover:bg-sky-700 active:bg-sky-800 text-white rounded-lg text-xs font-bold flex items-center space-x-1.5 transition disabled:opacity-50"
+                className="px-3.5 py-2 bg-[#1d4ed8] hover:bg-blue-700 text-white rounded-xl text-xs font-extrabold flex items-center space-x-1.5 shadow-xs transition-all cursor-pointer disabled:opacity-50"
               >
                 <DownloadCloud className="w-3.5 h-3.5" />
                 <span>Pull from Cloud</span>
@@ -176,7 +195,7 @@ export const Settings = () => {
               <button
                 onClick={handlePushData}
                 disabled={isProcessing}
-                className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-white rounded-lg text-xs font-bold flex items-center space-x-1.5 transition disabled:opacity-50"
+                className="px-3.5 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-xl text-xs font-black flex items-center space-x-1.5 shadow-xs transition-all cursor-pointer disabled:opacity-50"
               >
                 <UploadCloud className="w-3.5 h-3.5" />
                 <span>Push to Cloud</span>
@@ -184,23 +203,23 @@ export const Settings = () => {
             </div>
           </div>
 
-          <div className="flex items-center justify-between text-xs bg-slate-50 p-3 rounded-lg border border-slate-200">
-            <div>
-              <span className="font-semibold text-slate-600">Current Sync Status: </span>
+          <div className="flex items-center justify-between text-xs bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+            <div className="flex items-center space-x-2">
+              <span className="font-bold text-slate-600">Current Sync Status:</span>
               <span
-                className={`font-bold ${
+                className={`font-black uppercase tracking-wider text-[11px] px-2 py-0.5 rounded-md ${
                   syncStatus?.state === 'connected'
-                    ? 'text-emerald-700'
+                    ? 'bg-emerald-100 text-emerald-800'
                     : syncStatus?.state === 'syncing'
-                    ? 'text-amber-700'
-                    : 'text-slate-700'
+                    ? 'bg-amber-100 text-amber-800'
+                    : 'bg-slate-200 text-slate-800'
                 }`}
               >
                 {syncStatus?.message || 'Ready'}
               </span>
             </div>
             {syncStatus?.lastSync && (
-              <span className="text-slate-500">Last Synced: {syncStatus.lastSync}</span>
+              <span className="text-slate-500 font-mono text-[11px]">Last Synced: {syncStatus.lastSync}</span>
             )}
           </div>
 
@@ -212,15 +231,15 @@ export const Settings = () => {
 
           {actionStatus && (
             <div
-              className={`p-4 rounded-lg text-xs border ${
+              className={`p-4 rounded-xl text-xs border ${
                 actionStatus.type === 'success'
-                  ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                  ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
                   : actionStatus.type === 'error'
-                  ? 'bg-rose-50 border-rose-200 text-rose-800'
-                  : 'bg-sky-50 border-sky-200 text-sky-800'
+                  ? 'bg-rose-50 border-rose-200 text-rose-900'
+                  : 'bg-blue-50 border-blue-200 text-blue-900'
               }`}
             >
-              <div className="flex items-start space-x-2 font-semibold">
+              <div className="flex items-start space-x-2.5 font-bold">
                 {actionStatus.type === 'success' && (
                   <Check className="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" />
                 )}
@@ -228,7 +247,7 @@ export const Settings = () => {
                   <AlertTriangle className="w-4 h-4 text-rose-600 flex-shrink-0 mt-0.5" />
                 )}
                 {actionStatus.type === 'info' && (
-                  <RefreshCw className="w-4 h-4 text-sky-600 animate-spin flex-shrink-0 mt-0.5" />
+                  <RefreshCw className="w-4 h-4 text-blue-600 animate-spin flex-shrink-0 mt-0.5" />
                 )}
                 <div>
                   <p>{actionStatus.message}</p>
@@ -242,66 +261,68 @@ export const Settings = () => {
         </div>
 
         {/* User Session Card */}
-        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
-          <h3 className="font-bold text-slate-900 flex items-center space-x-2 border-b border-slate-100 pb-2">
-            <Users className="w-5 h-5 text-sky-600" />
-            <span>Active Session Information</span>
+        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-2xs space-y-4">
+          <h3 className="font-extrabold text-slate-900 flex items-center space-x-2 border-b border-slate-100 pb-3 text-xs uppercase tracking-wider">
+            <Users className="w-4 h-4 text-[#1d4ed8]" />
+            <span>Active Operator Session</span>
           </h3>
 
-          <div className="space-y-2 text-sm text-slate-700">
-            <div>
-              <strong>User ID:</strong> {user?.uid}
+          <div className="space-y-3 text-xs text-slate-700">
+            <div className="flex items-center justify-between p-2.5 bg-slate-50 rounded-xl border border-slate-200">
+              <span className="font-bold text-slate-500 uppercase text-[10px]">OPERATOR UID</span>
+              <span className="font-mono text-slate-900 font-bold">{user?.uid || 'local-operator'}</span>
             </div>
-            <div>
-              <strong>Email:</strong> {user?.email}
+            <div className="flex items-center justify-between p-2.5 bg-slate-50 rounded-xl border border-slate-200">
+              <span className="font-bold text-slate-500 uppercase text-[10px]">OPERATOR EMAIL</span>
+              <span className="font-bold text-slate-900">{user?.email || 'operator@atharva.com'}</span>
             </div>
-            <div>
-              <strong>Account Status:</strong>{' '}
-              <span className="bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded text-xs">
-                Active
+            <div className="flex items-center justify-between p-2.5 bg-slate-50 rounded-xl border border-slate-200">
+              <span className="font-bold text-slate-500 uppercase text-[10px]">ACCOUNT STATUS</span>
+              <span className="bg-emerald-100 text-emerald-800 font-black px-2 py-0.5 rounded-full text-[10px]">
+                AUTHENTICATED
               </span>
             </div>
           </div>
         </div>
 
         {/* Business Rule Checklist Card */}
-        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
-          <h3 className="font-bold text-slate-900 flex items-center space-x-2 border-b border-slate-100 pb-2">
-            <ShieldCheck className="w-5 h-5 text-emerald-600" />
-            <span>Critical Business Rule Guardrails</span>
+        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-2xs space-y-4">
+          <h3 className="font-extrabold text-slate-900 flex items-center space-x-2 border-b border-slate-100 pb-3 text-xs uppercase tracking-wider">
+            <ShieldCheck className="w-4 h-4 text-emerald-600" />
+            <span>Critical Business Guardrails</span>
           </h3>
 
-          <div className="space-y-3 text-xs font-semibold text-slate-700">
-            <div className="flex items-center space-x-2 text-emerald-700">
+          <div className="space-y-2.5 text-xs font-semibold text-slate-700">
+            <div className="flex items-center space-x-2 text-emerald-800">
               <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
               <span>LR No. manually accepted from client document (Never auto-generated).</span>
             </div>
-            <div className="flex items-center space-x-2 text-emerald-700">
+            <div className="flex items-center space-x-2 text-emerald-800">
               <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
               <span>Duplicate LR entries in Pending Stock are strictly blocked.</span>
             </div>
-            <div className="flex items-center space-x-2 text-emerald-700">
+            <div className="flex items-center space-x-2 text-emerald-800">
               <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
               <span>Outward requires selecting an existing PENDING stock LR.</span>
             </div>
-            <div className="flex items-center space-x-2 text-emerald-700">
+            <div className="flex items-center space-x-2 text-emerald-800">
               <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-              <span>Delivered LRs cannot be dispatched again.</span>
+              <span>Cross Stock-Out works as independent manual dispatch.</span>
             </div>
           </div>
         </div>
 
         {/* Danger Zone: Wipe Database Card */}
-        <div className="bg-rose-50/60 p-6 rounded-xl border border-rose-200 shadow-sm space-y-4 md:col-span-2">
+        <div className="bg-rose-50/70 p-6 rounded-2xl border border-rose-200 shadow-2xs space-y-4 md:col-span-2">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-rose-200 pb-3 gap-3">
-            <div className="flex items-center space-x-2.5">
-              <div className="p-2 bg-rose-100 rounded-lg text-rose-700">
+            <div className="flex items-center space-x-3">
+              <div className="p-2.5 bg-rose-100 rounded-xl text-rose-700 flex items-center justify-center">
                 <Trash2 className="w-5 h-5 text-rose-600" />
               </div>
               <div>
-                <h3 className="font-bold text-rose-950">Danger Zone: Complete Database Wipe</h3>
+                <h3 className="font-black text-rose-950 text-sm">Danger Zone: Complete Database Wipe</h3>
                 <p className="text-xs text-rose-700">
-                  Permanently delete all business data and masters across Cloud Firestore & browser
+                  Permanently delete all business data and masters across Cloud Firestore &amp; browser
                 </p>
               </div>
             </div>
@@ -309,14 +330,14 @@ export const Settings = () => {
             <button
               onClick={handleClearDatabase}
               disabled={isProcessing}
-              className="px-4 py-2 bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white rounded-lg text-xs font-bold flex items-center space-x-2 transition disabled:opacity-50 shadow-sm"
+              className="px-4 py-2.5 bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white rounded-xl text-xs font-extrabold flex items-center space-x-2 transition-all disabled:opacity-50 shadow-xs cursor-pointer"
             >
               <Trash2 className="w-3.5 h-3.5" />
               <span>Clear All Database Records</span>
             </button>
           </div>
 
-          <p className="text-xs text-rose-800 leading-relaxed">
+          <p className="text-xs text-rose-800 leading-relaxed font-medium">
             Clicking <strong>Clear All Database Records</strong> will permanently erase all Inward
             entries, Outward entries, Stock-Out, Pending Stock, Accounting vouchers, Expenses,
             Reports, and Masters from live Cloud Firestore and local device memory. Use this button
@@ -327,4 +348,3 @@ export const Settings = () => {
     </div>
   );
 };
-

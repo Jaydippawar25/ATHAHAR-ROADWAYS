@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { User, Lock, Eye, EyeOff, AlertCircle, RefreshCw, CheckCircle2 } from 'lucide-react';
+import { User, Lock, Eye, EyeOff, AlertCircle, RefreshCw, CheckCircle2, Truck } from 'lucide-react';
 
 export const Login = () => {
   const [username, setUsername] = useState('');
@@ -82,73 +82,87 @@ export const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#edf4f8] flex items-center justify-center p-4 sm:p-6 select-none font-sans">
+    <div className="min-h-screen bg-slate-100/90 flex items-center justify-center p-4 sm:p-6 select-none font-sans">
       {/* Main Login Card */}
-      <div className="bg-white rounded-[28px] shadow-2xl overflow-hidden w-full max-w-4xl grid grid-cols-1 md:grid-cols-12 min-h-[520px] relative border border-slate-100">
+      <div className="bg-white rounded-3xl shadow-2xl overflow-hidden w-full max-w-4xl grid grid-cols-1 md:grid-cols-12 min-h-[520px] relative border border-slate-200">
         
         {/* Left Column — Sign In Form */}
         <div className="md:col-span-7 p-8 sm:p-12 flex flex-col justify-between bg-white z-10">
           <div>
-            <h2 className="text-3xl font-black text-[#1e295b] tracking-wider mb-6">
-              SIGN IN
+            <div className="flex items-center space-x-2 text-[10px] font-extrabold tracking-widest uppercase text-[#1d4ed8] mb-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span>ENTERPRISE PORTAL</span>
+            </div>
+            <h2 className="text-3xl font-black text-slate-900 tracking-tight mb-6">
+              Sign In to Godown
             </h2>
 
             {/* Error Notification */}
             {errorMsg && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xs flex items-start space-x-2 animate-in fade-in">
-                <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                <span className="font-medium">{errorMsg}</span>
+              <div className="mb-4 p-3.5 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-xs flex items-start space-x-2.5">
+                <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5 text-rose-600" />
+                <span className="font-semibold">{errorMsg}</span>
               </div>
             )}
 
             {/* Success / Info Notification */}
             {infoMsg && (
-              <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs flex items-start space-x-2 animate-in fade-in">
-                <CheckCircle2 className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                <span className="font-medium">{infoMsg}</span>
+              <div className="mb-4 p-3.5 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs flex items-start space-x-2.5">
+                <CheckCircle2 className="w-4 h-4 flex-shrink-0 mt-0.5 text-emerald-600" />
+                <span className="font-semibold">{infoMsg}</span>
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-6 max-w-sm">
+            <form onSubmit={handleSubmit} className="space-y-5 max-w-sm">
               {/* Username Input */}
-              <div className="relative border-b border-slate-300 focus-within:border-[#1e295b] transition-colors py-2 flex items-center space-x-3">
-                <User className="w-5 h-5 text-slate-400 flex-shrink-0" />
-                <input
-                  type="email"
-                  required
-                  placeholder="Enter email address"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  className="w-full text-sm text-slate-800 placeholder-slate-400 focus:outline-none bg-transparent"
-                />
+              <div className="space-y-1.5">
+                <label className="block text-[11px] font-extrabold uppercase text-slate-600 tracking-wider">
+                  Email Address
+                </label>
+                <div className="relative border border-slate-200 bg-slate-50/50 rounded-xl focus-within:border-[#1d4ed8] focus-within:bg-white focus-within:ring-2 focus-within:ring-blue-100 transition-all px-3 py-2.5 flex items-center space-x-2.5">
+                  <User className="w-4 h-4 text-slate-400 flex-shrink-0" />
+                  <input
+                    type="email"
+                    required
+                    placeholder="operator@atharvaroadways.com"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    className="w-full text-xs font-semibold text-slate-800 placeholder-slate-400 focus:outline-none bg-transparent"
+                  />
+                </div>
               </div>
 
               {/* Password Input */}
-              <div className="relative border-b border-slate-300 focus-within:border-[#1e295b] transition-colors py-2 flex items-center space-x-3">
-                <Lock className="w-5 h-5 text-slate-400 flex-shrink-0" />
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  required
-                  placeholder="Enter password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full text-sm text-slate-800 placeholder-slate-400 focus:outline-none bg-transparent"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="text-slate-400 hover:text-slate-600 focus:outline-none p-1"
-                  title={showPassword ? 'Hide password' : 'Show password'}
-                >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
+              <div className="space-y-1.5">
+                <label className="block text-[11px] font-extrabold uppercase text-slate-600 tracking-wider">
+                  Password
+                </label>
+                <div className="relative border border-slate-200 bg-slate-50/50 rounded-xl focus-within:border-[#1d4ed8] focus-within:bg-white focus-within:ring-2 focus-within:ring-blue-100 transition-all px-3 py-2.5 flex items-center space-x-2.5">
+                  <Lock className="w-4 h-4 text-slate-400 flex-shrink-0" />
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    required
+                    placeholder="Enter account password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full text-xs font-semibold text-slate-800 placeholder-slate-400 focus:outline-none bg-transparent"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="text-slate-400 hover:text-slate-600 focus:outline-none p-1 cursor-pointer"
+                    title={showPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
               </div>
 
               {/* Submit Button */}
               <button
                 type="submit"
                 disabled={isSubmitting || loading}
-                className="w-full mt-4 bg-[#1e295b] hover:bg-[#18214a] disabled:opacity-70 text-white font-bold py-3.5 px-6 rounded-xl text-sm shadow-md transition-all duration-200 active:scale-[0.99] flex items-center justify-center space-x-2"
+                className="w-full mt-2 bg-[#1d4ed8] hover:bg-blue-700 active:bg-blue-800 disabled:opacity-70 text-white font-black py-3 px-6 rounded-xl text-xs shadow-md transition-all duration-200 cursor-pointer flex items-center justify-center space-x-2"
               >
                 {isSubmitting ? (
                   <>
@@ -156,7 +170,7 @@ export const Login = () => {
                     <span>Logging in...</span>
                   </>
                 ) : (
-                  <span>Login</span>
+                  <span>Access Dashboard</span>
                 )}
               </button>
 
@@ -167,18 +181,18 @@ export const Login = () => {
                     type="checkbox"
                     checked={remember}
                     onChange={(e) => setRemember(e.target.checked)}
-                    className="rounded border-slate-300 text-[#1e295b] focus:ring-[#1e295b] w-4 h-4 cursor-pointer"
+                    className="rounded border-slate-300 text-[#1d4ed8] focus:ring-[#1d4ed8] w-4 h-4 cursor-pointer"
                   />
-                  <span>Remember</span>
+                  <span className="text-[11px] font-bold text-slate-600">Keep me logged in</span>
                 </label>
 
                 <button
                   type="button"
                   onClick={handleForgotPassword}
                   disabled={isResetting}
-                  className="text-[#1e295b] hover:underline font-bold text-xs disabled:opacity-50"
+                  className="text-[#1d4ed8] hover:underline font-bold text-[11px] disabled:opacity-50 cursor-pointer"
                 >
-                  {isResetting ? 'Sending Link...' : 'Forgot Password?'}
+                  {isResetting ? 'Sending...' : 'Forgot password?'}
                 </button>
               </div>
             </form>
@@ -186,41 +200,37 @@ export const Login = () => {
 
           {/* Copyright Footer */}
           <p className="text-[11px] text-slate-400 pt-8 font-normal">
-            Copyright &copy;2026 ATHARVA ROADWAYS. All rights reserved.
+            &copy; 2026 ATHARVA ROADWAYS. Cloud Transport ERP.
           </p>
         </div>
 
-        {/* Right Column — Brand Card (Dark Navy with decorative elements) */}
-        <div className="md:col-span-5 bg-[#1b2456] text-white p-8 sm:p-10 flex flex-col items-center justify-center text-center relative overflow-hidden">
-          
-          {/* Background Decorative SVG Shapes */}
-          <div className="absolute inset-0 opacity-15 pointer-events-none">
-            <svg className="w-full h-full" viewBox="0 0 400 500" fill="none">
-              <circle cx="350" cy="100" r="80" stroke="white" strokeWidth="2" />
-              <circle cx="300" cy="400" r="120" stroke="white" strokeWidth="2" />
-              <path d="M20 50 Q 50 20, 80 50 T 140 50" stroke="white" strokeWidth="3" fill="none" />
-              <path d="M30 420 L50 450 L10 450 Z" stroke="white" strokeWidth="2" fill="none" />
-              <text x="50" y="200" fill="white" fontSize="24" opacity="0.3">+</text>
-              <text x="250" y="380" fill="white" fontSize="24" opacity="0.3">+</text>
-            </svg>
-          </div>
+        {/* Right Column — Brand Card */}
+        <div className="md:col-span-5 bg-gradient-to-br from-[#0d2358] via-[#102d73] to-[#163a94] text-white p-8 sm:p-10 flex flex-col items-center justify-center text-center relative overflow-hidden">
+          <div className="absolute -top-16 -right-16 w-48 h-48 bg-sky-400/10 rounded-full blur-2xl pointer-events-none" />
+          <div className="absolute -bottom-16 -left-16 w-48 h-48 bg-blue-300/10 rounded-full blur-2xl pointer-events-none" />
 
           <div className="relative z-10 flex flex-col items-center space-y-4 max-w-xs">
             {/* Logo Badge */}
-            <div className="bg-[#2a3875] text-sky-400 font-black text-2xl px-5 py-4 rounded-2xl shadow-inner border border-sky-400/20">
-              AR
+            <div className="w-16 h-16 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center shadow-lg">
+              <Truck className="w-8 h-8 text-sky-400" />
             </div>
 
             {/* Title */}
-            <h1 className="text-xl font-black tracking-wider text-white uppercase">
-              ATHARVA ROADWAYS
-            </h1>
+            <div>
+              <h1 className="text-xl font-black tracking-tight text-white uppercase">
+                ATHARVA ROADWAYS
+              </h1>
+              <p className="text-[10px] font-extrabold tracking-widest text-sky-300 uppercase mt-0.5">
+                GODOWN MANAGEMENT SYSTEM
+              </p>
+            </div>
 
             {/* Address */}
-            <div className="text-[11px] text-sky-100 font-medium leading-relaxed space-y-1 opacity-90">
-              <p>NEXT TO PARVATI CRANE, VAKHAR BHAG, SANGLI-416416</p>
-              <p className="font-semibold text-sky-200">
-                MOB NO. 9370229449 / 9850329449
+            <div className="text-[11px] text-blue-100/80 font-medium leading-relaxed space-y-1 bg-white/5 backdrop-blur-sm p-4 rounded-xl border border-white/10 w-full">
+              <p className="text-white font-bold">HQ &amp; Godown Hub 01</p>
+              <p>Next to Parvati Crane, Vakhar Bhag, Sangli - 416416</p>
+              <p className="font-mono text-sky-300 pt-1 text-[10px]">
+                TEL: 9370229449 / 9850329449
               </p>
             </div>
           </div>

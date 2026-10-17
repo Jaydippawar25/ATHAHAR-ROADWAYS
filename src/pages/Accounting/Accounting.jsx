@@ -405,32 +405,32 @@ export const Accounting = () => {
   return (
     <div className="space-y-6 text-slate-800 max-w-full">
       {/* Top Header Banner */}
-      <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="space-y-1.5">
-          <div className="flex items-center space-x-2 text-[11px] font-bold tracking-wider uppercase">
-            <span className="bg-emerald-50 text-emerald-700 px-2.5 py-0.5 rounded-full border border-emerald-200 flex items-center">
-              <Calculator className="w-3.5 h-3.5 mr-1" />
+      <div className="bg-gradient-to-r from-[#0d2358] via-[#102d73] to-[#163a94] rounded-2xl p-6 text-white shadow-lg border border-blue-900/40 flex flex-col md:flex-row md:items-center justify-between gap-4 relative overflow-hidden">
+        <div className="space-y-1.5 z-10">
+          <div className="flex items-center space-x-2 text-[10px] font-black tracking-widest uppercase text-blue-200">
+            <span className="bg-white/10 px-2.5 py-0.5 rounded-full border border-white/20 flex items-center">
+              <Calculator className="w-3.5 h-3.5 mr-1 text-sky-300" />
               TRANSPORT FREIGHT ACCOUNTING
             </span>
-            <span className="text-slate-400 font-semibold">&bull; ATHARVA ROADWAYS SANGLI</span>
+            <span>&bull; ATHARVA ROADWAYS SANGLI</span>
           </div>
 
-          <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 flex items-center space-x-3">
-            <span>Inward, Outward & Stock Out Accounting</span>
+          <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-white flex items-center space-x-3">
+            <span>Inward, Outward &amp; Stock Out Accounting</span>
           </h2>
 
-          <p className="text-slate-500 text-xs sm:text-sm font-medium">
-            Live calculation of Total Money Inward, Outward, Stock Out, and 20% Agency Commission
+          <p className="text-blue-100 text-xs sm:text-sm font-medium">
+            Live calculation of Total Money Inward, Outward, Stock Out, and Agency Commission
           </p>
         </div>
 
         {/* Commission Rate Configurator Pill */}
-        <div className="bg-slate-50 border border-slate-200 px-4 py-2.5 rounded-xl flex items-center space-x-3 self-start md:self-auto shadow-xs">
-          <div className="p-2 bg-amber-500 text-white rounded-lg font-black shadow-xs">
-            <Percent className="w-5 h-5" />
+        <div className="bg-white/10 border border-white/20 px-4 py-2.5 rounded-xl flex items-center space-x-3 self-start md:self-auto shadow-sm backdrop-blur-xs z-10">
+          <div className="p-2 bg-amber-400 text-slate-950 rounded-lg font-black shadow-xs">
+            <Percent className="w-4 h-4" />
           </div>
           <div>
-            <span className="text-[10px] uppercase font-bold text-slate-500 block">
+            <span className="text-[10px] uppercase font-bold text-blue-200 block">
               Agency Commission
             </span>
             <div className="flex items-center space-x-1.5">
@@ -442,7 +442,7 @@ export const Accounting = () => {
                 onChange={(e) => setCommissionRate(Number(e.target.value) || 0)}
                 className="w-16 px-2 py-0.5 bg-white text-slate-900 font-black text-sm rounded border border-slate-300 text-center focus:ring-2 focus:ring-amber-500 focus:outline-hidden"
               />
-              <span className="font-extrabold text-sm text-slate-700">%</span>
+              <span className="font-extrabold text-sm text-white">%</span>
             </div>
           </div>
         </div>
