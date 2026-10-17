@@ -12,98 +12,11 @@ export const EXPENSE_CATEGORIES = [
 
 export const PAYMENT_MODES = ['CASH', 'UPI', 'BANK_TRANSFER', 'CHEQUE'];
 
-const INITIAL_SAMPLE_EXPENSES = [
-  {
-    id: 'exp-101',
-    voucherNo: 'EXP-01',
-    date: new Date().toISOString().split('T')[0],
-    category: 'Diesel / Fuel Expense',
-    amount: 4500,
-    vehicleNo: 'MH-10-CR-1122',
-    payeeName: 'Bharat Petroleum Sangli',
-    paymentMode: 'UPI',
-    referenceNo: 'BPCL-9921',
-    notes: '50 Litres Diesel for Sangli to Mumbai dispatch',
-    createdAt: new Date().toISOString(),
-    createdBy: 'Administrator',
-  },
-  {
-    id: 'exp-102',
-    voucherNo: 'EXP-02',
-    date: new Date().toISOString().split('T')[0],
-    category: 'Vehicle Maintenance',
-    amount: 1800,
-    vehicleNo: 'MH-10-CR-1122',
-    payeeName: 'National Auto Garage',
-    paymentMode: 'CASH',
-    referenceNo: 'BILL-402',
-    notes: 'Oil filter replacement and brake checkup',
-    createdAt: new Date().toISOString(),
-    createdBy: 'Administrator',
-  },
-  {
-    id: 'exp-103',
-    voucherNo: 'EXP-03',
-    date: new Date().toISOString().split('T')[0],
-    category: 'Toll and Road Charges',
-    amount: 750,
-    vehicleNo: 'MH-10-CR-1122',
-    payeeName: 'Fastag NH4',
-    paymentMode: 'BANK_TRANSFER',
-    referenceNo: 'FT-8831',
-    notes: 'Karad & Satara Toll Plaza charges',
-    createdAt: new Date().toISOString(),
-    createdBy: 'Administrator',
-  },
-  {
-    id: 'exp-104',
-    voucherNo: 'EXP-04',
-    date: new Date().toISOString().split('T')[0],
-    category: 'Driver and Helper Expenses',
-    amount: 1200,
-    vehicleNo: 'MH-10-CR-1122',
-    payeeName: 'Ramesh Shinde (Driver)',
-    paymentMode: 'CASH',
-    referenceNo: '',
-    notes: 'Food allowance and trip advance for driver',
-    createdAt: new Date().toISOString(),
-    createdBy: 'Administrator',
-  },
-  {
-    id: 'exp-105',
-    voucherNo: 'EXP-05',
-    date: new Date().toISOString().split('T')[0],
-    category: 'Loading Expense',
-    amount: 650,
-    vehicleNo: 'MH-10-CR-1122',
-    payeeName: 'Sangli Mathadi Hamali Union',
-    paymentMode: 'CASH',
-    referenceNo: '',
-    notes: 'Loading 40 packages for outward dispatch vehicle',
-    createdAt: new Date().toISOString(),
-    createdBy: 'Administrator',
-  },
-  {
-    id: 'exp-106',
-    voucherNo: 'EXP-06',
-    date: new Date().toISOString().split('T')[0],
-    category: 'Unloading Expense',
-    amount: 950,
-    vehicleNo: '',
-    payeeName: 'Sangli Mathadi Hamali Union',
-    paymentMode: 'CASH',
-    referenceNo: '',
-    notes: 'Godown unloading 35 packages from Kolhapur inward',
-    createdAt: new Date().toISOString(),
-    createdBy: 'Administrator',
-  },
-];
 
 export const getAllExpenses = () => {
-  const stored = getStoredItem(STORAGE_KEYS.EXPENSES);
-  if (!stored || !Array.isArray(stored) || stored.length === 0) {
-    setStoredItem(STORAGE_KEYS.EXPENSES, INITIAL_SAMPLE_EXPENSES);
-    return INITIAL_SAMPLE_EXPENSES;
+  const stored = getStoredItem(STORAGE_KEYS.EXPENSES, []);
+  if (!Array.isArray(stored)) {
+    return [];
   }
   // Auto-migrate any existing 'Loading and Unloading' entries
   return stored.map((item) => {

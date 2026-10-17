@@ -23,61 +23,10 @@ export const INCOME_CATEGORIES = [
 
 export const PAYMENT_MODES = ['CASH', 'UPI', 'BANK_TRANSFER', 'CHEQUE'];
 
-const INITIAL_SAMPLE_VOUCHERS = [
-  {
-    id: 'vch-101',
-    voucherNo: 'VCH-01',
-    date: new Date().toISOString().split('T')[0],
-    type: 'EXPENSE',
-    category: 'Fuel / Diesel',
-    partyName: 'Bharat Petroleum Sangli',
-    vehicleNo: 'MH-04-FK-1234',
-    amount: 3500,
-    paymentMode: 'UPI',
-    referenceNo: 'UPI-9823412',
-    notes: 'Diesel for Mumbai trip',
-    createdAt: new Date().toISOString(),
-    createdBy: 'Operator',
-  },
-  {
-    id: 'vch-102',
-    voucherNo: 'VCH-02',
-    date: new Date().toISOString().split('T')[0],
-    type: 'EXPENSE',
-    category: 'Hamali / Labour',
-    partyName: 'Sangli Mathadi Labour Union',
-    vehicleNo: '',
-    amount: 850,
-    paymentMode: 'CASH',
-    referenceNo: '',
-    notes: 'Unloading 25 packages inward godown',
-    createdAt: new Date().toISOString(),
-    createdBy: 'Operator',
-  },
-  {
-    id: 'vch-103',
-    voucherNo: 'VCH-03',
-    date: new Date().toISOString().split('T')[0],
-    type: 'EXPENSE',
-    category: 'Driver Advance',
-    partyName: 'Ramesh Kumar',
-    vehicleNo: 'MH-04-FK-1234',
-    amount: 1500,
-    paymentMode: 'CASH',
-    referenceNo: '',
-    notes: 'Advance for trip expenses and food',
-    createdAt: new Date().toISOString(),
-    createdBy: 'Operator',
-  },
-];
 
 export const getAllVouchers = () => {
-  const stored = getStoredItem(STORAGE_KEYS.ACCOUNTING_VOUCHERS);
-  if (!stored || !Array.isArray(stored) || stored.length === 0) {
-    setStoredItem(STORAGE_KEYS.ACCOUNTING_VOUCHERS, INITIAL_SAMPLE_VOUCHERS);
-    return INITIAL_SAMPLE_VOUCHERS;
-  }
-  return stored;
+  const stored = getStoredItem(STORAGE_KEYS.ACCOUNTING_VOUCHERS, []);
+  return Array.isArray(stored) ? stored : [];
 };
 
 export const getNextVoucherNo = (vouchersList) => {
