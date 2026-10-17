@@ -153,7 +153,7 @@ export const Login = () => {
                 {isSubmitting ? (
                   <>
                     <RefreshCw className="w-4 h-4 animate-spin" />
-                    <span>Verifying with Firebase...</span>
+                    <span>Logging in...</span>
                   </>
                 ) : (
                   <span>Login</span>
