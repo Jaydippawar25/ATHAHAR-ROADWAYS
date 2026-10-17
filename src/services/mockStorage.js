@@ -1,6 +1,6 @@
 import { INITIAL_MASTERS, STATUS } from '../utils/constants';
 import { db } from '../firebase/firebase';
-import { doc, getDoc, setDoc, onSnapshot, collection, getDocs } from 'firebase/firestore';
+import { doc, getDoc, setDoc, deleteDoc, onSnapshot, collection, getDocs } from 'firebase/firestore';
 
 export const STORAGE_KEYS = {
   MASTERS: 'athahar_masters',
