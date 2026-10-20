@@ -186,7 +186,7 @@ export const Login = () => {
                     <span>Logging in...</span>
                   </>
                 ) : (
-                  <span>Login to Console</span>
+                  <span>Login</span>
                 )}
               </button>
 
