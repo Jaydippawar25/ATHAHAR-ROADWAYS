@@ -144,10 +144,10 @@ export const Reports = () => {
           </div>
 
           {/* Quick Filter Switcher Pills */}
-          <div className="flex items-center p-1 bg-white/10 backdrop-blur-md rounded-xl border border-white/20 self-start md:self-auto text-xs font-bold">
+          <div className="flex items-center p-1 bg-white/10 backdrop-blur-md rounded-xl border border-white/20 overflow-x-auto no-scrollbar w-full md:w-auto text-xs font-bold">
             <button
               onClick={() => setReportType('inward')}
-              className={`px-3.5 py-1.5 rounded-lg transition-all cursor-pointer ${
+              className={`px-3 sm:px-3.5 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap flex-1 md:flex-none text-center ${
                 reportType === 'inward'
                   ? 'bg-white text-[#0b2545] shadow-md font-black'
                   : 'text-white/80 hover:text-white hover:bg-white/10'
@@ -157,7 +157,7 @@ export const Reports = () => {
             </button>
             <button
               onClick={() => setReportType('pending')}
-              className={`px-3.5 py-1.5 rounded-lg transition-all cursor-pointer ${
+              className={`px-3 sm:px-3.5 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap flex-1 md:flex-none text-center ${
                 reportType === 'pending'
                   ? 'bg-gradient-to-r from-orange-600 to-orange-500 text-white shadow-md font-black'
                   : 'text-white/80 hover:text-white hover:bg-white/10'
@@ -167,7 +167,7 @@ export const Reports = () => {
             </button>
             <button
               onClick={() => setReportType('delivered')}
-              className={`px-3.5 py-1.5 rounded-lg transition-all cursor-pointer ${
+              className={`px-3 sm:px-3.5 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap flex-1 md:flex-none text-center ${
                 reportType === 'delivered'
                   ? 'bg-emerald-500 text-white shadow-md font-black'
                   : 'text-white/80 hover:text-white hover:bg-white/10'
@@ -180,66 +180,66 @@ export const Reports = () => {
       </div>
 
       {/* 4 SUMMARY METRIC KPI CARDS */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
         {/* Card 1: Active Registry Count */}
-        <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-2xs flex flex-col justify-between">
+        <div className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-5 border border-slate-200 shadow-2xs flex flex-col justify-between">
           <div className="flex items-center justify-between text-slate-500 mb-2">
-            <span className="text-[11px] font-extrabold uppercase tracking-wider">
+            <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider truncate">
               {reportType === 'inward'
-                ? 'TOTAL INWARD LRS'
+                ? 'INWARD LRS'
                 : reportType === 'pending'
-                ? 'PENDING GODOWN STOCK'
+                ? 'PENDING STOCK'
                 : 'DISPATCHED LRS'}
             </span>
-            <div className="w-8 h-8 rounded-lg bg-sky-50 text-sky-600 flex items-center justify-center">
-              <FileText className="w-4 h-4" />
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-sky-50 text-sky-600 flex items-center justify-center flex-shrink-0">
+              <FileText className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
           </div>
           <div>
-            <div className="text-2xl font-black text-slate-900 tracking-tight">{totalRecords}</div>
-            <div className="text-[11px] font-medium text-slate-400 mt-0.5">Active report records</div>
+            <div className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight truncate">{totalRecords}</div>
+            <div className="text-[10px] sm:text-[11px] font-medium text-slate-400 mt-0.5 truncate">Active records</div>
           </div>
         </div>
 
         {/* Card 2: Total Package Volume */}
-        <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-2xs flex flex-col justify-between">
+        <div className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-5 border border-slate-200 shadow-2xs flex flex-col justify-between">
           <div className="flex items-center justify-between text-slate-500 mb-2">
-            <span className="text-[11px] font-extrabold uppercase tracking-wider">TOTAL PACKAGES</span>
-            <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
-              <Package className="w-4 h-4" />
+            <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider truncate">TOTAL PACKAGES</span>
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center flex-shrink-0">
+              <Package className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
           </div>
           <div>
-            <div className="text-2xl font-black text-slate-900 tracking-tight">{totalPackages} Pkgs</div>
-            <div className="text-[11px] font-medium text-slate-400 mt-0.5">Physical freight in view</div>
+            <div className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight truncate">{totalPackages} Pkgs</div>
+            <div className="text-[10px] sm:text-[11px] font-medium text-slate-400 mt-0.5 truncate">Physical freight</div>
           </div>
         </div>
 
         {/* Card 3: To Pay Receivables */}
-        <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-2xs flex flex-col justify-between">
+        <div className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-5 border border-slate-200 shadow-2xs flex flex-col justify-between">
           <div className="flex items-center justify-between text-slate-500 mb-2">
-            <span className="text-[11px] font-extrabold uppercase tracking-wider">TO PAY RECEIVABLES</span>
-            <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
-              <Wallet className="w-4 h-4" />
+            <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider truncate">TO PAY FREIGHT</span>
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center flex-shrink-0">
+              <Wallet className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
           </div>
           <div>
-            <div className="text-2xl font-black text-amber-600 tracking-tight">{formatCurrency(totalToPay)}</div>
-            <div className="text-[11px] font-medium text-slate-400 mt-0.5">Due upon consignee delivery</div>
+            <div className="text-xl sm:text-2xl font-black text-amber-600 tracking-tight truncate">{formatCurrency(totalToPay)}</div>
+            <div className="text-[10px] sm:text-[11px] font-medium text-slate-400 mt-0.5 truncate">Due on delivery</div>
           </div>
         </div>
 
         {/* Card 4: Settled / Paid Amount */}
-        <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-2xs flex flex-col justify-between">
+        <div className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-5 border border-slate-200 shadow-2xs flex flex-col justify-between">
           <div className="flex items-center justify-between text-slate-500 mb-2">
-            <span className="text-[11px] font-extrabold uppercase tracking-wider">PAID & T.B.B. FREIGHT</span>
-            <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
-              <CheckCircle2 className="w-4 h-4" />
+            <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider truncate">PAID &amp; TBB</span>
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center flex-shrink-0">
+              <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
           </div>
           <div>
-            <div className="text-2xl font-black text-emerald-600 tracking-tight">{formatCurrency(totalPaid + totalTbb)}</div>
-            <div className="text-[11px] font-medium text-slate-400 mt-0.5">Paid: {formatCurrency(totalPaid)} | TBB: {formatCurrency(totalTbb)}</div>
+            <div className="text-xl sm:text-2xl font-black text-emerald-600 tracking-tight truncate">{formatCurrency(totalPaid + totalTbb)}</div>
+            <div className="text-[10px] sm:text-[11px] font-medium text-slate-400 mt-0.5 truncate">Paid: {formatCurrency(totalPaid)}</div>
           </div>
         </div>
       </div>
