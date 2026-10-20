@@ -55,7 +55,7 @@ export const Sidebar = () => {
           </div>
           <div>
             <h1 className="text-sm font-black text-slate-900 leading-tight tracking-wide uppercase">
-              ATHARVA ROADWAYS
+              ATHAHAR ROADWAYS
             </h1>
             <p className="text-[10px] text-[#0284c7] font-bold uppercase tracking-wider">SANGLI - 416416</p>
           </div>
@@ -90,7 +90,7 @@ export const Sidebar = () => {
             </div>
             <div className="min-w-0">
               <h1 className="text-sm font-black tracking-tight text-slate-900 leading-none uppercase truncate">
-                ATHARVA ROADWAYS
+                ATHAHAR ROADWAYS
               </h1>
               <p className="text-[11px] text-[#0284c7] font-bold tracking-wider uppercase mt-1">
                 SANGLI - 416416
@@ -144,10 +144,10 @@ export const Sidebar = () => {
                 </div>
                 <div className="truncate">
                   <p className="text-xs font-black text-slate-900 leading-tight truncate">
-                    {user.displayName || 'ATHARVA'}
+                    {user.displayName || 'ATHAHAR'}
                   </p>
                   <p className="text-[10px] text-slate-500 font-medium truncate">
-                    {user.email || 'atharva@admin.com'}
+                    {user.email || 'athahar@admin.com'}
                   </p>
                 </div>
               </div>

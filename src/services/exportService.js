@@ -43,7 +43,7 @@ export const exportToPDF = (title, columns, data, filename = 'report') => {
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(18);
   doc.setTextColor(15, 23, 42);
-  doc.text('ATHARVA ROADWAYS', marginX, 14);
+  doc.text('ATHAHAR ROADWAYS', marginX, 14);
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8.5);
@@ -196,7 +196,7 @@ export const exportToPDF = (title, columns, data, filename = 'report') => {
       doc.setFontSize(8);
       doc.setTextColor(148, 163, 184);
       doc.text(
-        'ATHARVA ROADWAYS — Transport Management System',
+        'ATHAHAR ROADWAYS — Transport Management System',
         marginX,
         pageHeight - 6
       );
@@ -213,12 +213,12 @@ export const exportToPDF = (title, columns, data, filename = 'report') => {
 };
 
 export const printRecordDetails = ({ title, fields = [], items = [], showDeliveryPerson = false }) => {
-  let iframe = document.getElementById('atharva-print-frame');
+  let iframe = document.getElementById('athahar-print-frame');
   if (iframe) {
     document.body.removeChild(iframe);
   }
   iframe = document.createElement('iframe');
-  iframe.id = 'atharva-print-frame';
+  iframe.id = 'athahar-print-frame';
   iframe.style.position = 'fixed';
   iframe.style.right = '0';
   iframe.style.bottom = '0';
@@ -328,7 +328,7 @@ export const printRecordDetails = ({ title, fields = [], items = [], showDeliver
       <body>
         <div class="header">
           <div>
-            <h1 class="company">ATHARVA ROADWAYS</h1>
+            <h1 class="company">ATHAHAR ROADWAYS</h1>
             <p class="address">NEXT TO PARVATI CRANE, VAKHAR BHAG, SANGLI-416416 | MOB: 9370229449 / 9850329449</p>
             <p class="doc-title">${title}</p>
           </div>

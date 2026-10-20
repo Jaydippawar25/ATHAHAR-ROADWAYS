@@ -124,7 +124,7 @@ export const Login = () => {
                   <input
                     type="email"
                     required
-                    placeholder="operator@atharvaroadways.com"
+                    placeholder="operator@athaharroadways.com"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     className="w-full text-xs font-semibold text-slate-800 placeholder-slate-400 focus:outline-none bg-transparent"
@@ -200,7 +200,7 @@ export const Login = () => {
 
           {/* Copyright Footer */}
           <p className="text-[11px] text-slate-400 pt-8 font-normal">
-            &copy; 2026 ATHARVA ROADWAYS. Cloud Transport ERP.
+            &copy; 2026 ATHAHAR ROADWAYS. Cloud Transport ERP.
           </p>
         </div>
 
@@ -218,7 +218,7 @@ export const Login = () => {
             {/* Title */}
             <div>
               <h1 className="text-xl font-black tracking-tight text-white uppercase">
-                ATHARVA ROADWAYS
+                ATHAHAR ROADWAYS
               </h1>
               <p className="text-[10px] font-extrabold tracking-widest text-sky-300 uppercase mt-0.5">
                 GODOWN MANAGEMENT SYSTEM

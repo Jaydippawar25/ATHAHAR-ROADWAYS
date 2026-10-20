@@ -18,7 +18,7 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import { formatDate } from '../../utils/dateUtils';
 
-const OPERATORS_STORAGE_KEY = 'atharva_operators_registry';
+const OPERATORS_STORAGE_KEY = 'athahar_operators_registry';
 
 export const Settings = () => {
   const { user, changePassword, changeEmail, createOperatorUser, resetPassword } = useAuth();
@@ -53,7 +53,7 @@ export const Settings = () => {
   // Operators List
   const [operatorsList, setOperatorsList] = useState(() => {
     try {
-      const saved = localStorage.getItem(OPERATORS_STORAGE_KEY);
+      const saved = localStorage.getItem(OPERATORS_STORAGE_KEY) || localStorage.getItem('atharva_operators_registry');
       if (saved) return JSON.parse(saved);
     } catch {
       // ignore
@@ -62,7 +62,7 @@ export const Settings = () => {
       {
         uid: user?.uid || 'admin-01',
         displayName: user?.displayName || 'Principal Administrator',
-        email: user?.email || 'admin@atharvaroadways.com',
+        email: user?.email || 'admin@athaharroadways.com',
         role: 'Administrator',
         createdAt: new Date().toISOString(),
         isSuperAdmin: true,
@@ -517,7 +517,7 @@ export const Settings = () => {
                   Current Email
                 </label>
                 <div className="px-3 py-2 bg-slate-100 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-700">
-                  {user?.email || 'admin@atharvaroadways.com'}
+                  {user?.email || 'admin@athaharroadways.com'}
                 </div>
               </div>
 
@@ -530,7 +530,7 @@ export const Settings = () => {
                   required
                   value={newEmail}
                   onChange={(e) => setNewEmail(e.target.value)}
-                  placeholder="e.g. newoperator@atharvaroadways.com"
+                  placeholder="e.g. newoperator@athaharroadways.com"
                   className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:border-[#1d4ed8] focus:ring-2 focus:ring-blue-100"
                 />
               </div>
@@ -631,7 +631,7 @@ export const Settings = () => {
                 required
                 value={newUserForm.email}
                 onChange={(e) => setNewUserForm({ ...newUserForm, email: e.target.value })}
-                placeholder="ramesh@atharvaroadways.com"
+                placeholder="ramesh@athaharroadways.com"
                 className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:outline-none focus:border-[#1d4ed8]"
               />
             </div>
@@ -781,7 +781,7 @@ export const Settings = () => {
           <div className="space-y-3 text-xs text-slate-700">
             <div className="flex items-center justify-between p-2.5 bg-slate-50 rounded-xl border border-slate-200">
               <span className="font-bold text-slate-500 uppercase text-[10px]">OPERATOR EMAIL</span>
-              <span className="font-bold text-slate-900">{user?.email || 'admin@atharvaroadways.com'}</span>
+              <span className="font-bold text-slate-900">{user?.email || 'admin@athaharroadways.com'}</span>
             </div>
             <div className="flex items-center justify-between p-2.5 bg-slate-50 rounded-xl border border-slate-200">
               <span className="font-bold text-slate-500 uppercase text-[10px]">OPERATOR NAME</span>

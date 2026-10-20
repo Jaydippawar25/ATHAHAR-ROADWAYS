@@ -1,8 +1,8 @@
-# ATHARVA ROADWAYS — UPDATED PROJECT STRUCTURE
+# ATHAHAR ROADWAYS — UPDATED PROJECT STRUCTURE
 
 ## 1. Project Scope
 
-ATHARVA ROADWAYS is a transport management web application based on the client's existing LIMRA desktop workflow.
+ATHAHAR ROADWAYS is a transport management web application based on the client's existing LIMRA desktop workflow.
 
 The new system must reproduce the **business workflow and fields** of the client's existing:
 

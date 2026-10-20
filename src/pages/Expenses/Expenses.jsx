@@ -370,12 +370,12 @@ export const Expenses = () => {
       'Remarks / Notes': e.notes || '-',
       'Recorded By': e.createdBy || '-',
     }));
-    exportToExcel(exportData, `Atharva_Expenses_${getTodayDateString()}`);
+    exportToExcel(exportData, `Athahar_Expenses_${getTodayDateString()}`);
   };
 
   // Export to PDF
   const handleExportPDF = () => {
-    const title = 'ATHARVA ROADWAYS - EXPENSE SUMMARY REPORT';
+    const title = 'ATHAHAR ROADWAYS - EXPENSE SUMMARY REPORT';
     const columns = [
       { header: 'Date', dataKey: 'date' },
       { header: 'Voucher', dataKey: 'voucherNo' },
@@ -396,7 +396,7 @@ export const Expenses = () => {
       amount: formatCurrency(e.amount),
       notes: e.notes || '-',
     }));
-    exportToPDF(title, columns, data, `Atharva_Expenses_${getTodayDateString()}`);
+    exportToPDF(title, columns, data, `Athahar_Expenses_${getTodayDateString()}`);
   };
 
   // Helper for compact short labels in table
@@ -426,7 +426,7 @@ export const Expenses = () => {
             <span className="bg-white/10 px-2.5 py-0.5 rounded-full border border-white/20 flex items-center">
               OPERATIONAL EXPENSES
             </span>
-            <span>&bull; SANGLI TERMINAL &mdash; ATHARVA ROADWAYS</span>
+            <span>&bull; SANGLI TERMINAL &mdash; ATHAHAR ROADWAYS</span>
           </div>
 
           <h2 className="text-2xl sm:text-3xl font-black tracking-tight flex items-center space-x-2.5 text-white">
@@ -1103,7 +1103,7 @@ export const Expenses = () => {
             {/* Printable Voucher Header */}
             <div className="bg-[#072440] text-white p-4 rounded-xl flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-black tracking-wider uppercase">ATHARVA ROADWAYS</h3>
+                <h3 className="text-sm font-black tracking-wider uppercase">ATHAHAR ROADWAYS</h3>
                 <p className="text-[10px] text-sky-400 font-bold uppercase">SANGLI-416416</p>
                 <div className="mt-1 text-[11px] font-extrabold text-sky-200">
                   Payment Voucher #{viewingExpense.voucherNo}
@@ -1244,7 +1244,7 @@ export const Expenses = () => {
             </div>
           </div>
           <p className="text-xs text-slate-600 font-medium">
-            This will permanently remove all expense records from Atharva Roadways and reset the register.
+            This will permanently remove all expense records from Athahar Roadways and reset the register.
           </p>
           <div className="flex items-center justify-end space-x-2 pt-3 border-t border-slate-200">
             <button

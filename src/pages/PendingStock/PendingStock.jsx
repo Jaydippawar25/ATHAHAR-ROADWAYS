@@ -171,7 +171,7 @@ export const PendingStock = () => {
             <span className="bg-white/10 px-2.5 py-0.5 rounded-full border border-white/20">
               GODOWN INVENTORY
             </span>
-            <span>&bull; SANGLI TERMINAL &mdash; ATHARVA ROADWAYS</span>
+            <span>&bull; SANGLI TERMINAL &mdash; ATHAHAR ROADWAYS</span>
           </div>
 
           <h2 className="text-2xl sm:text-3xl font-black tracking-tight flex items-center space-x-2.5 text-white">

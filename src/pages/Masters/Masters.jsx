@@ -240,7 +240,7 @@ export const Masters = () => {
               required
               autoFocus
               onChange={handleInputChange}
-              placeholder={activeMaster === 'vehicles' ? 'e.g. MH-10-AZ-1234' : 'e.g. Atharva Transport Hub'}
+              placeholder={activeMaster === 'vehicles' ? 'e.g. MH-10-AZ-1234' : 'e.g. Athahar Transport Hub'}
               className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-bold focus:ring-2 focus:ring-[#1d4ed8] outline-none"
             />
           </div>

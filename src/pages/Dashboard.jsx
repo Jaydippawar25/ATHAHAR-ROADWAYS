@@ -200,7 +200,7 @@ export const Dashboard = () => {
       'Memo No': i.memoNo || '-',
       'Total Qty': i.totalQty,
     }));
-    exportToExcel(exportData, `Atharva_Recent_Inward_Log`);
+    exportToExcel(exportData, `Athahar_Recent_Inward_Log`);
   };
 
   // Pseudo bay location allocator for logistics rack tag
@@ -220,15 +220,15 @@ export const Dashboard = () => {
           <div className="flex flex-wrap items-center gap-2">
             <span className="bg-white/10 text-blue-200 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest border border-white/10 backdrop-blur-xs flex items-center space-x-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-              <span>GODOWN SUMMARY &bull; SANGLI TERMINAL &mdash; ATHARVA ROADWAYS</span>
+              <span>GODOWN SUMMARY &bull; SANGLI TERMINAL &mdash; ATHAHAR ROADWAYS</span>
             </span>
             <span className="bg-sky-950/80 text-sky-300 border border-sky-500/30 text-[10px] font-mono font-black px-2 py-0.5 rounded tracking-wider">
               GATE-01 ACTIVE
             </span>
           </div>
 
-          <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
-            Atharva Roadways
+          <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-white uppercase">
+            ATHAHAR ROADWAYS
           </h2>
 
           <p className="text-blue-100 text-xs sm:text-sm font-medium tracking-tight">

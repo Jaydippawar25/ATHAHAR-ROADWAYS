@@ -21,7 +21,7 @@ export const TopHeader = () => {
         <div>
           <div className="flex items-center space-x-2">
             <h1 className="text-sm font-black tracking-wide text-slate-900 uppercase">
-              ATHARVA ROADWAYS
+              ATHAHAR ROADWAYS
             </h1>
             <span className="bg-slate-100 border border-slate-200 text-slate-600 px-1.5 py-0.5 rounded text-[10px] font-mono font-bold tracking-tight">
               Godown Hub 01
