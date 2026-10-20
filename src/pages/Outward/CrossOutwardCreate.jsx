@@ -159,6 +159,7 @@ export const CrossOutwardCreate = () => {
         setEditingIndex(0);
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Intentionally synchronize only on route state changes
   }, [location.state, masters]);
 
   // List of added LR rows

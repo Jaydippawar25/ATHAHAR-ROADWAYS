@@ -1,4 +1,4 @@
-import { INITIAL_MASTERS, STATUS } from '../utils/constants';
+import { INITIAL_MASTERS } from '../utils/constants';
 import { db } from '../firebase/firebase';
 import { doc, getDoc, setDoc, deleteDoc, onSnapshot, collection, getDocs } from 'firebase/firestore';
 
@@ -190,12 +190,6 @@ export const testFirestoreConnection = async () => {
   }
 };
 
-/**
- * Clean empty data for fresh initialization (no dummy records)
- */
-const getDefaultInitialData = () => {
-  return { sampleInward: null, sampleItems: [] };
-};
 
 /**
  * Safe Asynchronous Hydration & Initialization:

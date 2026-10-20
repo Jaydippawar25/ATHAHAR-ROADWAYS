@@ -131,6 +131,7 @@ export const InwardCreate = () => {
       }
     }
     focusLRNoInput();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Intentionally synchronize only on route state changes
   }, [location.state]);
 
   const handleKeyDown = (e, index) => {

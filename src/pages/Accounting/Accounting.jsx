@@ -1,20 +1,13 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { useApp } from '../../context/AppContext';
 import {
-  Wallet,
   ArrowDownLeft,
   ArrowUpRight,
   TrendingUp,
   Percent,
-  Layers,
-  FileSpreadsheet,
-  FileText,
   Printer,
   Eye,
-  CheckCircle2,
-  Calendar,
   Calculator,
-  DollarSign,
   ArrowLeftRight,
   Shuffle,
 } from 'lucide-react';
@@ -40,7 +33,7 @@ export const Accounting = () => {
   const [viewingRecord, setViewingRecord] = useState(null);
 
   // Filter helper for dates
-  const isDateInFilter = (dateStr) => {
+  const isDateInFilter = useCallback((dateStr) => {
     if (!dateStr || dateFilter === 'all') return true;
     const d = new Date(dateStr);
     const now = new Date();
@@ -57,7 +50,7 @@ export const Accounting = () => {
       return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
     }
     return true;
-  };
+  }, [dateFilter]);
 
   const commMultiplier = (Number(commissionRate) || 0) / 100;
 
@@ -109,7 +102,7 @@ export const Accounting = () => {
           items,
         };
       });
-  }, [inwards, inwardItems, dateFilter, commMultiplier, commissionRate]);
+  }, [inwards, inwardItems, isDateInFilter, commMultiplier, commissionRate]);
 
   // Helper to distinguish Stock Out from Standard Outward
   const isStockOutRecord = (out) =>
@@ -161,7 +154,7 @@ export const Accounting = () => {
           items,
         };
       });
-  }, [outwards, outwardItems, dateFilter, commissionRate]);
+  }, [outwards, outwardItems, isDateInFilter, commissionRate]);
 
   // 3. Enrich Stock Out receipts (Cross Stock Out)
   const enrichedStockOuts = useMemo(() => {
@@ -209,7 +202,7 @@ export const Accounting = () => {
           items,
         };
       });
-  }, [outwards, outwardItems, dateFilter, commissionRate]);
+  }, [outwards, outwardItems, isDateInFilter, commissionRate]);
 
   // 4. Combined Inward, Outward & Stock Out Transactions
   const allTransactions = useMemo(() => {
@@ -275,10 +268,10 @@ export const Accounting = () => {
       totalCommission20,
       netDifference,
     };
-  }, [enrichedInwards, enrichedOutwards, enrichedStockOuts, commMultiplier]);
+  }, [enrichedInwards, enrichedOutwards, enrichedStockOuts]);
 
   // Print Details Handler
-  const handlePrintAccountingStatement = (row) => {
+  const handlePrintAccountingStatement = useCallback((row) => {
     printRecordDetails({
       title: `${row.type} Accounting Receipt #${row.receiptNo}`,
       fields: [
@@ -303,98 +296,101 @@ export const Accounting = () => {
       ],
       items: row.items,
     });
-  };
+  }, [commissionRate]);
 
   // Table Columns Definition
-  const accountingColumns = [
-    { label: 'Date', key: 'date', type: 'date', nowrap: true },
-    {
-      label: 'Type',
-      key: 'type',
-      width: 'min-w-[110px]',
-      nowrap: true,
-      render: (row) => (
-        <span
-          className={`inline-flex items-center px-2 py-0.5 rounded text-[10.5px] font-black whitespace-nowrap shrink-0 ${
-            row.type === 'INWARD'
-              ? 'bg-sky-100 text-sky-800 border border-sky-300'
-              : row.type === 'STOCK OUT'
-              ? 'bg-purple-100 text-purple-800 border border-purple-300'
-              : 'bg-emerald-100 text-emerald-800 border border-emerald-300'
-          }`}
-        >
-          {row.type === 'INWARD' ? (
-            <ArrowDownLeft className="w-3 h-3 mr-1 text-sky-600 shrink-0" />
-          ) : row.type === 'STOCK OUT' ? (
-            <Shuffle className="w-3 h-3 mr-1 text-purple-600 shrink-0" />
-          ) : (
-            <ArrowUpRight className="w-3 h-3 mr-1 text-emerald-600 shrink-0" />
-          )}
-          <span>{row.type}</span>
-        </span>
-      ),
-    },
-    {
-      label: 'Receipt No.',
-      key: 'receiptNo',
-      nowrap: true,
-      render: (row) => <span className="font-extrabold text-slate-900 whitespace-nowrap">{row.receiptNo}</span>,
-    },
-    { label: 'Vehicle No.', key: 'vehicleNo', nowrap: true, render: (row) => <span className="whitespace-nowrap">{row.vehicleNo || '-'}</span> },
-    { label: 'PKG', key: 'totalQty', nowrap: true },
-    { label: 'To Pay', key: 'totalToPay', type: 'currency', nowrap: true },
-    { label: 'T.B.B', key: 'totalTbb', type: 'currency', nowrap: true },
-    { label: 'Paid', key: 'totalPaid', type: 'currency', nowrap: true },
-    {
-      label: `COMMISSION (${commissionRate}%)`,
-      key: 'commissionAmount',
-      type: 'currency',
-      nowrap: true,
-      render: (row) =>
-        row.type === 'INWARD' ? (
-          <span className="font-black text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 whitespace-nowrap">
-            {formatCurrency(row.commissionAmount)}
-          </span>
-        ) : (
-          <span className="font-semibold text-slate-400 bg-slate-50 px-2 py-0.5 rounded border border-slate-200 whitespace-nowrap">
-            ₹0.00
+  const accountingColumns = useMemo(
+    () => [
+      { label: 'Date', key: 'date', type: 'date', nowrap: true },
+      {
+        label: 'Type',
+        key: 'type',
+        width: 'min-w-[110px]',
+        nowrap: true,
+        render: (row) => (
+          <span
+            className={`inline-flex items-center px-2 py-0.5 rounded text-[10.5px] font-black whitespace-nowrap shrink-0 ${
+              row.type === 'INWARD'
+                ? 'bg-sky-100 text-sky-800 border border-sky-300'
+                : row.type === 'STOCK OUT'
+                ? 'bg-purple-100 text-purple-800 border border-purple-300'
+                : 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+            }`}
+          >
+            {row.type === 'INWARD' ? (
+              <ArrowDownLeft className="w-3 h-3 mr-1 text-sky-600 shrink-0" />
+            ) : row.type === 'STOCK OUT' ? (
+              <Shuffle className="w-3 h-3 mr-1 text-purple-600 shrink-0" />
+            ) : (
+              <ArrowUpRight className="w-3 h-3 mr-1 text-emerald-600 shrink-0" />
+            )}
+            <span>{row.type}</span>
           </span>
         ),
-    },
-    {
-      label: 'Total Money',
-      key: 'totalMoney',
-      type: 'currency',
-      nowrap: true,
-      render: (row) => (
-        <span className="font-black text-slate-900 text-xs whitespace-nowrap">
-          {formatCurrency(row.totalMoney)}
-        </span>
-      ),
-    },
-    {
-      label: 'Actions',
-      key: 'actions',
-      render: (row) => (
-        <div className="flex items-center justify-center space-x-1">
-          <button
-            onClick={() => setViewingRecord(row)}
-            className="p-1 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded transition-colors cursor-pointer"
-            title="View Money & Commission Details"
-          >
-            <Eye className="w-3.5 h-3.5" />
-          </button>
-          <button
-            onClick={() => handlePrintAccountingStatement(row)}
-            className="p-1 text-sky-600 hover:text-sky-800 hover:bg-sky-50 rounded transition-colors cursor-pointer"
-            title="Print Statement"
-          >
-            <Printer className="w-3.5 h-3.5" />
-          </button>
-        </div>
-      ),
-    },
-  ];
+      },
+      {
+        label: 'Receipt No.',
+        key: 'receiptNo',
+        nowrap: true,
+        render: (row) => <span className="font-extrabold text-slate-900 whitespace-nowrap">{row.receiptNo}</span>,
+      },
+      { label: 'Vehicle No.', key: 'vehicleNo', nowrap: true, render: (row) => <span className="whitespace-nowrap">{row.vehicleNo || '-'}</span> },
+      { label: 'PKG', key: 'totalQty', nowrap: true },
+      { label: 'To Pay', key: 'totalToPay', type: 'currency', nowrap: true },
+      { label: 'T.B.B', key: 'totalTbb', type: 'currency', nowrap: true },
+      { label: 'Paid', key: 'totalPaid', type: 'currency', nowrap: true },
+      {
+        label: `COMMISSION (${commissionRate}%)`,
+        key: 'commissionAmount',
+        type: 'currency',
+        nowrap: true,
+        render: (row) =>
+          row.type === 'INWARD' ? (
+            <span className="font-black text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 whitespace-nowrap">
+              {formatCurrency(row.commissionAmount)}
+            </span>
+          ) : (
+            <span className="font-semibold text-slate-400 bg-slate-50 px-2 py-0.5 rounded border border-slate-200 whitespace-nowrap">
+              ₹0.00
+            </span>
+          ),
+      },
+      {
+        label: 'Total Money',
+        key: 'totalMoney',
+        type: 'currency',
+        nowrap: true,
+        render: (row) => (
+          <span className="font-black text-slate-900 text-xs whitespace-nowrap">
+            {formatCurrency(row.totalMoney)}
+          </span>
+        ),
+      },
+      {
+        label: 'Actions',
+        key: 'actions',
+        render: (row) => (
+          <div className="flex items-center justify-center space-x-1">
+            <button
+              onClick={() => setViewingRecord(row)}
+              className="p-1 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded transition-colors cursor-pointer"
+              title="View Money & Commission Details"
+            >
+              <Eye className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onClick={() => handlePrintAccountingStatement(row)}
+              className="p-1 text-sky-600 hover:text-sky-800 hover:bg-sky-50 rounded transition-colors cursor-pointer"
+              title="Print Statement"
+            >
+              <Printer className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        ),
+      },
+    ],
+    [commissionRate, handlePrintAccountingStatement]
+  );
 
   // Outward & Stock Out Columns (Excludes COMMISSION column)
   const outwardColumns = useMemo(

@@ -5,7 +5,6 @@ import {
   ArrowDownLeft,
   PackageCheck,
   ArrowUpRight,
-  Truck,
   PlusCircle,
   Search,
   X,
@@ -16,8 +15,6 @@ import {
   Building2,
   Route,
   Wallet,
-  Calendar,
-  Layers,
 } from 'lucide-react';
 import { formatDate } from '../utils/dateUtils';
 import { formatCurrency } from '../utils/numberUtils';

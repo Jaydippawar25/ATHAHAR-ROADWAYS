@@ -211,7 +211,7 @@ export const deleteOutward = (outwardId) => {
 
     inwardItems = inwardItems.map((item) => {
       if (inwardItemIds.has(item.id) || item.outwardId === outwardId) {
-        const { deliveredAt, outwardId: oId, outwardNo, ...rest } = item;
+        const { deliveredAt: _deliveredAt, outwardId: _oId, outwardNo: _outwardNo, ...rest } = item;
         return {
           ...rest,
           status: STATUS.PENDING,
@@ -247,7 +247,7 @@ export const deleteOutwardItem = (outwardItemId) => {
     let inwardItems = getStoredItem(STORAGE_KEYS.INWARD_ITEMS);
     inwardItems = inwardItems.map((item) => {
       if (item.id === targetItem.inwardItemId) {
-        const { deliveredAt, outwardId, outwardNo, ...rest } = item;
+        const { deliveredAt: _deliveredAt, outwardId: _outwardId, outwardNo: _outwardNo, ...rest } = item;
         return {
           ...rest,
           status: STATUS.PENDING,
@@ -333,8 +333,6 @@ export const updateOutwardHeader = (outwardId, updatedFields) => {
 export const updateOutwardItem = (itemId, updatedFields) => {
   let outwardItems = getAllOutwardItems();
   let outwards = getAllOutwards();
-
-  const oldItem = outwardItems.find((item) => item.id === itemId);
 
   outwardItems = outwardItems.map((item) => {
     if (item.id === itemId) {
@@ -467,7 +465,14 @@ export const updateFullOutward = (outwardId, headerData, selectedPendingItems, c
         item.outwardId === resolvedOutwardId ||
         (existingHeader && item.outwardNo === existingHeader.outwardNo)
       ) {
-        const { deliveredAt, outwardId: oId, outwardNo, outwardDate, deliveryPersonName, ...rest } = item;
+        const {
+          deliveredAt: _deliveredAt,
+          outwardId: _oId,
+          outwardNo: _outwardNo,
+          outwardDate: _outwardDate,
+          deliveryPersonName: _deliveryPersonName,
+          ...rest
+        } = item;
         return {
           ...rest,
           status: STATUS.PENDING,

@@ -27,14 +27,21 @@ export default [
       ...js.configs.recommended.rules,
       ...reactHooks.configs.recommended.rules,
       'no-empty': ['warn', { allowEmptyCatch: true }],
-      'no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
+      'no-unused-vars': [
+        'warn',
+        {
+          argsIgnorePattern: '^(e|err|_)',
+          varsIgnorePattern: '^(React|_)',
+          caughtErrorsIgnorePattern: '^(e|err|_)',
+        },
+      ],
       'no-useless-assignment': 'warn',
       'react-hooks/set-state-in-effect': 'off',
       'react-hooks/immutability': 'off',
       'react-hooks/purity': 'off',
       'react-refresh/only-export-components': [
         'warn',
-        { allowConstantExport: true },
+        { allowConstantExport: true, allowExportNames: ['useApp', 'useAuth'] },
       ],
     },
   },

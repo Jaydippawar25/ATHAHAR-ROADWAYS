@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 import {
@@ -9,26 +9,18 @@ import {
   Navigation,
   Users,
   Package,
-  PackageCheck,
   ArrowDownToLine,
   ArrowUpFromLine,
   MoreHorizontal,
   FileSpreadsheet,
   FileText,
   Search,
-  Calendar,
-  Filter,
   Eye,
   Edit2,
   Trash2,
   CheckCircle2,
   AlertCircle,
-  Truck,
   DollarSign,
-  CreditCard,
-  Building2,
-  RefreshCw,
-  X,
 } from 'lucide-react';
 import { Modal } from '../../components/common/Modal';
 import { EditableCombobox } from '../../components/common/EditableCombobox';
@@ -141,31 +133,34 @@ export const Expenses = () => {
   };
 
   // Helper for Date Filtering
-  const isDateInFilter = (dateStr) => {
-    if (!dateStr) return true;
-    if (dateFilter === 'all') return true;
+  const isDateInFilter = useCallback(
+    (dateStr) => {
+      if (!dateStr) return true;
+      if (dateFilter === 'all') return true;
 
-    const d = new Date(dateStr);
-    const now = new Date();
-    if (isNaN(d.getTime())) return true;
+      const d = new Date(dateStr);
+      const now = new Date();
+      if (isNaN(d.getTime())) return true;
 
-    if (dateFilter === 'today') {
-      return d.toDateString() === now.toDateString();
-    }
-    if (dateFilter === 'week') {
-      const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-      return d >= oneWeekAgo && d <= now;
-    }
-    if (dateFilter === 'month') {
-      return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-    }
-    if (dateFilter === 'custom') {
-      if (customStartDate && d < new Date(customStartDate)) return false;
-      if (customEndDate && d > new Date(customEndDate + 'T23:59:59')) return false;
+      if (dateFilter === 'today') {
+        return d.toDateString() === now.toDateString();
+      }
+      if (dateFilter === 'week') {
+        const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        return d >= oneWeekAgo && d <= now;
+      }
+      if (dateFilter === 'month') {
+        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+      }
+      if (dateFilter === 'custom') {
+        if (customStartDate && d < new Date(customStartDate)) return false;
+        if (customEndDate && d > new Date(customEndDate + 'T23:59:59')) return false;
+        return true;
+      }
       return true;
-    }
-    return true;
-  };
+    },
+    [dateFilter, customStartDate, customEndDate]
+  );
 
   // Filtered Expense Records
   const filteredExpenses = useMemo(() => {
@@ -210,9 +205,7 @@ export const Expenses = () => {
     selectedCategory,
     selectedVehicle,
     selectedPaymentMode,
-    dateFilter,
-    customStartDate,
-    customEndDate,
+    isDateInFilter,
   ]);
 
   // Aggregate Category Totals

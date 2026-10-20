@@ -12,7 +12,6 @@ import {
   AlertTriangle,
   Layers,
   FileSpreadsheet,
-  FileText,
   Eye,
   Printer,
 } from 'lucide-react';
