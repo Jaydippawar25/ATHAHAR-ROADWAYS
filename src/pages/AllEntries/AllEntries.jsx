@@ -1047,7 +1047,52 @@ export const AllEntries = () => {
                   <h4 className="font-black text-slate-700 uppercase tracking-wider text-[11px]">
                     Associated LR Items
                   </h4>
-                  <div className="border border-slate-200 rounded-xl overflow-x-auto max-h-60">
+                  {/* Mobile Cards (sm:hidden) */}
+                  <div className="sm:hidden space-y-2 max-h-64 overflow-y-auto pr-0.5">
+                    {(viewCategory === 'inward_header'
+                      ? inwardItems.filter(
+                          (item) =>
+                            item.inwardId === viewingRecord.id || item.inwardNo === viewingRecord.inwardNo
+                        )
+                      : outwardItems.filter(
+                          (item) =>
+                            item.outwardId === viewingRecord.id || item.outwardNo === viewingRecord.outwardNo
+                        )
+                    ).map((lr, idx) => (
+                      <div key={lr.id || idx} className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="font-black text-sky-800 text-xs">LR #{lr.lrNo}</span>
+                          <StatusBadge status={lr.status} />
+                        </div>
+                        <div className="grid grid-cols-2 gap-1.5 text-[11px] text-slate-600">
+                          <div>
+                            <span className="text-[10px] uppercase font-bold text-slate-400 block">Consigner</span>
+                            <span className="font-semibold truncate block">{lr.consignorName || '-'}</span>
+                          </div>
+                          <div>
+                            <span className="text-[10px] uppercase font-bold text-slate-400 block">Consignee</span>
+                            <span className="font-semibold truncate block">{lr.consigneeName || '-'}</span>
+                          </div>
+                          <div>
+                            <span className="text-[10px] uppercase font-bold text-slate-400 block">CT To</span>
+                            <span className="font-semibold truncate block">{lr.ctTo || '-'}</span>
+                          </div>
+                          <div>
+                            <span className="text-[10px] uppercase font-bold text-slate-400 block">PKG</span>
+                            <span className="font-black text-slate-800">{lr.pkg}</span>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-3 gap-1 text-[10px] text-slate-500 pt-1.5 border-t border-slate-200">
+                          <div>To Pay: <span className="font-bold text-slate-800">{formatCurrency(lr.toPayAmount)}</span></div>
+                          <div>TBB: <span className="font-bold text-slate-800">{formatCurrency(lr.tbbAmount)}</span></div>
+                          <div>Paid: <span className="font-bold text-slate-800">{formatCurrency(lr.paidAmount)}</span></div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Desktop Table (hidden sm:block) */}
+                  <div className="hidden sm:block border border-slate-200 rounded-xl overflow-x-auto max-h-60">
                     <table className="w-full text-left text-[11px]">
                       <thead className="bg-slate-100 text-slate-700 font-black uppercase border-b border-slate-200">
                         <tr>

@@ -708,7 +708,66 @@ export const Settings = () => {
             <h4 className="text-xs font-extrabold text-slate-700 uppercase tracking-wider mb-2.5">
               Authorized Users Registry
             </h4>
-            <div className="overflow-x-auto rounded-xl border border-slate-200">
+            {/* Mobile View: Clean Touch Cards (NO Horizontal Scrolling) */}
+            <div className="sm:hidden divide-y divide-slate-100 rounded-xl border border-slate-200 bg-white overflow-hidden">
+              {operatorsList.length === 0 ? (
+                <div className="p-6 text-center text-slate-400 text-xs font-medium">
+                  No operators registered.
+                </div>
+              ) : (
+                operatorsList.map((op, idx) => (
+                  <div key={op.uid || idx} className="p-3 space-y-2 bg-white">
+                    <div className="flex items-center justify-between">
+                      <div className="font-black text-xs text-slate-900 truncate">
+                        {op.displayName || 'Operator'}
+                      </div>
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-black bg-emerald-100 text-emerald-800">
+                        <CheckCircle2 className="w-2.5 h-2.5 mr-1" /> ACTIVE
+                      </span>
+                    </div>
+
+                    <div className="text-xs text-slate-600 font-mono truncate">
+                      {op.email}
+                    </div>
+
+                    <div className="flex items-center justify-between pt-1 border-t border-slate-100 text-[11px]">
+                      <div className="flex items-center space-x-2">
+                        <span className="px-2 py-0.5 rounded-full text-[9px] font-black bg-blue-50 text-[#1d4ed8] border border-blue-200">
+                          {op.role || 'Operator'}
+                        </span>
+                        <span className="text-[10px] text-slate-400 font-medium">
+                          {formatDate(op.createdAt)}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center space-x-1.5">
+                        <button
+                          type="button"
+                          onClick={() => handleSendResetToOperator(op.email)}
+                          className="p-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
+                          title="Send Password Reset Email"
+                        >
+                          <Send className="w-3.5 h-3.5" />
+                        </button>
+                        {!op.isSuperAdmin && (
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteOperator(op.email)}
+                            className="p-1.5 text-rose-600 hover:text-rose-800 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                            title="Revoke User Access"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Desktop View: Multi-column Table */}
+            <div className="hidden sm:block overflow-x-auto rounded-xl border border-slate-200">
               <table className="w-full text-left text-xs text-slate-700 border-collapse">
                 <thead className="bg-[#0b2545] text-white">
                   <tr className="text-[10px] uppercase font-extrabold tracking-wider">

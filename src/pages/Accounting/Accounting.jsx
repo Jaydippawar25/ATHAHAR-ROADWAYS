@@ -806,7 +806,70 @@ export const Accounting = () => {
               </div>
             </div>
 
-            <div className="border border-slate-200 rounded-xl overflow-hidden">
+            {/* Mobile View: Clean Touch Cards (NO Horizontal Scrolling) */}
+            <div className="sm:hidden divide-y divide-slate-100 rounded-xl border border-slate-200 bg-white overflow-hidden">
+              <div className="p-3.5 space-y-2 bg-white">
+                <div className="flex items-center justify-between">
+                  <span className="font-black text-xs text-sky-700">Inward Freight</span>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-900 border border-amber-300">
+                    Comm ({commissionRate}%): {formatCurrency(accountingSummary.inwardCommission)}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-xs font-semibold text-slate-800">
+                  <span>{enrichedInwards.length} Receipts</span>
+                  <span className="font-black text-slate-900">Total: {formatCurrency(accountingSummary.inwardMoneyTotal)}</span>
+                </div>
+                <div className="grid grid-cols-3 gap-1 pt-1 border-t border-slate-100 text-[10px] text-slate-500 font-bold">
+                  <span>ToPay: {formatCurrency(accountingSummary.inwardToPay)}</span>
+                  <span>TBB: {formatCurrency(accountingSummary.inwardTbb)}</span>
+                  <span>Paid: {formatCurrency(accountingSummary.inwardPaid)}</span>
+                </div>
+              </div>
+
+              <div className="p-3.5 space-y-2 bg-white">
+                <div className="flex items-center justify-between">
+                  <span className="font-black text-xs text-emerald-700">Outward Freight</span>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-slate-100 text-slate-500">
+                    No Commission
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-xs font-semibold text-slate-800">
+                  <span>{enrichedOutwards.length} Dispatches</span>
+                  <span className="font-black text-slate-900">Total: {formatCurrency(accountingSummary.outwardMoneyTotal)}</span>
+                </div>
+                <div className="grid grid-cols-3 gap-1 pt-1 border-t border-slate-100 text-[10px] text-slate-500 font-bold">
+                  <span>ToPay: {formatCurrency(accountingSummary.outwardToPay)}</span>
+                  <span>TBB: {formatCurrency(accountingSummary.outwardTbb)}</span>
+                  <span>Paid: {formatCurrency(accountingSummary.outwardPaid)}</span>
+                </div>
+              </div>
+
+              <div className="p-3.5 space-y-2 bg-white">
+                <div className="flex items-center justify-between">
+                  <span className="font-black text-xs text-purple-700">Stock Out Freight</span>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-slate-100 text-slate-500">
+                    No Commission
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-xs font-semibold text-slate-800">
+                  <span>{enrichedStockOuts.length} Stock Outs</span>
+                  <span className="font-black text-slate-900">Total: {formatCurrency(accountingSummary.stockOutMoneyTotal)}</span>
+                </div>
+                <div className="grid grid-cols-3 gap-1 pt-1 border-t border-slate-100 text-[10px] text-slate-500 font-bold">
+                  <span>ToPay: {formatCurrency(accountingSummary.stockOutToPay)}</span>
+                  <span>TBB: {formatCurrency(accountingSummary.stockOutTbb)}</span>
+                  <span>Paid: {formatCurrency(accountingSummary.stockOutPaid)}</span>
+                </div>
+              </div>
+
+              <div className="p-3 bg-slate-900 text-white flex items-center justify-between text-xs font-bold">
+                <span>Total Handled: {formatCurrency(accountingSummary.totalFreightHandled)}</span>
+                <span className="text-amber-400 font-black">Net Comm: {formatCurrency(accountingSummary.totalCommission20)}</span>
+              </div>
+            </div>
+
+            {/* Desktop View: Multi-column Table */}
+            <div className="hidden sm:block border border-slate-200 rounded-xl overflow-hidden">
               <table className="w-full text-left text-xs">
                 <thead className="bg-slate-100 text-slate-800 font-black uppercase text-[11px] border-b border-slate-200">
                   <tr>
@@ -971,7 +1034,39 @@ export const Accounting = () => {
                 <h4 className="font-black text-slate-700 uppercase tracking-wider text-[11px]">
                   LR Breakdown & Calculations
                 </h4>
-                <div className="border border-slate-200 rounded-xl overflow-x-auto max-h-56">
+                {/* Mobile Cards (sm:hidden) */}
+                <div className="sm:hidden space-y-2 max-h-56 overflow-y-auto pr-0.5">
+                  {viewingRecord.items.map((lr, idx) => {
+                    const lrFreight =
+                      (Number(lr.toPayAmount) || 0) +
+                      (Number(lr.tbbAmount) || 0) +
+                      (Number(lr.paidAmount) || 0);
+                    const lrComm =
+                      viewingRecord.type === 'INWARD' ? lrFreight * commMultiplier : 0;
+                    return (
+                      <div key={lr.id || idx} className="p-2.5 bg-slate-50 rounded-xl border border-slate-200 text-xs space-y-1">
+                        <div className="flex items-center justify-between">
+                          <span className="font-black text-sky-800">LR #{lr.lrNo}</span>
+                          <span className="font-bold text-slate-600">{lr.pkg} PKG</span>
+                        </div>
+                        <div className="grid grid-cols-3 gap-1 text-[10px] text-slate-500 pt-1">
+                          <div>To Pay: <span className="font-bold text-slate-700">{formatCurrency(lr.toPayAmount)}</span></div>
+                          <div>T.B.B: <span className="font-bold text-slate-700">{formatCurrency(lr.tbbAmount)}</span></div>
+                          <div>Paid: <span className="font-bold text-slate-700">{formatCurrency(lr.paidAmount)}</span></div>
+                        </div>
+                        <div className="flex items-center justify-between pt-1 border-t border-slate-200 font-black text-[11px]">
+                          <span>Freight: {formatCurrency(lrFreight)}</span>
+                          {viewingRecord.type === 'INWARD' && (
+                            <span className="text-amber-700">Comm: {formatCurrency(lrComm)}</span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Desktop Table (hidden sm:block) */}
+                <div className="hidden sm:block border border-slate-200 rounded-xl overflow-x-auto max-h-56">
                   <table className="w-full text-left text-[11px]">
                     <thead className="bg-slate-100 text-slate-700 font-black uppercase border-b border-slate-200">
                       <tr>

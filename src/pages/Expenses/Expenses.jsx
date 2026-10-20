@@ -775,7 +775,112 @@ export const Expenses = () => {
 
       {/* EXPENSES DATA TABLE */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
-        <div className="w-full overflow-x-hidden">
+        {/* MOBILE CARD VIEW (sm:hidden) */}
+        <div className="sm:hidden divide-y divide-slate-100">
+          {filteredExpenses.length === 0 ? (
+            <div className="py-10 px-4 text-center text-slate-400 font-medium">
+              <Receipt className="w-8 h-8 mx-auto mb-2 opacity-40 text-slate-500" />
+              No expenses found matching the selected filters.
+            </div>
+          ) : (
+            filteredExpenses.map((item) => {
+              const conf = categoryConfig[item.category] || categoryConfig['Other Expenses'];
+              const Icon = conf.icon;
+              return (
+                <div key={item.id} className="p-3.5 space-y-2 hover:bg-slate-50/60 transition-colors">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <span className="font-extrabold text-sky-800 bg-sky-50 px-2 py-0.5 rounded border border-sky-200 text-xs">
+                        #{item.voucherNo}
+                      </span>
+                      <span className="text-[11px] font-bold text-slate-500">
+                        {formatDate(item.date)}
+                      </span>
+                    </div>
+                    <div className="text-right font-black text-sm text-[#072440]">
+                      {formatCurrency(item.amount)}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between gap-2">
+                    <span className={`inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-[10px] font-black border ${conf.badge}`}>
+                      <Icon className="w-2.5 h-2.5 mr-0.5 shrink-0" />
+                      <span>{getCategoryShortLabel(item.category)}</span>
+                    </span>
+                    <span className="text-[9.5px] font-extrabold px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-slate-700 uppercase">
+                      {getPaymentModeShortLabel(item.paymentMode)}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 text-[11px] pt-1">
+                    <div>
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block">Payee</span>
+                      <span className="font-bold text-slate-800 truncate block">
+                        {item.payeeName || '-'}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block">Vehicle</span>
+                      <span className="font-extrabold text-slate-900 truncate block">
+                        {item.vehicleNo || '-'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {(item.notes || item.referenceNo) && (
+                    <div className="text-[10.5px] text-slate-500 bg-slate-50 rounded-lg p-1.5 border border-slate-100">
+                      {item.notes ? item.notes : `Ref: ${item.referenceNo}`}
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-end space-x-1 pt-1 border-t border-slate-100">
+                    <button
+                      type="button"
+                      onClick={() => setViewingExpense(item)}
+                      className="px-2.5 py-1 text-sky-600 hover:bg-sky-50 rounded-lg text-xs font-bold flex items-center space-x-1 cursor-pointer"
+                    >
+                      <Eye className="w-3.5 h-3.5" />
+                      <span>View</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleOpenEditModal(item)}
+                      className="px-2.5 py-1 text-amber-600 hover:bg-amber-50 rounded-lg text-xs font-bold flex items-center space-x-1 cursor-pointer"
+                    >
+                      <Edit2 className="w-3.5 h-3.5" />
+                      <span>Edit</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setDeleteConfirmItem(item);
+                        setDeleteConfirmId(item.id || item.voucherNo);
+                      }}
+                      className="px-2.5 py-1 text-rose-600 hover:bg-rose-50 rounded-lg text-xs font-bold flex items-center space-x-1 cursor-pointer"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Delete</span>
+                    </button>
+                  </div>
+                </div>
+              );
+            })
+          )}
+
+          {filteredExpenses.length > 0 && (
+            <div className="p-3 bg-sky-50/90 border-t-2 border-slate-300 flex items-center justify-between text-xs font-black text-slate-900">
+              <span className="text-[10.5px] uppercase tracking-wider text-slate-600">
+                Total ({filteredExpenses.length} Records)
+              </span>
+              <span className="text-sm font-black text-[#1e295b]">
+                {formatCurrency(categoryTotals.total)}
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* DESKTOP TABLE VIEW (hidden sm:block) */}
+        <div className="hidden sm:block w-full overflow-x-hidden">
           <table className="w-full text-left border-collapse table-fixed">
             <thead>
               <tr className="bg-slate-100/90 border-b border-slate-200 text-[10px] font-black text-slate-700 uppercase tracking-tight">
