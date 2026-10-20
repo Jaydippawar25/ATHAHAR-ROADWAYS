@@ -420,9 +420,12 @@ export const Expenses = () => {
   return (
     <div className="space-y-5 text-slate-800 max-w-full">
       {/* PAGE HEADER */}
-      <div className="bg-gradient-to-r from-[#0d2358] via-[#102d73] to-[#163a94] rounded-2xl p-6 text-white shadow-lg border border-blue-900/40 flex flex-col md:flex-row md:items-center justify-between gap-4 relative overflow-hidden">
+      <div className="bg-gradient-to-r from-[#07182e] via-[#0b2545] to-[#133e87] rounded-3xl p-6 text-white shadow-xl border border-blue-900/40 flex flex-col md:flex-row md:items-center justify-between gap-4 relative overflow-hidden">
+        <div className="h-1 highway-accent-line absolute top-0 left-0 right-0" />
+        <div className="absolute right-0 top-0 w-80 h-80 bg-orange-500/15 rounded-full blur-3xl pointer-events-none" />
+
         <div className="space-y-1.5 z-10">
-          <div className="flex items-center space-x-2 text-[10px] font-black tracking-widest uppercase text-blue-200">
+          <div className="flex items-center space-x-2 text-[10px] font-black tracking-widest uppercase text-orange-400">
             <span className="bg-white/10 px-2.5 py-0.5 rounded-full border border-white/20 flex items-center">
               OPERATIONAL EXPENSES
             </span>
@@ -430,7 +433,7 @@ export const Expenses = () => {
           </div>
 
           <h2 className="text-2xl sm:text-3xl font-black tracking-tight flex items-center space-x-2.5 text-white">
-            <Receipt className="w-7 h-7 text-sky-400" />
+            <Receipt className="w-7 h-7 text-orange-400" />
             <span>Operating Expense Management</span>
           </h2>
 
@@ -469,9 +472,9 @@ export const Expenses = () => {
           )}
           <button
             onClick={handleOpenCreateModal}
-            className="flex items-center space-x-1.5 px-4 py-2 bg-white text-[#0d2358] hover:bg-slate-100 font-black rounded-xl text-xs shadow-md transition-all active:scale-95 cursor-pointer"
+            className="flex items-center space-x-1.5 px-4 py-2 bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-400 text-white font-black rounded-xl text-xs shadow-lg shadow-orange-500/25 transition-all active:scale-95 cursor-pointer"
           >
-            <Plus className="w-4 h-4 text-[#0d2358]" />
+            <Plus className="w-4 h-4 text-white" />
             <span>+ Add Expense</span>
           </button>
         </div>

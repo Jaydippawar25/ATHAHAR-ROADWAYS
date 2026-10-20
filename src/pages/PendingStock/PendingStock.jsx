@@ -165,9 +165,12 @@ export const PendingStock = () => {
   return (
     <div className="space-y-5">
       {/* Top Banner with Godown Inventory metrics & Quick Actions */}
-      <div className="bg-gradient-to-r from-[#0d2358] via-[#102d73] to-[#163a94] rounded-2xl p-6 text-white shadow-lg border border-blue-900/40 flex flex-col md:flex-row md:items-center justify-between gap-4 relative overflow-hidden">
+      <div className="bg-gradient-to-r from-[#07182e] via-[#0b2545] to-[#133e87] rounded-3xl p-6 text-white shadow-xl border border-blue-900/40 flex flex-col md:flex-row md:items-center justify-between gap-4 relative overflow-hidden">
+        <div className="h-1 highway-accent-line absolute top-0 left-0 right-0" />
+        <div className="absolute right-0 top-0 w-80 h-80 bg-orange-500/15 rounded-full blur-3xl pointer-events-none" />
+
         <div className="space-y-1.5 z-10">
-          <div className="flex items-center space-x-2 text-[10px] font-black tracking-widest uppercase text-blue-200">
+          <div className="flex items-center space-x-2 text-[10px] font-black tracking-widest uppercase text-orange-400">
             <span className="bg-white/10 px-2.5 py-0.5 rounded-full border border-white/20">
               GODOWN INVENTORY
             </span>
@@ -175,7 +178,7 @@ export const PendingStock = () => {
           </div>
 
           <h2 className="text-2xl sm:text-3xl font-black tracking-tight flex items-center space-x-2.5 text-white">
-            <PackageCheck className="w-7 h-7 text-sky-400" />
+            <PackageCheck className="w-7 h-7 text-orange-400" />
             <span>Pending Stock Register</span>
           </h2>
 
@@ -188,7 +191,7 @@ export const PendingStock = () => {
           {selectedIds.length > 0 ? (
             <button
               onClick={handleProceedToOutward}
-              className="inline-flex items-center space-x-2 bg-amber-400 hover:bg-amber-300 text-slate-950 font-black px-5 py-3 rounded-xl text-xs shadow-md transition-all active:scale-[0.98]"
+              className="inline-flex items-center space-x-2 bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-400 text-white font-black px-5 py-3 rounded-xl text-xs shadow-lg shadow-orange-500/30 transition-all active:scale-[0.98]"
             >
               <ArrowUpRight className="w-4 h-4" />
               <span>Process Outward ({selectedIds.length} LRs Selected)</span>
@@ -202,7 +205,7 @@ export const PendingStock = () => {
               }}
               className="inline-flex items-center space-x-2 bg-white/10 hover:bg-white/20 text-white font-bold px-4 py-2.5 rounded-xl text-xs border border-white/20 transition-all"
             >
-              <ArrowUpRight className="w-4 h-4" />
+              <ArrowUpRight className="w-4 h-4 text-orange-400" />
               <span>Create Outward Dispatch</span>
             </button>
           )}
@@ -211,12 +214,12 @@ export const PendingStock = () => {
 
       {/* Summary KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5">
-        <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-2xs">
+        <div className="bg-white p-4 rounded-2xl border border-slate-200/90 border-t-4 border-t-orange-500 shadow-xs">
           <span className="text-[10.5px] font-black uppercase text-slate-400 tracking-wider block mb-1">
             Pending LRs
           </span>
           <div className="flex items-baseline space-x-1.5">
-            <span className="text-2xl font-black text-blue-700">{pendingStock.length}</span>
+            <span className="text-2xl font-black text-orange-600">{pendingStock.length}</span>
             <span className="text-xs font-semibold text-slate-400">LRs</span>
           </div>
           <span className="text-[11px] text-slate-500 font-semibold mt-1 block">
@@ -224,31 +227,31 @@ export const PendingStock = () => {
           </span>
         </div>
 
-        <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-2xs">
+        <div className="bg-white p-4 rounded-2xl border border-slate-200/90 border-t-4 border-t-amber-500 shadow-xs">
           <span className="text-[10.5px] font-black uppercase text-slate-400 tracking-wider block mb-1">
             To Pay Freight
           </span>
           <div className="flex items-baseline space-x-1">
-            <span className="text-2xl font-black text-rose-600">{formatCurrency(totalToPay)}</span>
+            <span className="text-2xl font-black text-amber-700">{formatCurrency(totalToPay)}</span>
           </div>
-          <span className="text-[11px] text-rose-700 font-bold mt-1 block">
+          <span className="text-[11px] text-amber-800 font-bold mt-1 block">
             Awaiting Collection
           </span>
         </div>
 
-        <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-2xs">
+        <div className="bg-white p-4 rounded-2xl border border-slate-200/90 border-t-4 border-t-[#0b2545] shadow-xs">
           <span className="text-[10.5px] font-black uppercase text-slate-400 tracking-wider block mb-1">
             T.B.B. Freight
           </span>
           <div className="flex items-baseline space-x-1">
-            <span className="text-2xl font-black text-indigo-700">{formatCurrency(totalTbb)}</span>
+            <span className="text-2xl font-black text-[#0b2545]">{formatCurrency(totalTbb)}</span>
           </div>
-          <span className="text-[11px] text-indigo-700 font-bold mt-1 block">
+          <span className="text-[11px] text-[#0b2545] font-bold mt-1 block">
             To Be Billed
           </span>
         </div>
 
-        <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-2xs">
+        <div className="bg-white p-4 rounded-2xl border border-slate-200/90 border-t-4 border-t-emerald-500 shadow-xs">
           <span className="text-[10.5px] font-black uppercase text-slate-400 tracking-wider block mb-1">
             Paid Freight
           </span>

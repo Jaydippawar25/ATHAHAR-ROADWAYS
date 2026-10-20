@@ -432,14 +432,15 @@ export const CrossOutwardCreate = () => {
 
   return (
     <div className="space-y-5 text-slate-800 max-w-full">
-      {/* ROYAL NAVY HERO BANNER */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#0d2358] via-[#102d73] to-[#163a94] p-5 sm:p-6 text-white shadow-lg border border-blue-900/40">
-        <div className="absolute -top-16 -right-16 w-56 h-56 bg-sky-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-16 -left-16 w-56 h-56 bg-blue-400/10 rounded-full blur-3xl pointer-events-none" />
+      {/* ROYAL NAVY & ORANGE HERO BANNER */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#07182e] via-[#0b2545] to-[#133e87] p-5 sm:p-6 text-white shadow-xl border border-blue-900/40">
+        <div className="h-1 highway-accent-line absolute top-0 left-0 right-0" />
+        <div className="absolute -top-16 -right-16 w-56 h-56 bg-orange-500/15 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-16 -left-16 w-56 h-56 bg-sky-500/10 rounded-full blur-3xl pointer-events-none" />
 
         <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <div className="flex items-center space-x-2 text-[10px] font-extrabold tracking-widest uppercase text-sky-300">
+            <div className="flex items-center space-x-2 text-[10px] font-extrabold tracking-widest uppercase text-orange-400">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
               <span>DIRECT CROSS-DOCK DISPATCH (MANUAL DISPATCH)</span>
               <span className="text-blue-200/50">•</span>
@@ -448,7 +449,7 @@ export const CrossOutwardCreate = () => {
             <h1 className="text-2xl sm:text-3xl font-black tracking-tight mt-1">
               {editingOutwardId ? `Update Cross Stock-Out #${headerData.outwardNo}` : 'Manual Cross Stock-Out'}
             </h1>
-            <p className="text-xs text-blue-100/80 mt-1 max-w-xl">
+            <p className="text-xs text-blue-100/80 mt-1 max-w-xl font-medium">
               Manual direct dispatch terminal independent of Godown Pending Stock or Inward batches.
             </p>
           </div>
@@ -459,7 +460,7 @@ export const CrossOutwardCreate = () => {
               onClick={() => navigate('/all-entries', { state: { tab: 'cross_outward_headers' } })}
               className="px-4 py-2.5 bg-white/10 hover:bg-white/20 active:bg-white/30 text-white rounded-xl text-xs font-bold transition-all border border-white/20 flex items-center space-x-2 shadow-xs cursor-pointer"
             >
-              <Layers className="w-4 h-4 text-sky-300" />
+              <Layers className="w-4 h-4 text-orange-400" />
               <span>Show All Cross Stock-Out</span>
             </button>
           </div>
@@ -1033,7 +1034,7 @@ export const CrossOutwardCreate = () => {
           <button
             type="button"
             onClick={handleSaveCrossOutward}
-            className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-xl shadow-xs flex items-center space-x-1.5 cursor-pointer transition-all"
+            className="px-5 py-2.5 bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-400 text-white font-black text-xs rounded-xl shadow-lg shadow-orange-500/25 flex items-center space-x-1.5 cursor-pointer transition-all active:scale-[0.98]"
           >
             <Save className="w-4 h-4" />
             <span>{editingOutwardId ? 'Update Stock-Out' : 'Save Stock-Out'}</span>

@@ -498,14 +498,15 @@ export const InwardCreate = () => {
 
   return (
     <div className="space-y-5 text-slate-800 max-w-full">
-      {/* ROYAL NAVY HERO BANNER */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#0d2358] via-[#102d73] to-[#163a94] p-5 sm:p-6 text-white shadow-lg border border-blue-900/40">
-        <div className="absolute -top-16 -right-16 w-56 h-56 bg-sky-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-16 -left-16 w-56 h-56 bg-blue-400/10 rounded-full blur-3xl pointer-events-none" />
+      {/* ROYAL NAVY & ORANGE HERO BANNER */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#07182e] via-[#0b2545] to-[#133e87] p-5 sm:p-6 text-white shadow-xl border border-blue-900/40">
+        <div className="h-1 highway-accent-line absolute top-0 left-0 right-0" />
+        <div className="absolute -top-16 -right-16 w-56 h-56 bg-orange-500/15 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-16 -left-16 w-56 h-56 bg-sky-500/10 rounded-full blur-3xl pointer-events-none" />
 
         <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <div className="flex items-center space-x-2 text-[10px] font-extrabold tracking-widest uppercase text-sky-300">
+            <div className="flex items-center space-x-2 text-[10px] font-extrabold tracking-widest uppercase text-orange-400">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
               <span>GATE-01 INWARD MANIFEST DOCK</span>
               <span className="text-blue-200/50">•</span>
@@ -516,7 +517,7 @@ export const InwardCreate = () => {
             <h1 className="text-2xl sm:text-3xl font-black tracking-tight mt-1">
               {editingInwardId ? `Update Inward Entry #${headerData.inwardNo}` : 'New Inward Consignment'}
             </h1>
-            <p className="text-xs text-blue-100/80 mt-1 max-w-xl">
+            <p className="text-xs text-blue-100/80 mt-1 max-w-xl font-medium">
               Log incoming linehaul truckload, attach physical memo numbers, and register individual LR items into godown stock.
             </p>
           </div>
@@ -527,7 +528,7 @@ export const InwardCreate = () => {
               onClick={() => navigate('/all-entries', { state: { tab: 'inward_headers' } })}
               className="px-4 py-2.5 bg-white/10 hover:bg-white/20 active:bg-white/30 text-white rounded-xl text-xs font-bold transition-all border border-white/20 flex items-center space-x-2 shadow-xs cursor-pointer"
             >
-              <Layers className="w-4 h-4 text-sky-300" />
+              <Layers className="w-4 h-4 text-orange-400" />
               <span>Show All Inward</span>
             </button>
           </div>
@@ -995,7 +996,7 @@ export const InwardCreate = () => {
 
         <div className="overflow-x-auto min-h-[200px] max-h-[380px]">
           <table className="w-full text-left border-collapse">
-            <thead className="bg-[#0d2358] text-white sticky top-0 z-10">
+            <thead className="bg-[#0b2545] text-white sticky top-0 z-10 border-b-2 border-orange-500">
               <tr className="text-[10px] font-extrabold uppercase tracking-wider">
                 <th className="py-2.5 px-3 border-r border-blue-900/60 w-12 text-center">SR</th>
                 <th className="py-2.5 px-3 border-r border-blue-900/60">LR NO.</th>
@@ -1109,7 +1110,7 @@ export const InwardCreate = () => {
           <button
             type="button"
             onClick={() => handleFinalSubmit(false)}
-            className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-xl shadow-xs flex items-center space-x-1.5 cursor-pointer transition-all"
+            className="px-5 py-2.5 bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-400 text-white font-black text-xs rounded-xl shadow-lg shadow-orange-500/25 flex items-center space-x-1.5 cursor-pointer transition-all active:scale-[0.98]"
           >
             <Save className="w-4 h-4" />
             <span>{editingInwardId ? 'Update Inward' : 'Save & Post to Stock'}</span>
@@ -1118,9 +1119,9 @@ export const InwardCreate = () => {
           <button
             type="button"
             onClick={() => handleFinalSubmit(true)}
-            className="px-5 py-2.5 bg-[#1d4ed8] hover:bg-blue-700 text-white font-extrabold text-xs rounded-xl shadow-xs flex items-center space-x-1.5 cursor-pointer transition-all"
+            className="px-5 py-2.5 bg-[#0b2545] hover:bg-[#133e87] text-white font-extrabold text-xs rounded-xl shadow-xs flex items-center space-x-1.5 cursor-pointer transition-all active:scale-[0.98]"
           >
-            <Printer className="w-4 h-4" />
+            <Printer className="w-4 h-4 text-orange-400" />
             <span>Save &amp; Print Manifest</span>
           </button>
         </div>

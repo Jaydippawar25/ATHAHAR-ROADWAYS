@@ -405,11 +405,14 @@ export const Accounting = () => {
   return (
     <div className="space-y-6 text-slate-800 max-w-full">
       {/* Top Header Banner */}
-      <div className="bg-gradient-to-r from-[#0d2358] via-[#102d73] to-[#163a94] rounded-2xl p-6 text-white shadow-lg border border-blue-900/40 flex flex-col md:flex-row md:items-center justify-between gap-4 relative overflow-hidden">
+      <div className="bg-gradient-to-r from-[#07182e] via-[#0b2545] to-[#133e87] rounded-3xl p-6 text-white shadow-xl border border-blue-900/40 flex flex-col md:flex-row md:items-center justify-between gap-4 relative overflow-hidden">
+        <div className="h-1 highway-accent-line absolute top-0 left-0 right-0" />
+        <div className="absolute right-0 top-0 w-80 h-80 bg-orange-500/15 rounded-full blur-3xl pointer-events-none" />
+
         <div className="space-y-1.5 z-10">
-          <div className="flex items-center space-x-2 text-[10px] font-black tracking-widest uppercase text-blue-200">
+          <div className="flex items-center space-x-2 text-[10px] font-black tracking-widest uppercase text-orange-400">
             <span className="bg-white/10 px-2.5 py-0.5 rounded-full border border-white/20 flex items-center">
-              <Calculator className="w-3.5 h-3.5 mr-1 text-sky-300" />
+              <Calculator className="w-3.5 h-3.5 mr-1 text-orange-400" />
               TRANSPORT FREIGHT ACCOUNTING
             </span>
             <span>&bull; ATHAHAR ROADWAYS SANGLI</span>
@@ -426,7 +429,7 @@ export const Accounting = () => {
 
         {/* Commission Rate Configurator Pill */}
         <div className="bg-white/10 border border-white/20 px-4 py-2.5 rounded-xl flex items-center space-x-3 self-start md:self-auto shadow-sm backdrop-blur-xs z-10">
-          <div className="p-2 bg-amber-400 text-slate-950 rounded-lg font-black shadow-xs">
+          <div className="p-2 bg-gradient-to-r from-orange-600 to-orange-500 text-white rounded-lg font-black shadow-xs">
             <Percent className="w-4 h-4" />
           </div>
           <div>

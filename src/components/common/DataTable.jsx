@@ -298,7 +298,7 @@ export const DataTable = ({
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder={searchPlaceholder}
-              className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition-all shadow-inner"
+              className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all shadow-inner"
             />
           </div>
         )}
@@ -331,7 +331,7 @@ export const DataTable = ({
       {/* Table Container */}
       <div className="w-full overflow-x-auto">
         <table className={`w-full text-slate-800 border-collapse table-${tableLayout}`}>
-          <thead className="bg-[#f8fafc] text-slate-500 uppercase font-black text-[10px] tracking-wider border-b border-slate-200">
+          <thead className="bg-slate-100/90 text-[#0b2545] uppercase font-black text-[10px] tracking-wider border-b-2 border-slate-200">
             <tr>
               {selectable && (
                 <th className="p-3 w-8 text-center">
@@ -342,7 +342,7 @@ export const DataTable = ({
                       if (input) input.indeterminate = isSomeSelected;
                     }}
                     onChange={handleSelectAllChange}
-                    className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                    className="rounded border-slate-300 text-orange-600 focus:ring-orange-500 cursor-pointer"
                   />
                 </th>
               )}
@@ -389,8 +389,8 @@ export const DataTable = ({
                 return (
                   <tr
                     key={row.id || rowIdx}
-                    className={`hover:bg-slate-50/80 transition-colors ${
-                      isRowSelected ? 'bg-blue-50/40' : rowIdx % 2 === 1 ? 'bg-slate-50/30' : 'bg-white'
+                    className={`hover:bg-orange-50/40 transition-colors ${
+                      isRowSelected ? 'bg-orange-50/70' : rowIdx % 2 === 1 ? 'bg-slate-50/30' : 'bg-white'
                     }`}
                   >
                     {selectable && (

@@ -82,4 +82,37 @@ input[type="number"] {
   appearance: textfield !important;
 }
 
+/* ATHAHAR ROADWAYS Theme Utilities */
+.bg-brand-navy-gradient {
+  background: linear-gradient(135deg, #07182e 0%, #0b2545 55%, #133e87 100%);
+}
+
+.bg-brand-orange-gradient {
+  background: linear-gradient(135deg, #ea580c 0%, #f97316 100%);
+}
+
+.bg-brand-orange-gradient-hover {
+  background: linear-gradient(135deg, #c2410c 0%, #ea580c 100%);
+}
+
+.highway-accent-line {
+  background: linear-gradient(90deg, #ea580c 0%, #f97316 40%, #fbbf24 70%, transparent 100%);
+}
+
+.glow-orange {
+  box-shadow: 0 4px 18px -2px rgba(234, 88, 12, 0.35);
+}
+
+.glow-navy {
+  box-shadow: 0 10px 25px -4px rgba(11, 37, 69, 0.3);
+}
+
+.glass-pill {
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+
 

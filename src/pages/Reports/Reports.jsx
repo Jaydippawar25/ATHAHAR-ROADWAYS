@@ -121,14 +121,15 @@ export const Reports = () => {
 
   return (
     <div className="space-y-6">
-      {/* ROYAL NAVY HERO BANNER */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#0d2358] via-[#102d73] to-[#163a94] p-6 text-white shadow-lg border border-blue-900/40">
-        <div className="absolute -top-16 -right-16 w-56 h-56 bg-sky-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-16 -left-16 w-56 h-56 bg-blue-400/10 rounded-full blur-3xl pointer-events-none" />
+      {/* ROYAL NAVY & ORANGE HERO BANNER */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#07182e] via-[#0b2545] to-[#133e87] p-6 text-white shadow-xl border border-blue-900/40">
+        <div className="h-1 highway-accent-line absolute top-0 left-0 right-0" />
+        <div className="absolute -top-16 -right-16 w-56 h-56 bg-orange-500/15 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-16 -left-16 w-56 h-56 bg-sky-500/10 rounded-full blur-3xl pointer-events-none" />
 
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <div className="flex items-center space-x-2 text-[10px] font-extrabold tracking-widest uppercase text-sky-300">
+            <div className="flex items-center space-x-2 text-[10px] font-extrabold tracking-widest uppercase text-orange-400">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
               <span>ANALYTICS & AUDIT HUB</span>
               <span className="text-blue-200/50">•</span>
@@ -137,7 +138,7 @@ export const Reports = () => {
             <h1 className="text-2xl sm:text-3xl font-black tracking-tight mt-1">
               Transport Performance Reports
             </h1>
-            <p className="text-xs text-blue-100/80 mt-1 max-w-xl">
+            <p className="text-xs text-blue-100/80 mt-1 max-w-xl font-medium">
               Inspect historical LR movements, reconcile pending freight receivables, and export detailed spreadsheets.
             </p>
           </div>
@@ -148,7 +149,7 @@ export const Reports = () => {
               onClick={() => setReportType('inward')}
               className={`px-3.5 py-1.5 rounded-lg transition-all cursor-pointer ${
                 reportType === 'inward'
-                  ? 'bg-white text-[#0d2358] shadow-md font-black'
+                  ? 'bg-white text-[#0b2545] shadow-md font-black'
                   : 'text-white/80 hover:text-white hover:bg-white/10'
               }`}
             >
@@ -158,7 +159,7 @@ export const Reports = () => {
               onClick={() => setReportType('pending')}
               className={`px-3.5 py-1.5 rounded-lg transition-all cursor-pointer ${
                 reportType === 'pending'
-                  ? 'bg-amber-400 text-slate-950 shadow-md font-black'
+                  ? 'bg-gradient-to-r from-orange-600 to-orange-500 text-white shadow-md font-black'
                   : 'text-white/80 hover:text-white hover:bg-white/10'
               }`}
             >
@@ -168,7 +169,7 @@ export const Reports = () => {
               onClick={() => setReportType('delivered')}
               className={`px-3.5 py-1.5 rounded-lg transition-all cursor-pointer ${
                 reportType === 'delivered'
-                  ? 'bg-emerald-400 text-slate-950 shadow-md font-black'
+                  ? 'bg-emerald-500 text-white shadow-md font-black'
                   : 'text-white/80 hover:text-white hover:bg-white/10'
               }`}
             >

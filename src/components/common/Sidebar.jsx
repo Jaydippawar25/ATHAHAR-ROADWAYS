@@ -49,14 +49,16 @@ export const Sidebar = () => {
       {/* Mobile Header Bar */}
       <div className="lg:hidden bg-white text-slate-800 p-4 flex items-center justify-between border-b border-slate-200 sticky top-0 z-50 shadow-xs">
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 p-1 flex items-center justify-center shadow-xs flex-shrink-0 overflow-hidden">
+          <div className="w-10 h-10 rounded-xl bg-white border border-orange-200/80 p-1 flex items-center justify-center shadow-xs flex-shrink-0 overflow-hidden ring-1 ring-orange-500/20">
             <img src="/logo.png" alt="ATHAHAR ROADWAYS" className="w-full h-full object-contain" />
           </div>
           <div>
             <h1 className="text-sm font-black text-slate-900 leading-tight tracking-wide uppercase">
               ATHAHAR ROADWAYS
             </h1>
-            <p className="text-[10px] text-[#0284c7] font-bold uppercase tracking-wider">SANGLI - 416416</p>
+            <p className="text-[10px] text-orange-600 font-extrabold uppercase tracking-wider">
+              SAFE &bull; ON TIME &bull; ALWAYS
+            </p>
           </div>
         </div>
         <button
@@ -84,15 +86,17 @@ export const Sidebar = () => {
         {/* Top Branding Section */}
         <div className="p-4 border-b border-slate-100">
           <div className="flex items-center space-x-3">
-            <div className="w-11 h-11 rounded-xl bg-white border border-slate-200 p-1 flex items-center justify-center shadow-xs flex-shrink-0 overflow-hidden">
+            <div className="w-11 h-11 rounded-xl bg-white border border-orange-200/80 p-1 flex items-center justify-center shadow-xs flex-shrink-0 overflow-hidden ring-2 ring-orange-500/15">
               <img src="/logo.png" alt="ATHAHAR ROADWAYS" className="w-full h-full object-contain" />
             </div>
             <div className="min-w-0">
-              <h1 className="text-sm font-black tracking-tight text-slate-900 leading-none uppercase truncate">
+              <h1 className="text-sm font-black tracking-tight text-[#0b2545] leading-none uppercase truncate">
                 ATHAHAR ROADWAYS
               </h1>
-              <p className="text-[11px] text-[#0284c7] font-bold tracking-wider uppercase mt-1">
-                SANGLI - 416416
+              <p className="text-[10px] text-orange-600 font-extrabold tracking-wider uppercase mt-1 flex items-center">
+                <span>SANGLI</span>
+                <span className="mx-1 text-slate-300">&bull;</span>
+                <span className="text-[9px] text-slate-500">416416</span>
               </p>
             </div>
           </div>
@@ -100,8 +104,9 @@ export const Sidebar = () => {
 
         {/* Navigation Items List */}
         <div className="flex-1 py-4 px-3 space-y-1 overflow-y-auto no-scrollbar">
-          <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-3 mb-2.5">
-            Management
+          <div className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest px-3 mb-2.5 flex items-center justify-between">
+            <span>Management</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-orange-500"></span>
           </div>
           {navItems.map((item) => {
             const Icon = item.icon;
@@ -113,8 +118,8 @@ export const Sidebar = () => {
                 className={({ isActive }) =>
                   `flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all group ${
                     isActive
-                      ? 'bg-[#1d4ed8] text-white shadow-sm shadow-blue-600/20'
-                      : 'text-slate-600 hover:bg-slate-100/80 hover:text-slate-900'
+                      ? 'bg-[#0b2545] text-white shadow-md shadow-navy-950/20 border-l-4 border-orange-500 font-bold'
+                      : 'text-slate-600 hover:bg-orange-50/60 hover:text-orange-950'
                   }`
                 }
               >
@@ -124,7 +129,7 @@ export const Sidebar = () => {
                 </div>
 
                 {item.badge && (
-                  <span className="bg-[#e0f2fe] text-[#0369a1] font-black text-[11px] px-2 py-0.5 rounded-full">
+                  <span className="bg-gradient-to-r from-orange-600 to-orange-500 text-white font-black text-[10px] px-2 py-0.5 rounded-full shadow-xs">
                     {item.badge}
                   </span>
                 )}
@@ -138,8 +143,8 @@ export const Sidebar = () => {
           <div className="p-3.5 border-t border-slate-100 bg-slate-50/70">
             <div className="flex items-center justify-between p-2 rounded-xl bg-white border border-slate-200/80 shadow-2xs">
               <div className="flex items-center space-x-2.5 truncate">
-                <div className="w-8 h-8 rounded-full bg-[#0f172a] text-white flex items-center justify-center font-bold text-xs flex-shrink-0">
-                  <User className="w-4 h-4" />
+                <div className="w-8 h-8 rounded-full bg-[#0b2545] text-white flex items-center justify-center font-bold text-xs flex-shrink-0 ring-1 ring-orange-500/40">
+                  <User className="w-4 h-4 text-orange-400" />
                 </div>
                 <div className="truncate">
                   <p className="text-xs font-black text-slate-900 leading-tight truncate">

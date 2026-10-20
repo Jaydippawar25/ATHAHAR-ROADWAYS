@@ -781,9 +781,12 @@ export const AllEntries = () => {
   return (
     <div className="space-y-5 text-slate-800 max-w-full">
       {/* Top Banner with Logistics Registry details */}
-      <div className="bg-gradient-to-r from-[#0d2358] via-[#102d73] to-[#163a94] rounded-2xl p-6 text-white shadow-lg border border-blue-900/40 flex flex-col md:flex-row md:items-center justify-between gap-4 relative overflow-hidden">
+      <div className="bg-gradient-to-r from-[#07182e] via-[#0b2545] to-[#133e87] rounded-3xl p-6 text-white shadow-xl border border-blue-900/40 flex flex-col md:flex-row md:items-center justify-between gap-4 relative overflow-hidden">
+        <div className="h-1 highway-accent-line absolute top-0 left-0 right-0" />
+        <div className="absolute right-0 top-0 w-80 h-80 bg-orange-500/15 rounded-full blur-3xl pointer-events-none" />
+
         <div className="space-y-1.5 z-10">
-          <div className="flex items-center space-x-2 text-[10px] font-black tracking-widest uppercase text-blue-200">
+          <div className="flex items-center space-x-2 text-[10px] font-black tracking-widest uppercase text-orange-400">
             <span className="bg-white/10 px-2.5 py-0.5 rounded-full border border-white/20">
               CENTRAL LOGISTICS REGISTRY
             </span>
@@ -791,7 +794,7 @@ export const AllEntries = () => {
           </div>
 
           <h2 className="text-2xl sm:text-3xl font-black tracking-tight flex items-center space-x-2.5 text-white">
-            <ArrowLeftRight className="w-7 h-7 text-sky-400" />
+            <ArrowLeftRight className="w-7 h-7 text-orange-400" />
             <span>All Inward &amp; Outward Entries</span>
           </h2>
 
@@ -803,13 +806,13 @@ export const AllEntries = () => {
         <div className="flex items-center space-x-2.5 flex-shrink-0 z-10">
           <button
             onClick={() => navigate('/inward/new')}
-            className="inline-flex items-center space-x-1.5 bg-white text-[#0d2358] hover:bg-slate-100 font-bold px-4 py-2.5 rounded-xl text-xs shadow-sm transition-all"
+            className="inline-flex items-center space-x-1.5 bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-400 text-white font-black px-4 py-2.5 rounded-xl text-xs shadow-lg shadow-orange-500/25 transition-all active:scale-[0.98] cursor-pointer"
           >
             <span>+ New Inward</span>
           </button>
           <button
             onClick={() => navigate('/outward/new')}
-            className="inline-flex items-center space-x-1.5 bg-[#0284c7] hover:bg-[#0369a1] text-white font-bold px-4 py-2.5 rounded-xl text-xs shadow-sm transition-all"
+            className="inline-flex items-center space-x-1.5 bg-white/10 hover:bg-white/20 border border-white/20 text-white font-bold px-4 py-2.5 rounded-xl text-xs transition-all active:scale-[0.98] cursor-pointer"
           >
             <span>+ New Outward</span>
           </button>

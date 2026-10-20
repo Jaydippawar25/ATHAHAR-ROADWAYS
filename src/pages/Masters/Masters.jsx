@@ -68,14 +68,15 @@ export const Masters = () => {
 
   return (
     <div className="space-y-6">
-      {/* ROYAL NAVY HERO BANNER */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#0d2358] via-[#102d73] to-[#163a94] p-6 text-white shadow-lg border border-blue-900/40">
-        <div className="absolute -top-16 -right-16 w-56 h-56 bg-sky-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-16 -left-16 w-56 h-56 bg-blue-400/10 rounded-full blur-3xl pointer-events-none" />
+      {/* ROYAL NAVY & ORANGE HERO BANNER */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#07182e] via-[#0b2545] to-[#133e87] p-6 text-white shadow-xl border border-blue-900/40">
+        <div className="h-1 highway-accent-line absolute top-0 left-0 right-0" />
+        <div className="absolute -top-16 -right-16 w-56 h-56 bg-orange-500/15 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-16 -left-16 w-56 h-56 bg-sky-500/10 rounded-full blur-3xl pointer-events-none" />
 
         <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <div className="flex items-center space-x-2 text-[10px] font-extrabold tracking-widest uppercase text-sky-300">
+            <div className="flex items-center space-x-2 text-[10px] font-extrabold tracking-widest uppercase text-orange-400">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
               <span>CENTRAL MASTER DIRECTORY</span>
               <span className="text-blue-200/50">•</span>
@@ -84,7 +85,7 @@ export const Masters = () => {
             <h1 className="text-2xl sm:text-3xl font-black tracking-tight mt-1">
               Master Data Management
             </h1>
-            <p className="text-xs text-blue-100/80 mt-1 max-w-xl">
+            <p className="text-xs text-blue-100/80 mt-1 max-w-xl font-medium">
               Maintain standardized database of transporters, fleet vehicles, drivers, consignors, consignees, and delivery routes.
             </p>
           </div>
@@ -95,9 +96,9 @@ export const Masters = () => {
                 setFormData({});
                 setIsModalOpen(true);
               }}
-              className="px-5 py-2.5 bg-white text-[#0d2358] hover:bg-blue-50 active:bg-blue-100 rounded-xl text-xs font-black shadow-md transition-all flex items-center space-x-1.5 cursor-pointer"
+              className="px-5 py-2.5 bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-400 text-white rounded-xl text-xs font-black shadow-lg shadow-orange-500/25 transition-all flex items-center space-x-1.5 cursor-pointer active:scale-95"
             >
-              <Plus className="w-4 h-4 text-[#1d4ed8]" />
+              <Plus className="w-4 h-4 text-white" />
               <span>Add New {activeCategoryObj.label.replace(/s$/, '')}</span>
             </button>
           </div>
@@ -119,20 +120,20 @@ export const Masters = () => {
               }}
               className={`p-4 rounded-2xl border text-left flex items-center space-x-3.5 transition-all cursor-pointer ${
                 isActive
-                  ? 'bg-[#1d4ed8] border-[#1d4ed8] text-white shadow-md'
-                  : 'bg-white border-slate-200 text-slate-700 hover:border-blue-300 hover:bg-blue-50/40 shadow-2xs'
+                  ? 'bg-[#0b2545] border-[#0b2545] text-white shadow-lg border-b-4 border-b-orange-500'
+                  : 'bg-white border-slate-200 text-slate-700 hover:border-orange-300 hover:bg-orange-50/30 shadow-2xs'
               }`}
             >
               <div
                 className={`p-2.5 rounded-xl flex items-center justify-center ${
-                  isActive ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'
+                  isActive ? 'bg-orange-500 text-white shadow-xs' : 'bg-slate-100 text-slate-600'
                 }`}
               >
                 <Icon className="w-5 h-5" />
               </div>
               <div className="min-w-0">
                 <div className="text-xs font-black tracking-tight truncate">{type.label}</div>
-                <div className={`text-[11px] font-bold ${isActive ? 'text-blue-100' : 'text-slate-400'}`}>
+                <div className={`text-[11px] font-bold ${isActive ? 'text-orange-200' : 'text-slate-400'}`}>
                   {count} Records
                 </div>
               </div>
@@ -146,7 +147,7 @@ export const Masters = () => {
         {/* Header toolbar with search */}
         <div className="p-4 bg-slate-50 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center space-x-2">
-            <span className="w-1.5 h-4 bg-[#1d4ed8] rounded-full" />
+            <span className="w-1.5 h-4 bg-orange-500 rounded-full" />
             <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-800">
               {activeCategoryObj.label} Directory ({filteredList.length} Entries)
             </h3>
@@ -159,14 +160,14 @@ export const Masters = () => {
               value={searchFilter}
               onChange={(e) => setSearchFilter(e.target.value)}
               placeholder={`Search ${activeCategoryObj.label}...`}
-              className="w-full pl-9 pr-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:border-[#1d4ed8] focus:ring-2 focus:ring-blue-100 transition-all"
+              className="w-full pl-9 pr-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100 transition-all"
             />
           </div>
         </div>
 
         <div className="overflow-x-auto px-4 pb-4">
           <table className="w-full text-left text-xs text-slate-700 border-collapse">
-            <thead className="bg-[#0d2358] text-white">
+            <thead className="bg-[#0b2545] text-white">
               <tr className="text-[10px] uppercase font-extrabold tracking-wider">
                 <th className="py-2.5 px-3 w-12 text-center rounded-l-xl">#</th>
                 <th className="py-2.5 px-3">Name / Identifier</th>

@@ -82,28 +82,36 @@ export const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-100/90 flex items-center justify-center p-4 sm:p-6 select-none font-sans">
+    <div className="min-h-screen bg-slate-100/90 flex items-center justify-center p-4 sm:p-6 select-none font-sans relative overflow-hidden">
+      {/* Background Decorative Ambient Blobs */}
+      <div className="absolute top-0 right-1/4 w-96 h-96 bg-orange-500/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-0 left-1/4 w-96 h-96 bg-[#0b2545]/15 rounded-full blur-3xl pointer-events-none" />
+
       {/* Main Login Card */}
-      <div className="bg-white rounded-3xl shadow-2xl overflow-hidden w-full max-w-4xl grid grid-cols-1 md:grid-cols-12 min-h-[520px] relative border border-slate-200">
+      <div className="bg-white rounded-3xl shadow-2xl overflow-hidden w-full max-w-4xl grid grid-cols-1 md:grid-cols-12 min-h-[540px] relative border border-slate-200 z-10">
         
         {/* Left Column — Sign In Form */}
         <div className="md:col-span-7 p-8 sm:p-12 flex flex-col justify-between bg-white z-10">
           <div>
-            <div className="flex items-center space-x-3 mb-4">
-              <div className="w-11 h-11 rounded-xl bg-white border border-slate-200 p-1 flex items-center justify-center shadow-xs overflow-hidden flex-shrink-0">
+            <div className="flex items-center space-x-3 mb-5">
+              <div className="w-12 h-12 rounded-2xl bg-white border border-orange-200 p-1 flex items-center justify-center shadow-xs overflow-hidden flex-shrink-0 ring-2 ring-orange-500/15">
                 <img src="/logo.png" alt="Logo" className="w-full h-full object-contain" />
               </div>
               <div>
-                <div className="flex items-center space-x-1.5 text-[10px] font-extrabold tracking-widest uppercase text-[#1d4ed8]">
+                <div className="flex items-center space-x-1.5 text-[10px] font-black tracking-widest uppercase text-orange-600">
                   <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                   <span>ENTERPRISE PORTAL</span>
                 </div>
-                <div className="text-xs font-bold text-slate-500">ATHAHAR ROADWAYS</div>
+                <div className="text-xs font-black text-[#0b2545] tracking-tight">ATHAHAR ROADWAYS</div>
               </div>
             </div>
-            <h2 className="text-3xl font-black text-slate-900 tracking-tight mb-6">
+
+            <h2 className="text-3xl font-black text-slate-900 tracking-tight mb-1">
               Sign In to Godown
             </h2>
+            <p className="text-xs text-slate-500 font-medium mb-6">
+              Safe &bull; On Time &bull; Always &mdash; Terminal Operating System
+            </p>
 
             {/* Error Notification */}
             {errorMsg && (
@@ -121,13 +129,13 @@ export const Login = () => {
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-5 max-w-sm">
+            <form onSubmit={handleSubmit} className="space-y-4 max-w-sm">
               {/* Username Input */}
               <div className="space-y-1.5">
                 <label className="block text-[11px] font-extrabold uppercase text-slate-600 tracking-wider">
-                  Email Address
+                  Operator Email
                 </label>
-                <div className="relative border border-slate-200 bg-slate-50/50 rounded-xl focus-within:border-[#1d4ed8] focus-within:bg-white focus-within:ring-2 focus-within:ring-blue-100 transition-all px-3 py-2.5 flex items-center space-x-2.5">
+                <div className="relative border border-slate-200 bg-slate-50/60 rounded-xl focus-within:border-orange-500 focus-within:bg-white focus-within:ring-2 focus-within:ring-orange-100 transition-all px-3 py-2.5 flex items-center space-x-2.5">
                   <User className="w-4 h-4 text-slate-400 flex-shrink-0" />
                   <input
                     type="email"
@@ -143,9 +151,9 @@ export const Login = () => {
               {/* Password Input */}
               <div className="space-y-1.5">
                 <label className="block text-[11px] font-extrabold uppercase text-slate-600 tracking-wider">
-                  Password
+                  Account Password
                 </label>
-                <div className="relative border border-slate-200 bg-slate-50/50 rounded-xl focus-within:border-[#1d4ed8] focus-within:bg-white focus-within:ring-2 focus-within:ring-blue-100 transition-all px-3 py-2.5 flex items-center space-x-2.5">
+                <div className="relative border border-slate-200 bg-slate-50/60 rounded-xl focus-within:border-orange-500 focus-within:bg-white focus-within:ring-2 focus-within:ring-orange-100 transition-all px-3 py-2.5 flex items-center space-x-2.5">
                   <Lock className="w-4 h-4 text-slate-400 flex-shrink-0" />
                   <input
                     type={showPassword ? 'text' : 'password'}
@@ -170,7 +178,7 @@ export const Login = () => {
               <button
                 type="submit"
                 disabled={isSubmitting || loading}
-                className="w-full mt-2 bg-[#1d4ed8] hover:bg-blue-700 active:bg-blue-800 disabled:opacity-70 text-white font-black py-3 px-6 rounded-xl text-xs shadow-md transition-all duration-200 cursor-pointer flex items-center justify-center space-x-2"
+                className="w-full mt-3 bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-400 active:scale-[0.99] disabled:opacity-70 text-white font-black py-3 px-6 rounded-xl text-xs shadow-lg shadow-orange-500/25 transition-all duration-200 cursor-pointer flex items-center justify-center space-x-2"
               >
                 {isSubmitting ? (
                   <>
@@ -178,7 +186,7 @@ export const Login = () => {
                     <span>Logging in...</span>
                   </>
                 ) : (
-                  <span>Login</span>
+                  <span>Login to Console</span>
                 )}
               </button>
 
@@ -189,7 +197,7 @@ export const Login = () => {
                     type="checkbox"
                     checked={remember}
                     onChange={(e) => setRemember(e.target.checked)}
-                    className="rounded border-slate-300 text-[#1d4ed8] focus:ring-[#1d4ed8] w-4 h-4 cursor-pointer"
+                    className="rounded border-slate-300 text-orange-600 focus:ring-orange-500 w-4 h-4 cursor-pointer"
                   />
                   <span className="text-[11px] font-bold text-slate-600">Keep me logged in</span>
                 </label>
@@ -198,7 +206,7 @@ export const Login = () => {
                   type="button"
                   onClick={handleForgotPassword}
                   disabled={isResetting}
-                  className="text-[#1d4ed8] hover:underline font-bold text-[11px] disabled:opacity-50 cursor-pointer"
+                  className="text-orange-600 hover:text-orange-700 hover:underline font-bold text-[11px] disabled:opacity-50 cursor-pointer"
                 >
                   {isResetting ? 'Sending...' : 'Forgot password?'}
                 </button>
@@ -207,37 +215,42 @@ export const Login = () => {
           </div>
 
           {/* Copyright Footer */}
-          <p className="text-[11px] text-slate-400 pt-8 font-normal">
+          <p className="text-[11px] text-slate-400 pt-6 font-normal">
             &copy; 2026 ATHAHAR ROADWAYS. Cloud Transport ERP.
           </p>
         </div>
 
         {/* Right Column — Brand Card */}
-        <div className="md:col-span-5 bg-gradient-to-br from-[#0d2358] via-[#102d73] to-[#163a94] text-white p-8 sm:p-10 flex flex-col items-center justify-center text-center relative overflow-hidden">
-          <div className="absolute -top-16 -right-16 w-48 h-48 bg-sky-400/10 rounded-full blur-2xl pointer-events-none" />
-          <div className="absolute -bottom-16 -left-16 w-48 h-48 bg-blue-300/10 rounded-full blur-2xl pointer-events-none" />
+        <div className="md:col-span-5 bg-gradient-to-br from-[#07182e] via-[#0b2545] to-[#133e87] text-white p-8 sm:p-10 flex flex-col items-center justify-center text-center relative overflow-hidden">
+          {/* Sweeping Highway Arc Ambience matching the logo road curve */}
+          <div className="absolute -top-16 -right-16 w-56 h-56 bg-orange-500/15 rounded-full blur-2xl pointer-events-none" />
+          <div className="absolute -bottom-16 -left-16 w-56 h-56 bg-sky-400/10 rounded-full blur-2xl pointer-events-none" />
+          <div className="h-1 highway-accent-line absolute top-0 left-0 right-0" />
 
           <div className="relative z-10 flex flex-col items-center space-y-4 max-w-xs">
             {/* Logo Badge */}
-            <div className="w-24 h-24 rounded-2xl bg-white p-2.5 flex items-center justify-center shadow-xl border border-white/40 overflow-hidden">
+            <div className="w-28 h-28 rounded-3xl bg-white p-3 flex items-center justify-center shadow-2xl border-2 border-white/50 overflow-hidden ring-4 ring-orange-500/20">
               <img src="/logo.png" alt="ATHAHAR ROADWAYS Logo" className="w-full h-full object-contain" />
             </div>
 
-            {/* Title */}
+            {/* Title & Motto */}
             <div>
               <h1 className="text-xl font-black tracking-tight text-white uppercase">
                 ATHAHAR ROADWAYS
               </h1>
-              <p className="text-[10px] font-extrabold tracking-widest text-sky-300 uppercase mt-0.5">
-                GODOWN MANAGEMENT SYSTEM
+              <p className="text-[10px] font-black tracking-widest text-orange-400 uppercase mt-1">
+                SAFE &bull; ON TIME &bull; ALWAYS
               </p>
+              <div className="inline-block mt-1.5 px-3 py-0.5 rounded-full bg-white/10 border border-white/15 text-[10px] font-bold text-blue-100">
+                Godown Management System
+              </div>
             </div>
 
             {/* Address */}
-            <div className="text-[11px] text-blue-100/80 font-medium leading-relaxed space-y-1 bg-white/5 backdrop-blur-sm p-4 rounded-xl border border-white/10 w-full">
+            <div className="text-[11px] text-blue-100/85 font-medium leading-relaxed space-y-1 bg-white/5 backdrop-blur-sm p-4 rounded-2xl border border-white/10 w-full shadow-inner">
               <p className="text-white font-bold">HQ &amp; Godown Hub 01</p>
               <p>Next to Parvati Crane, Vakhar Bhag, Sangli - 416416</p>
-              <p className="font-mono text-sky-300 pt-1 text-[10px]">
+              <p className="font-mono text-orange-300 pt-1 text-[10px] font-bold">
                 TEL: 9370229449 / 9850329449
               </p>
             </div>

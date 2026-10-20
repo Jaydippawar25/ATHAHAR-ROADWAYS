@@ -349,14 +349,15 @@ export const Settings = () => {
 
   return (
     <div className="space-y-6 text-slate-800">
-      {/* ROYAL NAVY HERO BANNER */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#0d2358] via-[#102d73] to-[#163a94] p-6 text-white shadow-lg border border-blue-900/40">
-        <div className="absolute -top-16 -right-16 w-56 h-56 bg-sky-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-16 -left-16 w-56 h-56 bg-blue-400/10 rounded-full blur-3xl pointer-events-none" />
+      {/* ROYAL NAVY & ORANGE HERO BANNER */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#07182e] via-[#0b2545] to-[#133e87] p-6 text-white shadow-xl border border-blue-900/40">
+        <div className="h-1 highway-accent-line absolute top-0 left-0 right-0" />
+        <div className="absolute -top-16 -right-16 w-56 h-56 bg-orange-500/15 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-16 -left-16 w-56 h-56 bg-sky-500/10 rounded-full blur-3xl pointer-events-none" />
 
         <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <div className="flex items-center space-x-2 text-[10px] font-extrabold tracking-widest uppercase text-sky-300">
+            <div className="flex items-center space-x-2 text-[10px] font-extrabold tracking-widest uppercase text-orange-400">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
               <span>OPERATOR SECURITY &amp; ACCESS CONTROL</span>
               <span className="text-blue-200/50">•</span>
@@ -365,7 +366,7 @@ export const Settings = () => {
             <h1 className="text-2xl sm:text-3xl font-black tracking-tight mt-1">
               Account &amp; User Access Settings
             </h1>
-            <p className="text-xs text-blue-100/80 mt-1 max-w-xl">
+            <p className="text-xs text-blue-100/80 mt-1 max-w-xl font-medium">
               Change administrator password, update account login email, and provision new user accounts with role-based access.
             </p>
           </div>
@@ -458,7 +459,7 @@ export const Settings = () => {
                 <button
                   type="submit"
                   disabled={isUpdatingPassword}
-                  className="w-full py-2.5 bg-[#1d4ed8] hover:bg-blue-700 active:bg-blue-800 disabled:opacity-60 text-white rounded-xl text-xs font-black shadow-xs transition-all flex items-center justify-center space-x-2 cursor-pointer"
+                  className="w-full py-2.5 bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-400 active:scale-[0.99] disabled:opacity-60 text-white rounded-xl text-xs font-black shadow-lg shadow-orange-500/25 transition-all flex items-center justify-center space-x-2 cursor-pointer"
                 >
                   {isUpdatingPassword ? (
                     <>
@@ -539,7 +540,7 @@ export const Settings = () => {
                 <button
                   type="submit"
                   disabled={isUpdatingEmail}
-                  className="w-full py-2.5 bg-[#1d4ed8] hover:bg-blue-700 active:bg-blue-800 disabled:opacity-60 text-white rounded-xl text-xs font-black shadow-xs transition-all flex items-center justify-center space-x-2 cursor-pointer"
+                  className="w-full py-2.5 bg-[#0b2545] hover:bg-[#133e87] active:scale-[0.99] disabled:opacity-60 text-white rounded-xl text-xs font-black shadow-md transition-all flex items-center justify-center space-x-2 cursor-pointer"
                 >
                   {isUpdatingEmail ? (
                     <>
@@ -709,7 +710,7 @@ export const Settings = () => {
             </h4>
             <div className="overflow-x-auto rounded-xl border border-slate-200">
               <table className="w-full text-left text-xs text-slate-700 border-collapse">
-                <thead className="bg-[#0d2358] text-white">
+                <thead className="bg-[#0b2545] text-white">
                   <tr className="text-[10px] uppercase font-extrabold tracking-wider">
                     <th className="py-2.5 px-3">Operator Name</th>
                     <th className="py-2.5 px-3">Email Address</th>

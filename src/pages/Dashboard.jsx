@@ -212,31 +212,39 @@ export const Dashboard = () => {
   return (
     <div className="space-y-5 max-w-full">
       {/* Hero Operational Hub Banner matching reference mockup */}
-      <div className="bg-gradient-to-r from-[#0d2358] via-[#102d73] to-[#163a94] rounded-2xl p-6 text-white shadow-lg border border-blue-900/40 flex flex-col md:flex-row md:items-center justify-between gap-5 relative overflow-hidden">
-        {/* Subtle background glow effect */}
-        <div className="absolute right-0 top-0 w-96 h-96 bg-sky-500/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="bg-gradient-to-r from-[#07182e] via-[#0b2545] to-[#133e87] rounded-3xl p-6 text-white shadow-xl border border-blue-900/40 flex flex-col md:flex-row md:items-center justify-between gap-5 relative overflow-hidden">
+        {/* Top Brand Highway Accent Line */}
+        <div className="h-1 highway-accent-line absolute top-0 left-0 right-0" />
+        {/* Subtle background glow effect matching logo orange highway arch */}
+        <div className="absolute right-0 top-0 w-96 h-96 bg-orange-500/15 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute left-1/3 bottom-0 w-64 h-64 bg-sky-500/10 rounded-full blur-2xl pointer-events-none" />
 
-        <div className="space-y-2 z-10">
+        <div className="space-y-2.5 z-10">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="bg-white/10 text-blue-200 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest border border-white/10 backdrop-blur-xs flex items-center space-x-1.5">
+            <span className="bg-white/10 text-orange-200 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest border border-orange-400/20 backdrop-blur-xs flex items-center space-x-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
               <span>GODOWN SUMMARY &bull; SANGLI TERMINAL &mdash; ATHAHAR ROADWAYS</span>
             </span>
-            <span className="bg-sky-950/80 text-sky-300 border border-sky-500/30 text-[10px] font-mono font-black px-2 py-0.5 rounded tracking-wider">
+            <span className="bg-orange-950/80 text-orange-300 border border-orange-500/30 text-[10px] font-mono font-black px-2 py-0.5 rounded tracking-wider">
               GATE-01 ACTIVE
             </span>
           </div>
 
-          <div className="flex items-center space-x-3.5 pt-1">
-            <div className="w-14 h-14 rounded-2xl bg-white p-1.5 flex items-center justify-center shadow-lg border border-white/30 flex-shrink-0">
+          <div className="flex items-center space-x-4 pt-1">
+            <div className="w-16 h-16 rounded-2xl bg-white p-1.5 flex items-center justify-center shadow-2xl border-2 border-white/60 flex-shrink-0 ring-4 ring-orange-500/20">
               <img src="/logo.png" alt="ATHAHAR ROADWAYS" className="w-full h-full object-contain" />
             </div>
             <div>
-              <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-white uppercase">
-                ATHAHAR ROADWAYS
-              </h2>
-              <p className="text-blue-100 text-xs sm:text-sm font-medium tracking-tight">
-                NEXT TO PARVATI CRANE, VAKHAR BHAG, SANGLI-416416 &bull; HELPLINE: 9370229449 / 9850329449
+              <div className="flex items-center space-x-2">
+                <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-white uppercase">
+                  ATHAHAR ROADWAYS
+                </h2>
+              </div>
+              <p className="text-orange-400 text-[11px] font-black tracking-widest uppercase mt-0.5">
+                SAFE &bull; ON TIME &bull; ALWAYS
+              </p>
+              <p className="text-blue-100/80 text-xs font-mono tracking-tight mt-1">
+                NEXT TO PARVATI CRANE, VAKHAR BHAG, SANGLI-416416 &bull; MOB: 9370229449 / 9850329449
               </p>
             </div>
           </div>
@@ -245,21 +253,21 @@ export const Dashboard = () => {
         <div className="flex items-center space-x-3 flex-shrink-0 z-10">
           <Link
             to="/inward/new"
-            className="inline-flex items-center space-x-2 bg-white text-[#0d2358] hover:bg-slate-100 font-bold px-4 py-2.5 rounded-xl text-xs shadow-md transition-all active:scale-[0.98]"
+            className="inline-flex items-center space-x-2 bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-400 text-white font-black px-4 py-2.5 rounded-xl text-xs shadow-lg shadow-orange-500/25 transition-all active:scale-[0.98]"
           >
-            <PlusCircle className="w-4 h-4 text-[#0d2358]" />
+            <PlusCircle className="w-4 h-4 text-white" />
             <span>New Inward Entry</span>
-            <span className="bg-slate-100 border border-slate-300 text-slate-600 text-[10px] font-mono font-bold px-1.5 py-0.5 rounded">
+            <span className="bg-orange-700/80 text-white text-[10px] font-mono font-bold px-1.5 py-0.5 rounded">
               Alt+N
             </span>
           </Link>
           <Link
             to="/outward/new"
-            className="inline-flex items-center space-x-2 bg-[#0284c7] hover:bg-[#0369a1] text-white font-bold px-4 py-2.5 rounded-xl text-xs shadow-md transition-all active:scale-[0.98]"
+            className="inline-flex items-center space-x-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white font-bold px-4 py-2.5 rounded-xl text-xs shadow-md transition-all active:scale-[0.98]"
           >
-            <ArrowUpRight className="w-4 h-4" />
+            <ArrowUpRight className="w-4 h-4 text-orange-400" />
             <span>Process Outward</span>
-            <span className="bg-sky-700 text-white text-[10px] font-mono font-bold px-1.5 py-0.5 rounded">
+            <span className="bg-white/15 text-white text-[10px] font-mono font-bold px-1.5 py-0.5 rounded">
               Alt+O
             </span>
           </Link>
@@ -345,15 +353,15 @@ export const Dashboard = () => {
         </div>
       </div>
 
-      {/* 4 Primary Metric Stat Cards */}
+      {/* 4 Primary Metric Stat Cards with Brand Theme Accents */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Card 1: Total Inward LRs */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-xs transition-shadow">
+        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 border-t-4 border-t-[#0b2545] shadow-xs hover:shadow-md transition-all">
           <div className="flex items-center justify-between mb-3">
             <span className="text-[11px] font-black uppercase tracking-wider text-slate-500">
               Total Inward LRs
             </span>
-            <div className="p-2 bg-sky-50 text-sky-600 rounded-xl">
+            <div className="p-2 bg-slate-100 text-[#0b2545] rounded-xl font-bold">
               <ArrowDownLeft className="w-4 h-4" />
             </div>
           </div>
@@ -365,43 +373,43 @@ export const Dashboard = () => {
           </div>
           <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-100 text-xs">
             <span className="font-semibold text-slate-500">{totalInwardPackages.toLocaleString()} Packages</span>
-            <span className="text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded text-[11px]">
-              &nearr; +12%
+            <span className="text-[#0b2545] font-black bg-blue-50 px-2 py-0.5 rounded text-[11px] border border-blue-100">
+              Inward Register
             </span>
           </div>
         </div>
 
         {/* Card 2: Pending Stock (Godown) */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-xs transition-shadow">
+        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 border-t-4 border-t-orange-500 shadow-xs hover:shadow-md transition-all">
           <div className="flex items-center justify-between mb-3">
             <span className="text-[11px] font-black uppercase tracking-wider text-slate-500">
               Pending Stock (Godown)
             </span>
-            <div className="p-2 bg-blue-50 text-[#1d4ed8] rounded-xl">
+            <div className="p-2 bg-orange-500 text-white rounded-xl shadow-xs">
               <PackageCheck className="w-4 h-4" />
             </div>
           </div>
           <div className="flex items-baseline space-x-2">
-            <span className="text-3xl font-black text-blue-600 tracking-tight">
+            <span className="text-3xl font-black text-orange-600 tracking-tight">
               {totalPendingCount}
             </span>
             <span className="text-xs font-bold text-slate-500">LRs</span>
           </div>
           <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-100 text-xs">
             <span className="font-semibold text-slate-500">{totalPendingPackages.toLocaleString()} Packages</span>
-            <span className="text-sky-700 font-bold bg-sky-50 px-2 py-0.5 rounded text-[11px]">
-              Awaiting Outward
+            <span className="text-orange-700 font-black bg-orange-50 border border-orange-200/80 px-2 py-0.5 rounded text-[11px]">
+              Ready for Outward
             </span>
           </div>
         </div>
 
         {/* Card 3: Dispatched Today */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-xs transition-shadow">
+        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 border-t-4 border-t-emerald-500 shadow-xs hover:shadow-md transition-all">
           <div className="flex items-center justify-between mb-3">
             <span className="text-[11px] font-black uppercase tracking-wider text-slate-500">
               Dispatched Today
             </span>
-            <div className="p-2 bg-sky-50 text-[#0284c7] rounded-xl">
+            <div className="p-2 bg-emerald-50 text-emerald-600 rounded-xl">
               <ArrowUpRight className="w-4 h-4" />
             </div>
           </div>
@@ -413,19 +421,19 @@ export const Dashboard = () => {
           </div>
           <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-100 text-xs">
             <span className="font-semibold text-slate-500">{totalDispatchedPackages.toLocaleString()} Packages</span>
-            <span className="text-slate-700 font-bold text-[11px]">
-              {dispatchRate}% Dispatch Rate
+            <span className="text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded text-[11px]">
+              {dispatchRate}% Rate
             </span>
           </div>
         </div>
 
         {/* Card 4: Pending Freight (To Pay) */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-xs transition-shadow">
+        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 border-t-4 border-t-amber-500 shadow-xs hover:shadow-md transition-all">
           <div className="flex items-center justify-between mb-3">
             <span className="text-[11px] font-black uppercase tracking-wider text-slate-500">
               Pending Freight (To Pay)
             </span>
-            <div className="p-2 bg-rose-50 text-rose-600 rounded-xl">
+            <div className="p-2 bg-amber-50 text-amber-600 rounded-xl font-bold">
               <span className="font-black text-sm">&#8377;</span>
             </div>
           </div>
@@ -436,7 +444,7 @@ export const Dashboard = () => {
           </div>
           <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-100 text-xs">
             <span className="font-semibold text-slate-500">{pendingStockToPayCount} Freight Vouchers</span>
-            <span className="text-rose-700 font-bold bg-rose-50 px-2 py-0.5 rounded text-[11px]">
+            <span className="text-amber-800 font-bold bg-amber-50 border border-amber-200 px-2 py-0.5 rounded text-[11px]">
               To Be Collected
             </span>
           </div>
@@ -465,12 +473,12 @@ export const Dashboard = () => {
               </div>
 
               {/* Segmented Filter Pills */}
-              <div className="flex items-center space-x-1 bg-slate-100/80 p-1 rounded-xl text-xs font-bold text-slate-600">
+              <div className="flex items-center space-x-1 bg-slate-100/90 p-1 rounded-xl text-xs font-bold text-slate-600">
                 <button
                   onClick={() => setStockTab('all')}
-                  className={`px-3 py-1 rounded-lg transition-all ${
+                  className={`px-3 py-1.5 rounded-lg transition-all ${
                     stockTab === 'all'
-                      ? 'bg-white text-blue-700 shadow-2xs font-black'
+                      ? 'bg-[#0b2545] text-white shadow-xs font-black'
                       : 'hover:text-slate-900'
                   }`}
                 >
@@ -478,9 +486,9 @@ export const Dashboard = () => {
                 </button>
                 <button
                   onClick={() => setStockTab('priority')}
-                  className={`px-3 py-1 rounded-lg transition-all ${
+                  className={`px-3 py-1.5 rounded-lg transition-all ${
                     stockTab === 'priority'
-                      ? 'bg-white text-blue-700 shadow-2xs font-black'
+                      ? 'bg-[#0b2545] text-white shadow-xs font-black'
                       : 'hover:text-slate-900'
                   }`}
                 >
@@ -488,9 +496,9 @@ export const Dashboard = () => {
                 </button>
                 <button
                   onClick={() => setStockTab('heavy')}
-                  className={`px-3 py-1 rounded-lg transition-all ${
+                  className={`px-3 py-1.5 rounded-lg transition-all ${
                     stockTab === 'heavy'
-                      ? 'bg-white text-blue-700 shadow-2xs font-black'
+                      ? 'bg-[#0b2545] text-white shadow-xs font-black'
                       : 'hover:text-slate-900'
                   }`}
                 >
@@ -633,14 +641,14 @@ export const Dashboard = () => {
             <div className="flex items-center space-x-3">
               <Link
                 to="/pending"
-                className="text-blue-700 hover:underline font-bold text-xs"
+                className="text-orange-600 hover:text-orange-700 hover:underline font-bold text-xs"
               >
                 View All Pending Stock
               </Link>
               <button
                 onClick={handleDispatchSelected}
                 disabled={selectedStockIds.length === 0}
-                className="bg-[#1d4ed8] hover:bg-blue-800 disabled:opacity-40 text-white font-bold px-4 py-2 rounded-xl text-xs shadow-xs transition-all active:scale-[0.98]"
+                className="bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-400 disabled:opacity-40 text-white font-bold px-4 py-2 rounded-xl text-xs shadow-xs transition-all active:scale-[0.98]"
               >
                 Dispatch Selected
               </button>
