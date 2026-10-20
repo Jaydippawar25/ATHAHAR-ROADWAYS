@@ -34,7 +34,12 @@ export function App() {
   return (
     <AuthProvider>
       <AppProvider>
-        <BrowserRouter>
+        <BrowserRouter
+          future={{
+            v7_startTransition: true,
+            v7_relativeSplatPath: true,
+          }}
+        >
           <ScrollToTop />
           <MainLayout />
         </BrowserRouter>
