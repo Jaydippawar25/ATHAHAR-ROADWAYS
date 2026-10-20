@@ -327,10 +327,13 @@ export const printRecordDetails = ({ title, fields = [], items = [], showDeliver
       </head>
       <body>
         <div class="header">
-          <div>
-            <h1 class="company">ATHAHAR ROADWAYS</h1>
-            <p class="address">NEXT TO PARVATI CRANE, VAKHAR BHAG, SANGLI-416416 | MOB: 9370229449 / 9850329449</p>
-            <p class="doc-title">${title}</p>
+          <div style="display: flex; align-items: center; gap: 14px;">
+            <img src="/logo.png" alt="ATHAHAR ROADWAYS" style="width: 52px; height: 52px; object-fit: contain; border-radius: 6px;" />
+            <div>
+              <h1 class="company">ATHAHAR ROADWAYS</h1>
+              <p class="address">NEXT TO PARVATI CRANE, VAKHAR BHAG, SANGLI-416416 | MOB: 9370229449 / 9850329449</p>
+              <p class="doc-title">${title}</p>
+            </div>
           </div>
           <div class="timestamp">Printed on: ${new Date().toLocaleString()}</div>
         </div>

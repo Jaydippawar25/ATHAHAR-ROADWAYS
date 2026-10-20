@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { User, Lock, Eye, EyeOff, AlertCircle, RefreshCw, CheckCircle2, Truck } from 'lucide-react';
+import { User, Lock, Eye, EyeOff, AlertCircle, RefreshCw, CheckCircle2 } from 'lucide-react';
 
 export const Login = () => {
   const [username, setUsername] = useState('');
@@ -89,9 +89,17 @@ export const Login = () => {
         {/* Left Column — Sign In Form */}
         <div className="md:col-span-7 p-8 sm:p-12 flex flex-col justify-between bg-white z-10">
           <div>
-            <div className="flex items-center space-x-2 text-[10px] font-extrabold tracking-widest uppercase text-[#1d4ed8] mb-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span>ENTERPRISE PORTAL</span>
+            <div className="flex items-center space-x-3 mb-4">
+              <div className="w-11 h-11 rounded-xl bg-white border border-slate-200 p-1 flex items-center justify-center shadow-xs overflow-hidden flex-shrink-0">
+                <img src="/logo.png" alt="Logo" className="w-full h-full object-contain" />
+              </div>
+              <div>
+                <div className="flex items-center space-x-1.5 text-[10px] font-extrabold tracking-widest uppercase text-[#1d4ed8]">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span>ENTERPRISE PORTAL</span>
+                </div>
+                <div className="text-xs font-bold text-slate-500">ATHAHAR ROADWAYS</div>
+              </div>
             </div>
             <h2 className="text-3xl font-black text-slate-900 tracking-tight mb-6">
               Sign In to Godown
@@ -211,8 +219,8 @@ export const Login = () => {
 
           <div className="relative z-10 flex flex-col items-center space-y-4 max-w-xs">
             {/* Logo Badge */}
-            <div className="w-16 h-16 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center shadow-lg">
-              <Truck className="w-8 h-8 text-sky-400" />
+            <div className="w-24 h-24 rounded-2xl bg-white p-2.5 flex items-center justify-center shadow-xl border border-white/40 overflow-hidden">
+              <img src="/logo.png" alt="ATHAHAR ROADWAYS Logo" className="w-full h-full object-contain" />
             </div>
 
             {/* Title */}

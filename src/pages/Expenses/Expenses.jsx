@@ -1102,11 +1102,16 @@ export const Expenses = () => {
           <div className="space-y-4 text-slate-800">
             {/* Printable Voucher Header */}
             <div className="bg-[#072440] text-white p-4 rounded-xl flex items-center justify-between">
-              <div>
-                <h3 className="text-sm font-black tracking-wider uppercase">ATHAHAR ROADWAYS</h3>
-                <p className="text-[10px] text-sky-400 font-bold uppercase">SANGLI-416416</p>
-                <div className="mt-1 text-[11px] font-extrabold text-sky-200">
-                  Payment Voucher #{viewingExpense.voucherNo}
+              <div className="flex items-center space-x-3">
+                <div className="w-12 h-12 rounded-xl bg-white p-1 flex items-center justify-center shadow-xs flex-shrink-0">
+                  <img src="/logo.png" alt="ATHAHAR ROADWAYS" className="w-full h-full object-contain" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-black tracking-wider uppercase">ATHAHAR ROADWAYS</h3>
+                  <p className="text-[10px] text-sky-400 font-bold uppercase">SANGLI-416416</p>
+                  <div className="mt-1 text-[11px] font-extrabold text-sky-200">
+                    Payment Voucher #{viewingExpense.voucherNo}
+                  </div>
                 </div>
               </div>
               <div className="text-right">

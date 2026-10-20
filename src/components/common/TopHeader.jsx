@@ -15,8 +15,8 @@ export const TopHeader = () => {
   return (
     <header className="bg-white border-b border-slate-200/90 px-4 sm:px-6 py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs sticky top-0 z-30">
       <div className="flex items-center space-x-3">
-        <div className="bg-[#0284c7] text-white w-7 h-7 rounded-lg flex items-center justify-center font-black text-sm shadow-2xs flex-shrink-0">
-          A
+        <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 p-0.5 flex items-center justify-center shadow-2xs flex-shrink-0 overflow-hidden">
+          <img src="/logo.png" alt="ATHAHAR ROADWAYS" className="w-full h-full object-contain" />
         </div>
         <div>
           <div className="flex items-center space-x-2">

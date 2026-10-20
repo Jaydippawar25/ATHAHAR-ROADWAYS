@@ -12,7 +12,6 @@ import {
   Receipt,
   Database,
   Settings,
-  Truck,
   User,
   LogOut,
   Menu,
@@ -50,8 +49,8 @@ export const Sidebar = () => {
       {/* Mobile Header Bar */}
       <div className="lg:hidden bg-white text-slate-800 p-4 flex items-center justify-between border-b border-slate-200 sticky top-0 z-50 shadow-xs">
         <div className="flex items-center space-x-3">
-          <div className="bg-[#0284c7] p-2 rounded-xl text-white font-bold shadow-xs">
-            <Truck className="h-5 w-5" />
+          <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 p-1 flex items-center justify-center shadow-xs flex-shrink-0 overflow-hidden">
+            <img src="/logo.png" alt="ATHAHAR ROADWAYS" className="w-full h-full object-contain" />
           </div>
           <div>
             <h1 className="text-sm font-black text-slate-900 leading-tight tracking-wide uppercase">
@@ -83,10 +82,10 @@ export const Sidebar = () => {
         }`}
       >
         {/* Top Branding Section */}
-        <div className="p-5 border-b border-slate-100">
+        <div className="p-4 border-b border-slate-100">
           <div className="flex items-center space-x-3">
-            <div className="bg-[#0284c7] p-2.5 rounded-xl text-white font-black shadow-md shadow-sky-500/15 flex-shrink-0 flex items-center justify-center">
-              <Truck className="w-5 h-5 text-white" />
+            <div className="w-11 h-11 rounded-xl bg-white border border-slate-200 p-1 flex items-center justify-center shadow-xs flex-shrink-0 overflow-hidden">
+              <img src="/logo.png" alt="ATHAHAR ROADWAYS" className="w-full h-full object-contain" />
             </div>
             <div className="min-w-0">
               <h1 className="text-sm font-black tracking-tight text-slate-900 leading-none uppercase truncate">

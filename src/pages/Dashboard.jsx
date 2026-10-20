@@ -227,13 +227,19 @@ export const Dashboard = () => {
             </span>
           </div>
 
-          <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-white uppercase">
-            ATHAHAR ROADWAYS
-          </h2>
-
-          <p className="text-blue-100 text-xs sm:text-sm font-medium tracking-tight">
-            NEXT TO PARVATI CRANE, VAKHAR BHAG, SANGLI-416416 &bull; HELPLINE: 9370229449 / 9850329449
-          </p>
+          <div className="flex items-center space-x-3.5 pt-1">
+            <div className="w-14 h-14 rounded-2xl bg-white p-1.5 flex items-center justify-center shadow-lg border border-white/30 flex-shrink-0">
+              <img src="/logo.png" alt="ATHAHAR ROADWAYS" className="w-full h-full object-contain" />
+            </div>
+            <div>
+              <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-white uppercase">
+                ATHAHAR ROADWAYS
+              </h2>
+              <p className="text-blue-100 text-xs sm:text-sm font-medium tracking-tight">
+                NEXT TO PARVATI CRANE, VAKHAR BHAG, SANGLI-416416 &bull; HELPLINE: 9370229449 / 9850329449
+              </p>
+            </div>
+          </div>
         </div>
 
         <div className="flex items-center space-x-3 flex-shrink-0 z-10">

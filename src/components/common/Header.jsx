@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { LogOut, User, Truck } from 'lucide-react';
+import { LogOut, User } from 'lucide-react';
 
 export const Header = () => {
   const { user, logout } = useAuth();
@@ -9,8 +9,8 @@ export const Header = () => {
     <header className="bg-slate-900 text-white shadow-md border-b border-slate-800 sticky top-0 z-40">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         <div className="flex items-center space-x-3">
-          <div className="bg-sky-500 p-2 rounded-lg text-white font-bold">
-            <Truck className="h-6 w-6" />
+          <div className="w-10 h-10 rounded-xl bg-white p-1 flex items-center justify-center shadow-md flex-shrink-0 overflow-hidden">
+            <img src="/logo.png" alt="ATHAHAR ROADWAYS" className="w-full h-full object-contain" />
           </div>
           <div>
             <h1 className="text-lg font-bold tracking-wide text-white">ATHAHAR ROADWAYS</h1>
