@@ -751,7 +751,102 @@ export const OutwardCreate = () => {
           <span className="text-xs text-slate-400">Amounts are editable before final outward recording</span>
         </div>
 
-        <div className="overflow-x-auto min-h-[200px] max-h-[380px]">
+        {/* Mobile View: Clean Touch Cards (NO Horizontal Scrolling) */}
+        <div className="sm:hidden divide-y divide-slate-100">
+          {selectedItems.length === 0 ? (
+            <div className="py-8 px-4 text-center text-slate-400 font-medium text-xs">
+              No LRs selected for dispatch yet. Select LRs from godown list above.
+            </div>
+          ) : (
+            selectedItems.map((posItem, idx) => {
+              const item =
+                editingIndex === idx
+                  ? {
+                      ...posItem,
+                      lrNo: itemForm.lrNo || posItem.lrNo,
+                      inwardDate: itemForm.date || posItem.inwardDate || posItem.date,
+                      pkg: itemForm.pkg !== '' ? itemForm.pkg : posItem.pkg,
+                      invoiceNo: itemForm.invoiceNo,
+                      ctTo: itemForm.ctTo,
+                      deliveryPersonName: itemForm.deliveryPersonName,
+                      consignorName: itemForm.consignorName,
+                      consigneeName: itemForm.consigneeName,
+                      toPayAmount: itemForm.toPayAmount || 0,
+                      tbbAmount: itemForm.tbbAmount || 0,
+                      paidAmount: itemForm.paidAmount || 0,
+                    }
+                  : posItem;
+
+              const toPay = Number(item.toPayAmount) || 0;
+              const paid = Number(item.paidAmount) || 0;
+              const tbb = Number(item.tbbAmount) || 0;
+
+              return (
+                <div key={item.id || idx} className="p-3.5 space-y-2 bg-white">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <span className="text-[10px] font-bold text-slate-400">#{idx + 1}</span>
+                      <span className="font-black text-xs text-[#1d4ed8]">LR #{item.lrNo}</span>
+                      <span className="text-[10px] text-slate-400 font-medium">{formatDate(item.inwardDate || item.date)}</span>
+                    </div>
+                    {toPay > 0 ? (
+                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-black uppercase bg-rose-50 border border-rose-200 text-rose-700">
+                        TO PAY ₹{toPay.toFixed(2)}
+                      </span>
+                    ) : paid > 0 ? (
+                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-black uppercase bg-sky-50 border border-sky-200 text-sky-700">
+                        PAID ₹{paid.toFixed(2)}
+                      </span>
+                    ) : tbb > 0 ? (
+                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-black uppercase bg-indigo-50 border border-indigo-200 text-indigo-700">
+                        T.B.B. ₹{tbb.toFixed(2)}
+                      </span>
+                    ) : null}
+                  </div>
+
+                  <div className="text-xs text-slate-700">
+                    <div className="font-bold truncate">
+                      {item.consigneeName || 'Consignee'}
+                      {item.ctTo ? <span className="text-orange-600 font-semibold ml-1">({item.ctTo})</span> : ''}
+                    </div>
+                    {item.deliveryPersonName && (
+                      <div className="text-[11px] text-emerald-800 font-semibold truncate">
+                        Del Person: {item.deliveryPersonName}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex items-center justify-between pt-1 border-t border-slate-100 text-[11px]">
+                    <span className="font-black text-slate-900 bg-slate-100 px-1.5 py-0.5 rounded">
+                      {item.pkg} PKG
+                    </span>
+                    <div className="flex items-center space-x-1">
+                      <button
+                        type="button"
+                        onClick={() => handleEditItem(idx)}
+                        className="p-1 text-blue-600 hover:bg-blue-50 rounded-lg cursor-pointer"
+                        title="Edit LR"
+                      >
+                        <Edit2 className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteItem(idx)}
+                        className="p-1 text-rose-600 hover:bg-rose-50 rounded-lg cursor-pointer"
+                        title="Delete LR"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        {/* Desktop View: Multi-column Table */}
+        <div className="hidden sm:block overflow-x-auto min-h-[200px] max-h-[380px]">
           <table className="w-full text-left border-collapse">
             <thead className="bg-[#0d2358] text-white sticky top-0 z-10">
               <tr className="text-[10px] font-extrabold uppercase tracking-wider">

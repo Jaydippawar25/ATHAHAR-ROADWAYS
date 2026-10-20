@@ -13,7 +13,7 @@ export const TopHeader = () => {
   });
 
   return (
-    <header className="bg-white/95 backdrop-blur-md border-b border-slate-200/90 px-4 sm:px-6 py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs sticky top-0 z-30 relative">
+    <header className="hidden lg:flex bg-white/95 backdrop-blur-md border-b border-slate-200/90 px-6 py-2.5 items-center justify-between gap-3 shadow-xs sticky top-0 z-30 relative">
       {/* Top Brand Highway Accent Line */}
       <div className="h-[2.5px] highway-accent-line absolute top-0 left-0 right-0" />
 

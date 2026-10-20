@@ -15,11 +15,11 @@ const MainLayout = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col lg:flex-row">
+    <div className="min-h-screen bg-slate-50 flex flex-col lg:flex-row overflow-x-hidden w-full max-w-full">
       <Sidebar />
-      <div className="flex-1 flex flex-col min-w-0 lg:pl-64">
+      <div className="flex-1 flex flex-col min-w-0 w-full max-w-full lg:pl-64 overflow-x-hidden">
         <TopHeader />
-        <main className="flex-1 w-full mx-auto px-3 sm:px-4 lg:px-5 py-5">
+        <main className="flex-1 w-full max-w-full mx-auto px-3 sm:px-4 lg:px-5 py-3.5 sm:py-5 overflow-x-hidden">
           <AppRoutes />
         </main>
       </div>

@@ -175,6 +175,20 @@ export const DataTable = ({
   const firstTotalIndex = totalColIndices.length > 0 ? totalColIndices[0] : -1;
   const labelIndex = firstTotalIndex > 0 ? firstTotalIndex - 1 : 0;
 
+  const renderCell = (row, col) => {
+    let cellVal = row[col.key];
+    if (col.render) {
+      return col.render(row);
+    } else if (col.type === 'status') {
+      return <StatusBadge status={cellVal} />;
+    } else if (col.type === 'currency') {
+      return formatCurrency(cellVal);
+    } else if (col.type === 'date') {
+      return formatDate(cellVal);
+    }
+    return cellVal ?? '-';
+  };
+
   return (
     <div className={`bg-white rounded-2xl shadow-2xs border border-slate-200/90 overflow-hidden ${className}`}>
       {/* Table Filter Controls Header Bar */}
@@ -328,8 +342,81 @@ export const DataTable = ({
         </div>
       </div>
 
-      {/* Table Container */}
-      <div className="w-full overflow-x-auto">
+      {/* Mobile Card View (NO Horizontal Scroll on Mobile Screens) */}
+      <div className="sm:hidden divide-y divide-slate-100 bg-white">
+        {filteredData.length === 0 ? (
+          <div className="p-8 text-center text-slate-400 font-medium text-xs">
+            No records found matching filters.
+          </div>
+        ) : (
+          filteredData.map((row, rowIdx) => {
+            const isRowSelected = selectedIds.includes(row.id);
+            const actionCol = columns.find((c) => c.key === 'actions');
+            const dataCols = columns.filter((c) => c.key !== 'actions');
+            const primaryCol = dataCols[0];
+            const statusCol = dataCols.find((c) => c.type === 'status');
+            const secondaryCols = dataCols.slice(1);
+
+            return (
+              <div
+                key={row.id || rowIdx}
+                className={`p-3.5 space-y-2 transition-colors ${
+                  isRowSelected ? 'bg-orange-50/70' : rowIdx % 2 === 1 ? 'bg-slate-50/30' : 'bg-white'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2 min-w-0">
+                    {selectable && (
+                      <input
+                        type="checkbox"
+                        checked={isRowSelected}
+                        onChange={() => onSelectRow && onSelectRow(row)}
+                        className="rounded border-slate-300 text-orange-600 focus:ring-orange-500 cursor-pointer flex-shrink-0"
+                      />
+                    )}
+                    {primaryCol && (
+                      <div className="font-black text-xs text-[#0b2545] truncate">
+                        {renderCell(row, primaryCol)}
+                      </div>
+                    )}
+                  </div>
+                  {statusCol && (
+                    <div className="flex-shrink-0">
+                      {renderCell(row, statusCol)}
+                    </div>
+                  )}
+                </div>
+
+                {/* 2-column key-value grid for secondary details */}
+                <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs text-slate-700 pt-1">
+                  {secondaryCols
+                    .filter((c) => c.type !== 'status')
+                    .map((col, cIdx) => (
+                      <div key={cIdx} className="min-w-0">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight block truncate">
+                          {col.label}
+                        </span>
+                        <div className="text-xs font-semibold text-slate-800 truncate">
+                          {renderCell(row, col)}
+                        </div>
+                      </div>
+                    ))}
+                </div>
+
+                {/* Actions row */}
+                {actionCol && (
+                  <div className="flex items-center justify-end pt-1.5 border-t border-slate-100">
+                    {renderCell(row, actionCol)}
+                  </div>
+                )}
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      {/* Desktop Table Container (hidden on mobile) */}
+      <div className="hidden sm:block w-full overflow-x-auto">
         <table className={`w-full text-slate-800 border-collapse table-${tableLayout}`}>
           <thead className="bg-slate-100/90 text-[#0b2545] uppercase font-black text-[10px] tracking-wider border-b-2 border-slate-200">
             <tr>

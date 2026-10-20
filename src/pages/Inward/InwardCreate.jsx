@@ -982,19 +982,122 @@ export const InwardCreate = () => {
 
       {/* STAGED ITEMS TABLE */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden">
-        <div className="px-5 py-3.5 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
+        <div className="px-4 sm:px-5 py-3 sm:py-3.5 bg-slate-50 border-b border-slate-100 flex items-center justify-between gap-2">
           <div className="flex items-center space-x-2">
             <span className="text-xs font-extrabold uppercase tracking-wider text-slate-800">
               Inward Freight Staging Manifest
             </span>
             <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-blue-100 text-[#1d4ed8]">
-              {allLRs.length} Total Rows
+              {allLRs.length} Rows
             </span>
           </div>
-          <span className="text-xs text-slate-400">Review all LR items before saving or printing</span>
+          <span className="hidden sm:inline text-xs text-slate-400">Review all LR items before saving or printing</span>
         </div>
 
-        <div className="overflow-x-auto min-h-[200px] max-h-[380px]">
+        {/* Mobile View: Clean Touch Cards (NO Horizontal Scrolling) */}
+        <div className="sm:hidden divide-y divide-slate-100">
+          {allLRs.length === 0 ? (
+            <div className="py-8 px-4 text-center text-slate-400 font-medium text-xs">
+              No LR entries staged yet. Fill LR details above to populate grid.
+            </div>
+          ) : (
+            allLRs.map((item, idx) => {
+              const toPay = Number(item.toPayAmount) || 0;
+              const paid = Number(item.paidAmount) || 0;
+              const tbb = Number(item.tbbAmount) || 0;
+
+              return (
+                <div
+                  key={idx}
+                  className={`p-3 space-y-2 transition-colors ${
+                    item.isDraftPreview
+                      ? 'bg-sky-50/70 border-l-4 border-[#1d4ed8]'
+                      : editingIndex === idx
+                      ? 'bg-amber-50/80 border-l-4 border-amber-500'
+                      : 'bg-white'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <span className="text-[10px] font-bold text-slate-400">#{item.srNo}</span>
+                      <span className="font-black text-xs text-[#1d4ed8]">
+                        LR #{item.lrNo}
+                      </span>
+                      {item.isDraftPreview && (
+                        <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[9px] font-black bg-blue-100 text-[#1d4ed8] border border-blue-200">
+                          Typing
+                        </span>
+                      )}
+                    </div>
+                    {toPay > 0 ? (
+                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-black uppercase bg-rose-50 border border-rose-200 text-rose-700">
+                        TO PAY ₹{toPay.toFixed(2)}
+                      </span>
+                    ) : paid > 0 ? (
+                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-black uppercase bg-sky-50 border border-sky-200 text-sky-700">
+                        PAID ₹{paid.toFixed(2)}
+                      </span>
+                    ) : tbb > 0 ? (
+                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-black uppercase bg-indigo-50 border border-indigo-200 text-indigo-700">
+                        T.B.B. ₹{tbb.toFixed(2)}
+                      </span>
+                    ) : (
+                      <span className="text-[10px] text-slate-400 font-medium">{formatDate(item.date)}</span>
+                    )}
+                  </div>
+
+                  <div className="text-xs text-slate-700">
+                    <div className="font-bold truncate">
+                      {item.consigneeName || 'Consignee'}
+                      {item.ctTo ? <span className="text-orange-600 font-semibold ml-1">({item.ctTo})</span> : ''}
+                    </div>
+                    {item.consignorName && (
+                      <div className="text-[11px] text-slate-400 truncate">
+                        Consignor: {item.consignorName}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex items-center justify-between pt-1 border-t border-slate-100 text-[11px]">
+                    <div className="flex items-center space-x-2">
+                      <span className="font-black text-slate-900 bg-slate-100 px-1.5 py-0.5 rounded">
+                        {item.pkg} PKG
+                      </span>
+                      {item.invoiceNo && (
+                        <span className="text-[10px] text-slate-400 font-mono">
+                          Inv: {item.invoiceNo}
+                        </span>
+                      )}
+                    </div>
+                    {!item.isDraftPreview && (
+                      <div className="flex items-center space-x-1">
+                        <button
+                          type="button"
+                          onClick={() => handleEditStagedItem(idx)}
+                          className="p-1 text-blue-600 hover:bg-blue-50 rounded-lg cursor-pointer"
+                          title="Edit LR"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteStagedItem(idx)}
+                          className="p-1 text-rose-600 hover:bg-rose-50 rounded-lg cursor-pointer"
+                          title="Delete LR"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        {/* Desktop View: Multi-column Table */}
+        <div className="hidden sm:block overflow-x-auto min-h-[200px] max-h-[380px]">
           <table className="w-full text-left border-collapse">
             <thead className="bg-[#0b2545] text-white sticky top-0 z-10 border-b-2 border-orange-500">
               <tr className="text-[10px] font-extrabold uppercase tracking-wider">
