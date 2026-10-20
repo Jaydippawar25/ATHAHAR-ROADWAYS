@@ -5,6 +5,7 @@ import { AppProvider } from './context/AppContext';
 import { Sidebar } from './components/common/Sidebar';
 import { TopHeader } from './components/common/TopHeader';
 import { BottomNav } from './components/common/BottomNav';
+import { ScrollToTop } from './components/common/ScrollToTop';
 import { AppRoutes } from './routes/AppRoutes';
 
 const MainLayout = () => {
@@ -34,6 +35,7 @@ export function App() {
     <AuthProvider>
       <AppProvider>
         <BrowserRouter>
+          <ScrollToTop />
           <MainLayout />
         </BrowserRouter>
       </AppProvider>

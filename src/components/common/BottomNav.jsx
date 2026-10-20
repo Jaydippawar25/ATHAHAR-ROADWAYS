@@ -10,6 +10,14 @@ import {
 } from 'lucide-react';
 
 export const BottomNav = () => {
+  const handleNavClick = () => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    if (document.documentElement) document.documentElement.scrollTop = 0;
+    if (document.body) document.body.scrollTop = 0;
+    const main = document.querySelector('main');
+    if (main) main.scrollTop = 0;
+  };
+
   const navItems = [
     { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
     { label: 'Inward', path: '/inward', icon: ArrowDownLeft },
@@ -31,6 +39,7 @@ export const BottomNav = () => {
             <NavLink
               key={item.path}
               to={item.path}
+              onClick={handleNavClick}
               className={({ isActive }) =>
                 `relative flex flex-col items-center justify-center h-full py-1 px-0.5 rounded-lg transition-all active:scale-95 group ${
                   isActive

@@ -130,7 +130,10 @@ export const Sidebar = () => {
               <NavLink
                 key={item.path}
                 to={item.path}
-                onClick={() => setMobileOpen(false)}
+                onClick={() => {
+                  setMobileOpen(false);
+                  window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+                }}
                 className={({ isActive }) =>
                   `flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all group ${
                     isActive
