@@ -1207,47 +1207,47 @@ export const InwardCreate = () => {
       </div>
 
       {/* BOTTOM SUMMARY & ACTIONS */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-lg p-4 flex flex-col lg:flex-row items-center justify-between gap-4 sticky bottom-4 z-20">
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-lg p-3 sm:p-4 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 sm:gap-4 sticky bottom-16 lg:bottom-4 z-20">
         {/* Left Action Buttons (Save, Print) */}
-        <div className="flex flex-wrap items-center gap-2.5 w-full lg:w-auto">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:flex items-center gap-2 sm:gap-2.5 w-full lg:w-auto">
           <button
             type="button"
             onClick={() => handleFinalSubmit(false)}
-            className="px-5 py-2.5 bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-400 text-white font-black text-xs rounded-xl shadow-lg shadow-orange-500/25 flex items-center space-x-1.5 cursor-pointer transition-all active:scale-[0.98]"
+            className="w-full lg:w-auto justify-center px-5 py-2.5 bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-400 text-white font-black text-xs rounded-xl shadow-lg shadow-orange-500/25 flex items-center space-x-1.5 cursor-pointer transition-all active:scale-[0.98]"
           >
-            <Save className="w-4 h-4" />
+            <Save className="w-4 h-4 shrink-0" />
             <span>{editingInwardId ? 'Update Inward' : 'Save & Post to Stock'}</span>
           </button>
 
           <button
             type="button"
             onClick={() => handleFinalSubmit(true)}
-            className="px-5 py-2.5 bg-[#0b2545] hover:bg-[#133e87] text-white font-extrabold text-xs rounded-xl shadow-xs flex items-center space-x-1.5 cursor-pointer transition-all active:scale-[0.98]"
+            className="w-full lg:w-auto justify-center px-5 py-2.5 bg-[#0b2545] hover:bg-[#133e87] text-white font-extrabold text-xs rounded-xl shadow-xs flex items-center space-x-1.5 cursor-pointer transition-all active:scale-[0.98]"
           >
-            <Printer className="w-4 h-4 text-orange-400" />
+            <Printer className="w-4 h-4 text-orange-400 shrink-0" />
             <span>Save &amp; Print Manifest</span>
           </button>
         </div>
 
         {/* Right Summary Totals (PKG, TO PAY, T.B.B, PAID) */}
-        <div className="flex flex-wrap items-center gap-2.5 text-xs font-black text-slate-800 w-full lg:w-auto justify-end">
-          <div className="flex items-center space-x-2 bg-slate-100 px-3.5 py-2 rounded-xl border border-slate-200">
-            <span className="text-slate-500 uppercase text-[10px] tracking-wider">TOTAL PKG</span>
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:flex items-center gap-2 sm:gap-2.5 text-xs font-black text-slate-800 w-full lg:w-auto">
+          <div className="flex items-center justify-between space-x-2 bg-slate-100 px-3 py-2 rounded-xl border border-slate-200">
+            <span className="text-slate-500 uppercase text-[10px] tracking-wider font-extrabold">TOTAL PKG</span>
             <span className="text-slate-900 font-black text-sm">{totalQty}</span>
           </div>
 
-          <div className="flex items-center space-x-2 bg-amber-50 px-3.5 py-2 rounded-xl border border-amber-200 text-amber-900">
-            <span className="text-amber-700 uppercase text-[10px] tracking-wider">TO PAY</span>
+          <div className="flex items-center justify-between space-x-2 bg-amber-50 px-3 py-2 rounded-xl border border-amber-200 text-amber-900">
+            <span className="text-amber-700 uppercase text-[10px] tracking-wider font-extrabold">TO PAY</span>
             <span className="font-black text-sm">{formatCurrency(totalToPay)}</span>
           </div>
 
-          <div className="flex items-center space-x-2 bg-sky-50 px-3.5 py-2 rounded-xl border border-sky-200 text-sky-900">
-            <span className="text-sky-700 uppercase text-[10px] tracking-wider">T.B.B.</span>
+          <div className="flex items-center justify-between space-x-2 bg-sky-50 px-3 py-2 rounded-xl border border-sky-200 text-sky-900">
+            <span className="text-sky-700 uppercase text-[10px] tracking-wider font-extrabold">T.B.B.</span>
             <span className="font-black text-sm">{formatCurrency(totalTbb)}</span>
           </div>
 
-          <div className="flex items-center space-x-2 bg-emerald-50 px-3.5 py-2 rounded-xl border border-emerald-200 text-emerald-900">
-            <span className="text-emerald-700 uppercase text-[10px] tracking-wider">PAID</span>
+          <div className="flex items-center justify-between space-x-2 bg-emerald-50 px-3 py-2 rounded-xl border border-emerald-200 text-emerald-900">
+            <span className="text-emerald-700 uppercase text-[10px] tracking-wider font-extrabold">PAID</span>
             <span className="font-black text-sm">{formatCurrency(totalPaid)}</span>
           </div>
         </div>
