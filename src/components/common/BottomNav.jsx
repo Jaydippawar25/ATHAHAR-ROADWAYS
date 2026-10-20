@@ -22,9 +22,9 @@ export const BottomNav = () => {
     { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
     { label: 'Inward', path: '/inward', icon: ArrowDownLeft },
     { label: 'Outward', path: '/outward', icon: ArrowUpRight },
+    { label: 'All Entries', path: '/all-entries', icon: ArrowLeftRight },
     { label: 'Accounting', path: '/accounting', icon: Wallet },
     { label: 'Reports', path: '/reports', icon: FileText },
-    { label: 'All Entries', path: '/all-entries', icon: ArrowLeftRight },
   ];
 
   return (
