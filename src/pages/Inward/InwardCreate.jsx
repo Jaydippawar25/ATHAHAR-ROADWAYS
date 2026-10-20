@@ -563,9 +563,9 @@ export const InwardCreate = () => {
           </span>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 items-end">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-4 items-end">
           <div>
-            <label className="block text-[11px] font-extrabold text-slate-600 uppercase mb-1.5">
+            <label className="block text-[10px] sm:text-[11px] font-extrabold text-slate-600 uppercase mb-1 truncate">
               Inward No.
             </label>
             <input
@@ -573,12 +573,12 @@ export const InwardCreate = () => {
               name="inwardNo"
               value={headerData.inwardNo}
               onChange={handleHeaderChange}
-              className="w-full px-3 py-2 border border-slate-200 bg-slate-50/70 rounded-xl text-xs font-black text-[#1d4ed8] font-mono focus:ring-2 focus:ring-[#1d4ed8] outline-none"
+              className="w-full px-2.5 py-1.5 sm:px-3 sm:py-2 border border-slate-200 bg-slate-50/70 rounded-xl text-xs font-black text-[#1d4ed8] font-mono focus:ring-2 focus:ring-[#1d4ed8] outline-none"
             />
           </div>
 
           <div>
-            <label className="block text-[11px] font-extrabold text-slate-600 uppercase mb-1.5">
+            <label className="block text-[10px] sm:text-[11px] font-extrabold text-slate-600 uppercase mb-1 truncate">
               Arrival Date *
             </label>
             <input
@@ -586,27 +586,27 @@ export const InwardCreate = () => {
               name="date"
               value={headerData.date}
               onChange={handleHeaderChange}
-              className="w-full px-3 py-2 border border-slate-200 bg-white rounded-xl text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-[#1d4ed8] outline-none"
+              className="w-full px-2.5 py-1.5 sm:px-3 sm:py-2 border border-slate-200 bg-white rounded-xl text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-[#1d4ed8] outline-none"
             />
           </div>
 
           <div>
-            <label className="block text-[11px] font-extrabold text-slate-600 uppercase mb-1.5">
+            <label className="block text-[10px] sm:text-[11px] font-extrabold text-slate-600 uppercase mb-1 truncate">
               Transporter Name
             </label>
-            <div className="flex items-center space-x-1.5 min-w-0">
+            <div className="flex items-center space-x-1 min-w-0">
               <EditableCombobox
                 name="transporterName"
                 value={headerData.transporterName}
                 onChange={handleHeaderChange}
                 options={masters.transporters}
                 placeholder=""
-                className="px-3 py-2 border border-slate-200 bg-white rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-[#1d4ed8]"
+                className="px-2.5 py-1.5 sm:px-3 sm:py-2 border border-slate-200 bg-white rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-[#1d4ed8]"
               />
               <button
                 type="button"
                 onClick={() => handleOpenQuickAdd('transporters', 'Transporter', 'transporterName', true)}
-                className="px-2.5 py-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl font-black text-xs text-slate-700 transition-colors shadow-2xs flex-shrink-0 cursor-pointer"
+                className="px-2 py-1.5 sm:px-2.5 sm:py-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl font-black text-xs text-slate-700 transition-colors shadow-2xs flex-shrink-0 cursor-pointer"
                 title="Quick Add Transporter"
               >
                 +
@@ -615,22 +615,22 @@ export const InwardCreate = () => {
           </div>
 
           <div>
-            <label className="block text-[11px] font-extrabold text-slate-600 uppercase mb-1.5">
+            <label className="block text-[10px] sm:text-[11px] font-extrabold text-slate-600 uppercase mb-1 truncate">
               Origin Station *
             </label>
-            <div className="flex items-center space-x-1.5 min-w-0">
+            <div className="flex items-center space-x-1 min-w-0">
               <EditableCombobox
                 name="fromStation"
                 value={headerData.fromStation}
                 onChange={handleHeaderChange}
                 options={masters.stations}
                 placeholder=""
-                className="px-3 py-2 border border-slate-200 bg-white rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-[#1d4ed8]"
+                className="px-2.5 py-1.5 sm:px-3 sm:py-2 border border-slate-200 bg-white rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-[#1d4ed8]"
               />
               <button
                 type="button"
                 onClick={() => handleOpenQuickAdd('stations', 'Origin Station', 'fromStation', true)}
-                className="px-2.5 py-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl font-black text-xs text-slate-700 transition-colors shadow-2xs flex-shrink-0 cursor-pointer"
+                className="px-2 py-1.5 sm:px-2.5 sm:py-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl font-black text-xs text-slate-700 transition-colors shadow-2xs flex-shrink-0 cursor-pointer"
                 title="Quick Add Station"
               >
                 +
@@ -639,22 +639,22 @@ export const InwardCreate = () => {
           </div>
 
           <div>
-            <label className="block text-[11px] font-extrabold text-slate-600 uppercase mb-1.5">
+            <label className="block text-[10px] sm:text-[11px] font-extrabold text-slate-600 uppercase mb-1 truncate">
               Vehicle No. *
             </label>
-            <div className="flex items-center space-x-1.5 min-w-0">
+            <div className="flex items-center space-x-1 min-w-0">
               <EditableCombobox
                 name="vehicleNo"
                 value={headerData.vehicleNo}
                 onChange={handleHeaderChange}
                 options={masters.vehicles}
                 placeholder=""
-                className="px-3 py-2 border border-slate-200 bg-white rounded-xl text-xs font-black text-slate-900 focus:ring-2 focus:ring-[#1d4ed8]"
+                className="px-2.5 py-1.5 sm:px-3 sm:py-2 border border-slate-200 bg-white rounded-xl text-xs font-black text-slate-900 focus:ring-2 focus:ring-[#1d4ed8]"
               />
               <button
                 type="button"
                 onClick={() => handleOpenQuickAdd('vehicles', 'Vehicle Number', 'vehicleNo', true)}
-                className="px-2.5 py-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl font-black text-xs text-slate-700 transition-colors shadow-2xs flex-shrink-0 cursor-pointer"
+                className="px-2 py-1.5 sm:px-2.5 sm:py-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl font-black text-xs text-slate-700 transition-colors shadow-2xs flex-shrink-0 cursor-pointer"
                 title="Quick Add Vehicle"
               >
                 +
@@ -663,7 +663,7 @@ export const InwardCreate = () => {
           </div>
 
           <div>
-            <label className="block text-[11px] font-extrabold text-slate-600 uppercase mb-1.5">
+            <label className="block text-[10px] sm:text-[11px] font-extrabold text-slate-600 uppercase mb-1 truncate">
               Memo No.
             </label>
             <input
@@ -672,27 +672,27 @@ export const InwardCreate = () => {
               value={headerData.memoNo}
               onChange={handleHeaderChange}
               placeholder="e.g. MM-8801"
-              className="w-full px-3 py-2 border border-slate-200 bg-white rounded-xl text-xs font-bold text-slate-800 uppercase focus:ring-2 focus:ring-[#1d4ed8] outline-none placeholder-slate-400"
+              className="w-full px-2.5 py-1.5 sm:px-3 sm:py-2 border border-slate-200 bg-white rounded-xl text-xs font-bold text-slate-800 uppercase focus:ring-2 focus:ring-[#1d4ed8] outline-none placeholder-slate-400"
             />
           </div>
 
           <div>
-            <label className="block text-[11px] font-extrabold text-slate-600 uppercase mb-1.5">
+            <label className="block text-[10px] sm:text-[11px] font-extrabold text-slate-600 uppercase mb-1 truncate">
               Driver Name *
             </label>
-            <div className="flex items-center space-x-1.5 min-w-0">
+            <div className="flex items-center space-x-1 min-w-0">
               <EditableCombobox
                 name="driverName"
                 value={headerData.driverName}
                 onChange={handleHeaderChange}
                 options={masters.drivers}
                 placeholder=""
-                className="px-3 py-2 border border-slate-200 bg-white rounded-xl text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-[#1d4ed8]"
+                className="px-2.5 py-1.5 sm:px-3 sm:py-2 border border-slate-200 bg-white rounded-xl text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-[#1d4ed8]"
               />
               <button
                 type="button"
                 onClick={() => handleOpenQuickAdd('drivers', 'Driver Name', 'driverName', true)}
-                className="px-2.5 py-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl font-black text-xs text-slate-700 transition-colors shadow-2xs flex-shrink-0 cursor-pointer"
+                className="px-2 py-1.5 sm:px-2.5 sm:py-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl font-black text-xs text-slate-700 transition-colors shadow-2xs flex-shrink-0 cursor-pointer"
                 title="Quick Add Driver"
               >
                 +
@@ -701,10 +701,10 @@ export const InwardCreate = () => {
           </div>
 
           <div>
-            <label className="block text-[11px] font-extrabold text-slate-600 uppercase mb-1.5">
+            <label className="block text-[10px] sm:text-[11px] font-extrabold text-slate-600 uppercase mb-1 truncate">
               Vehicle Owner Name
             </label>
-            <div className="flex items-center space-x-1.5 min-w-0">
+            <div className="flex items-center space-x-1 min-w-0">
               <EditableCombobox
                 name="ownerName"
                 value={headerData.ownerName}
@@ -717,12 +717,12 @@ export const InwardCreate = () => {
                   ].filter(Boolean))
                 )}
                 placeholder=""
-                className="px-3 py-2 border border-slate-200 bg-white rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-[#1d4ed8]"
+                className="px-2.5 py-1.5 sm:px-3 sm:py-2 border border-slate-200 bg-white rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-[#1d4ed8]"
               />
               <button
                 type="button"
                 onClick={() => handleOpenQuickAdd('owners', 'Vehicle Owner', 'ownerName', true)}
-                className="px-2.5 py-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl font-black text-xs text-slate-700 transition-colors shadow-2xs flex-shrink-0 cursor-pointer"
+                className="px-2 py-1.5 sm:px-2.5 sm:py-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl font-black text-xs text-slate-700 transition-colors shadow-2xs flex-shrink-0 cursor-pointer"
                 title="Quick Add Vehicle Owner"
               >
                 +
@@ -763,9 +763,9 @@ export const InwardCreate = () => {
         </div>
 
         {/* Row 1: SRNO, LR NO, DATE, INVOICE NO */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3.5 items-end">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-3.5 items-end">
           <div>
-            <label className="block text-[11px] font-extrabold text-slate-600 uppercase mb-1.5">SR NO.</label>
+            <label className="block text-[10px] sm:text-[11px] font-extrabold text-slate-600 uppercase mb-1 truncate">SR NO.</label>
             <input
               type="text"
               readOnly
@@ -777,12 +777,12 @@ export const InwardCreate = () => {
                   ? editingIndex + 1
                   : stagedItems.length + 1
               }
-              className="w-full px-3 py-2 bg-slate-100 border border-slate-200 rounded-xl text-xs font-black text-center text-slate-500 outline-none"
+              className="w-full px-2.5 py-1.5 sm:px-3 sm:py-2 bg-slate-100 border border-slate-200 rounded-xl text-xs font-black text-center text-slate-500 outline-none"
             />
           </div>
 
           <div>
-            <label className="block text-[11px] font-extrabold text-[#1d4ed8] uppercase mb-1.5">LR NO. *</label>
+            <label className="block text-[10px] sm:text-[11px] font-extrabold text-[#1d4ed8] uppercase mb-1 truncate">LR NO. *</label>
             <input
               ref={(el) => (fieldRefs.current[0] = el)}
               onKeyDown={(e) => handleKeyDown(e, 0)}
@@ -792,12 +792,12 @@ export const InwardCreate = () => {
               onChange={handleItemChange}
               placeholder="e.g. 13941"
               autoFocus
-              className="w-full px-3 py-2 bg-sky-50/70 border border-blue-200 rounded-xl text-xs font-black text-[#1d4ed8] uppercase focus:ring-2 focus:ring-[#1d4ed8] outline-none placeholder-slate-400"
+              className="w-full px-2.5 py-1.5 sm:px-3 sm:py-2 bg-sky-50/70 border border-blue-200 rounded-xl text-xs font-black text-[#1d4ed8] uppercase focus:ring-2 focus:ring-[#1d4ed8] outline-none placeholder-slate-400"
             />
           </div>
 
           <div>
-            <label className="block text-[11px] font-extrabold text-slate-600 uppercase mb-1.5">DATE</label>
+            <label className="block text-[10px] sm:text-[11px] font-extrabold text-slate-600 uppercase mb-1 truncate">DATE</label>
             <input
               ref={(el) => (fieldRefs.current[1] = el)}
               onKeyDown={(e) => handleKeyDown(e, 1)}
@@ -805,12 +805,12 @@ export const InwardCreate = () => {
               name="date"
               value={itemForm.date}
               onChange={handleItemChange}
-              className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-[#1d4ed8] outline-none"
+              className="w-full px-2.5 py-1.5 sm:px-3 sm:py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-[#1d4ed8] outline-none"
             />
           </div>
 
           <div>
-            <label className="block text-[11px] font-extrabold text-slate-600 uppercase mb-1.5">INVOICE NO.</label>
+            <label className="block text-[10px] sm:text-[11px] font-extrabold text-slate-600 uppercase mb-1 truncate">INVOICE NO.</label>
             <input
               ref={(el) => (fieldRefs.current[2] = el)}
               onKeyDown={(e) => handleKeyDown(e, 2)}
@@ -819,16 +819,16 @@ export const InwardCreate = () => {
               value={itemForm.invoiceNo}
               onChange={handleItemChange}
               placeholder="e.g. INV-902"
-              className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 uppercase focus:ring-2 focus:ring-[#1d4ed8] outline-none placeholder-slate-400"
+              className="w-full px-2.5 py-1.5 sm:px-3 sm:py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 uppercase focus:ring-2 focus:ring-[#1d4ed8] outline-none placeholder-slate-400"
             />
           </div>
         </div>
 
         {/* Row 2: CT TO, CONSIGNOR, CONSIGNEE, PKG */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3.5 items-end">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-3.5 items-end">
           <div>
-            <label className="block text-[11px] font-extrabold text-slate-600 uppercase mb-1.5">DESTINATION / CT TO</label>
-            <div className="flex items-center space-x-1.5 min-w-0">
+            <label className="block text-[10px] sm:text-[11px] font-extrabold text-slate-600 uppercase mb-1 truncate">DESTINATION / CT TO</label>
+            <div className="flex items-center space-x-1 min-w-0">
               <EditableCombobox
                 ref={(el) => (fieldRefs.current[3] = el)}
                 inputRef={(el) => (fieldRefs.current[3] = el)}
@@ -838,13 +838,13 @@ export const InwardCreate = () => {
                 onChange={handleItemChange}
                 options={masters.stations}
                 placeholder=""
-                className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-[#1d4ed8]"
+                className="px-2.5 py-1.5 sm:px-3 sm:py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-[#1d4ed8]"
               />
               <button
                 type="button"
                 tabIndex={-1}
                 onClick={() => handleOpenQuickAdd('stations', 'Station', 'ctTo', false)}
-                className="px-2.5 py-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl font-black text-xs text-slate-700 transition-colors shadow-2xs flex-shrink-0 cursor-pointer"
+                className="px-2 py-1.5 sm:px-2.5 sm:py-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl font-black text-xs text-slate-700 transition-colors shadow-2xs flex-shrink-0 cursor-pointer"
                 title="Quick Add Station"
               >
                 +
@@ -853,8 +853,8 @@ export const InwardCreate = () => {
           </div>
 
           <div>
-            <label className="block text-[11px] font-extrabold text-slate-600 uppercase mb-1.5">CONSIGNOR (SENDER)</label>
-            <div className="flex items-center space-x-1.5 min-w-0">
+            <label className="block text-[10px] sm:text-[11px] font-extrabold text-slate-600 uppercase mb-1 truncate">CONSIGNOR (SENDER)</label>
+            <div className="flex items-center space-x-1 min-w-0">
               <EditableCombobox
                 ref={(el) => (fieldRefs.current[4] = el)}
                 inputRef={(el) => (fieldRefs.current[4] = el)}
@@ -864,13 +864,13 @@ export const InwardCreate = () => {
                 onChange={handleItemChange}
                 options={masters.consignors}
                 placeholder=""
-                className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-[#1d4ed8]"
+                className="px-2.5 py-1.5 sm:px-3 sm:py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-[#1d4ed8]"
               />
               <button
                 type="button"
                 tabIndex={-1}
                 onClick={() => handleOpenQuickAdd('consignors', 'Consignor', 'consignorName', false)}
-                className="px-2.5 py-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl font-black text-xs text-slate-700 transition-colors shadow-2xs flex-shrink-0 cursor-pointer"
+                className="px-2 py-1.5 sm:px-2.5 sm:py-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl font-black text-xs text-slate-700 transition-colors shadow-2xs flex-shrink-0 cursor-pointer"
                 title="Quick Add Consignor"
               >
                 +
@@ -879,8 +879,8 @@ export const InwardCreate = () => {
           </div>
 
           <div>
-            <label className="block text-[11px] font-extrabold text-slate-600 uppercase mb-1.5">CONSIGNEE (RECEIVER)</label>
-            <div className="flex items-center space-x-1.5 min-w-0">
+            <label className="block text-[10px] sm:text-[11px] font-extrabold text-slate-600 uppercase mb-1 truncate">CONSIGNEE (RECEIVER)</label>
+            <div className="flex items-center space-x-1 min-w-0">
               <EditableCombobox
                 ref={(el) => (fieldRefs.current[5] = el)}
                 inputRef={(el) => (fieldRefs.current[5] = el)}
@@ -890,13 +890,13 @@ export const InwardCreate = () => {
                 onChange={handleItemChange}
                 options={masters.consignees}
                 placeholder=""
-                className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-[#1d4ed8]"
+                className="px-2.5 py-1.5 sm:px-3 sm:py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-[#1d4ed8]"
               />
               <button
                 type="button"
                 tabIndex={-1}
                 onClick={() => handleOpenQuickAdd('consignees', 'Consignee', 'consigneeName', false)}
-                className="px-2.5 py-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl font-black text-xs text-slate-700 transition-colors shadow-2xs flex-shrink-0 cursor-pointer"
+                className="px-2 py-1.5 sm:px-2.5 sm:py-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl font-black text-xs text-slate-700 transition-colors shadow-2xs flex-shrink-0 cursor-pointer"
                 title="Quick Add Consignee"
               >
                 +
@@ -905,7 +905,7 @@ export const InwardCreate = () => {
           </div>
 
           <div>
-            <label className="block text-[11px] font-extrabold text-slate-900 uppercase mb-1.5">PACKAGES (PKG) *</label>
+            <label className="block text-[10px] sm:text-[11px] font-extrabold text-slate-900 uppercase mb-1 truncate">PACKAGES (PKG) *</label>
             <input
               ref={(el) => (fieldRefs.current[6] = el)}
               onKeyDown={(e) => handleKeyDown(e, 6)}
@@ -915,15 +915,15 @@ export const InwardCreate = () => {
               value={itemForm.pkg}
               onChange={handleItemChange}
               placeholder="1"
-              className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-black text-slate-900 focus:ring-2 focus:ring-[#1d4ed8] outline-none"
+              className="w-full px-2.5 py-1.5 sm:px-3 sm:py-2 bg-white border border-slate-200 rounded-xl text-xs font-black text-slate-900 focus:ring-2 focus:ring-[#1d4ed8] outline-none"
             />
           </div>
         </div>
 
         {/* Row 3: TO PAY, T.B.B, PAID, TOTAL */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3.5 items-end pt-1">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-3.5 items-end pt-1">
           <div>
-            <label className="block text-[11px] font-extrabold text-amber-700 uppercase mb-1.5">TO PAY FREIGHT</label>
+            <label className="block text-[10px] sm:text-[11px] font-extrabold text-amber-700 uppercase mb-1 truncate">TO PAY FREIGHT</label>
             <input
               ref={(el) => (fieldRefs.current[7] = el)}
               onKeyDown={(e) => handleKeyDown(e, 7)}
@@ -933,12 +933,12 @@ export const InwardCreate = () => {
               value={itemForm.toPayAmount}
               onChange={handleItemChange}
               placeholder="0.00"
-              className="w-full px-3 py-2 bg-amber-50/60 border border-amber-200 rounded-xl text-xs font-black text-amber-900 focus:ring-2 focus:ring-amber-500 outline-none"
+              className="w-full px-2.5 py-1.5 sm:px-3 sm:py-2 bg-amber-50/60 border border-amber-200 rounded-xl text-xs font-black text-amber-900 focus:ring-2 focus:ring-amber-500 outline-none"
             />
           </div>
 
           <div>
-            <label className="block text-[11px] font-extrabold text-sky-700 uppercase mb-1.5">T.B.B. FREIGHT</label>
+            <label className="block text-[10px] sm:text-[11px] font-extrabold text-sky-700 uppercase mb-1 truncate">T.B.B. FREIGHT</label>
             <input
               ref={(el) => (fieldRefs.current[8] = el)}
               onKeyDown={(e) => handleKeyDown(e, 8)}
@@ -948,12 +948,12 @@ export const InwardCreate = () => {
               value={itemForm.tbbAmount}
               onChange={handleItemChange}
               placeholder="0.00"
-              className="w-full px-3 py-2 bg-sky-50/60 border border-sky-200 rounded-xl text-xs font-black text-sky-900 focus:ring-2 focus:ring-sky-500 outline-none"
+              className="w-full px-2.5 py-1.5 sm:px-3 sm:py-2 bg-sky-50/60 border border-sky-200 rounded-xl text-xs font-black text-sky-900 focus:ring-2 focus:ring-sky-500 outline-none"
             />
           </div>
 
           <div>
-            <label className="block text-[11px] font-extrabold text-emerald-700 uppercase mb-1.5">PAID FREIGHT</label>
+            <label className="block text-[10px] sm:text-[11px] font-extrabold text-emerald-700 uppercase mb-1 truncate">PAID FREIGHT</label>
             <input
               ref={(el) => (fieldRefs.current[9] = el)}
               onKeyDown={(e) => handleKeyDown(e, 9)}
@@ -963,18 +963,18 @@ export const InwardCreate = () => {
               value={itemForm.paidAmount}
               onChange={handleItemChange}
               placeholder="0.00"
-              className="w-full px-3 py-2 bg-emerald-50/60 border border-emerald-200 rounded-xl text-xs font-black text-emerald-900 focus:ring-2 focus:ring-emerald-500 outline-none"
+              className="w-full px-2.5 py-1.5 sm:px-3 sm:py-2 bg-emerald-50/60 border border-emerald-200 rounded-xl text-xs font-black text-emerald-900 focus:ring-2 focus:ring-emerald-500 outline-none"
             />
           </div>
 
           <div>
-            <label className="block text-[11px] font-extrabold text-slate-700 uppercase mb-1.5">TOTAL ROW</label>
+            <label className="block text-[10px] sm:text-[11px] font-extrabold text-slate-700 uppercase mb-1 truncate">TOTAL ROW</label>
             <input
               type="text"
               readOnly
               tabIndex={-1}
               value={formatCurrency((Number(itemForm.toPayAmount) || 0) + (Number(itemForm.tbbAmount) || 0) + (Number(itemForm.paidAmount) || 0))}
-              className="w-full px-3 py-2 bg-slate-100 border border-slate-200 rounded-xl text-xs font-black text-slate-900 text-right outline-none cursor-default select-none"
+              className="w-full px-2.5 py-1.5 sm:px-3 sm:py-2 bg-slate-100 border border-slate-200 rounded-xl text-xs font-black text-slate-900 text-right outline-none cursor-default select-none"
             />
           </div>
         </div>

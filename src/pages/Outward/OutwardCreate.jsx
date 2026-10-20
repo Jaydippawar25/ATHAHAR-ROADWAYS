@@ -463,9 +463,9 @@ export const OutwardCreate = () => {
           </span>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 items-end">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-4 items-end">
           <div>
-            <label className="block text-[11px] font-extrabold text-slate-600 uppercase mb-1.5">
+            <label className="block text-[10px] sm:text-[11px] font-extrabold text-slate-600 uppercase mb-1 truncate">
               Outward No.
             </label>
             <input
@@ -473,12 +473,12 @@ export const OutwardCreate = () => {
               name="outwardNo"
               value={headerData.outwardNo}
               onChange={handleHeaderChange}
-              className="w-full px-3 py-2 border border-slate-200 bg-slate-50/70 rounded-xl text-xs font-black text-[#1d4ed8] font-mono focus:ring-2 focus:ring-[#1d4ed8] outline-none"
+              className="w-full px-2.5 py-1.5 sm:px-3 sm:py-2 border border-slate-200 bg-slate-50/70 rounded-xl text-xs font-black text-[#1d4ed8] font-mono focus:ring-2 focus:ring-[#1d4ed8] outline-none"
             />
           </div>
 
           <div>
-            <label className="block text-[11px] font-extrabold text-slate-600 uppercase mb-1.5">
+            <label className="block text-[10px] sm:text-[11px] font-extrabold text-slate-600 uppercase mb-1 truncate">
               Dispatch Date *
             </label>
             <input
@@ -486,27 +486,27 @@ export const OutwardCreate = () => {
               name="date"
               value={headerData.date}
               onChange={handleHeaderChange}
-              className="w-full px-3 py-2 border border-slate-200 bg-white rounded-xl text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-[#1d4ed8] outline-none"
+              className="w-full px-2.5 py-1.5 sm:px-3 sm:py-2 border border-slate-200 bg-white rounded-xl text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-[#1d4ed8] outline-none"
             />
           </div>
 
           <div>
-            <label className="block text-[11px] font-extrabold text-slate-600 uppercase mb-1.5">
+            <label className="block text-[10px] sm:text-[11px] font-extrabold text-slate-600 uppercase mb-1 truncate">
               Transporter Name
             </label>
-            <div className="flex items-center space-x-1.5 min-w-0">
+            <div className="flex items-center space-x-1 min-w-0">
               <EditableCombobox
                 name="transporterName"
                 value={headerData.transporterName}
                 onChange={handleHeaderChange}
                 options={masters.transporters}
                 placeholder=""
-                className="px-3 py-2 border border-slate-200 bg-white rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-[#1d4ed8]"
+                className="px-2.5 py-1.5 sm:px-3 sm:py-2 border border-slate-200 bg-white rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-[#1d4ed8]"
               />
               <button
                 type="button"
                 onClick={() => handleOpenQuickAdd('transporters', 'Transporter', 'transporterName', true)}
-                className="px-2.5 py-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl font-black text-xs text-slate-700 transition-colors shadow-2xs flex-shrink-0 cursor-pointer"
+                className="px-2 py-1.5 sm:px-2.5 sm:py-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl font-black text-xs text-slate-700 transition-colors shadow-2xs flex-shrink-0 cursor-pointer"
                 title="Quick Add Transporter"
               >
                 +
@@ -515,22 +515,22 @@ export const OutwardCreate = () => {
           </div>
 
           <div>
-            <label className="block text-[11px] font-extrabold text-slate-600 uppercase mb-1.5">
+            <label className="block text-[10px] sm:text-[11px] font-extrabold text-slate-600 uppercase mb-1 truncate">
               Origin Station *
             </label>
-            <div className="flex items-center space-x-1.5 min-w-0">
+            <div className="flex items-center space-x-1 min-w-0">
               <EditableCombobox
                 name="fromStation"
                 value={headerData.fromStation}
                 onChange={handleHeaderChange}
                 options={masters.stations}
                 placeholder=""
-                className="px-3 py-2 border border-slate-200 bg-white rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-[#1d4ed8]"
+                className="px-2.5 py-1.5 sm:px-3 sm:py-2 border border-slate-200 bg-white rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-[#1d4ed8]"
               />
               <button
                 type="button"
                 onClick={() => handleOpenQuickAdd('stations', 'Origin Station', 'fromStation', true)}
-                className="px-2.5 py-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl font-black text-xs text-slate-700 transition-colors shadow-2xs flex-shrink-0 cursor-pointer"
+                className="px-2 py-1.5 sm:px-2.5 sm:py-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl font-black text-xs text-slate-700 transition-colors shadow-2xs flex-shrink-0 cursor-pointer"
                 title="Quick Add Station"
               >
                 +
@@ -539,22 +539,22 @@ export const OutwardCreate = () => {
           </div>
 
           <div>
-            <label className="block text-[11px] font-extrabold text-slate-600 uppercase mb-1.5">
+            <label className="block text-[10px] sm:text-[11px] font-extrabold text-slate-600 uppercase mb-1 truncate">
               Vehicle No. *
             </label>
-            <div className="flex items-center space-x-1.5 min-w-0">
+            <div className="flex items-center space-x-1 min-w-0">
               <EditableCombobox
                 name="vehicleNo"
                 value={headerData.vehicleNo}
                 onChange={handleHeaderChange}
                 options={masters.vehicles}
                 placeholder=""
-                className="px-3 py-2 border border-slate-200 bg-white rounded-xl text-xs font-black text-slate-900 focus:ring-2 focus:ring-[#1d4ed8]"
+                className="px-2.5 py-1.5 sm:px-3 sm:py-2 border border-slate-200 bg-white rounded-xl text-xs font-black text-slate-900 focus:ring-2 focus:ring-[#1d4ed8]"
               />
               <button
                 type="button"
                 onClick={() => handleOpenQuickAdd('vehicles', 'Vehicle Number', 'vehicleNo', true)}
-                className="px-2.5 py-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl font-black text-xs text-slate-700 transition-colors shadow-2xs flex-shrink-0 cursor-pointer"
+                className="px-2 py-1.5 sm:px-2.5 sm:py-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl font-black text-xs text-slate-700 transition-colors shadow-2xs flex-shrink-0 cursor-pointer"
                 title="Quick Add Vehicle"
               >
                 +
@@ -563,22 +563,22 @@ export const OutwardCreate = () => {
           </div>
 
           <div>
-            <label className="block text-[11px] font-extrabold text-emerald-800 uppercase mb-1.5">
+            <label className="block text-[10px] sm:text-[11px] font-extrabold text-emerald-800 uppercase mb-1 truncate">
               Delivery Person *
             </label>
-            <div className="flex items-center space-x-1.5 min-w-0">
+            <div className="flex items-center space-x-1 min-w-0">
               <EditableCombobox
                 name="deliveryPersonName"
                 value={headerData.deliveryPersonName}
                 onChange={handleHeaderChange}
                 options={masters.deliveryPersons}
                 placeholder=""
-                className="px-3 py-2 border border-emerald-200 bg-emerald-50/50 rounded-xl text-xs font-extrabold text-emerald-900 focus:ring-2 focus:ring-emerald-500"
+                className="px-2.5 py-1.5 sm:px-3 sm:py-2 border border-emerald-200 bg-emerald-50/50 rounded-xl text-xs font-extrabold text-emerald-900 focus:ring-2 focus:ring-emerald-500"
               />
               <button
                 type="button"
                 onClick={() => handleOpenQuickAdd('deliveryPersons', 'Delivery Person', 'deliveryPersonName', true)}
-                className="px-2.5 py-2 bg-emerald-100 hover:bg-emerald-200 border border-emerald-200 rounded-xl font-black text-xs text-emerald-900 transition-colors shadow-2xs flex-shrink-0 cursor-pointer"
+                className="px-2 py-1.5 sm:px-2.5 sm:py-2 bg-emerald-100 hover:bg-emerald-200 border border-emerald-200 rounded-xl font-black text-xs text-emerald-900 transition-colors shadow-2xs flex-shrink-0 cursor-pointer"
                 title="Quick Add Delivery Person"
               >
                 +
@@ -587,22 +587,22 @@ export const OutwardCreate = () => {
           </div>
 
           <div>
-            <label className="block text-[11px] font-extrabold text-slate-600 uppercase mb-1.5">
+            <label className="block text-[10px] sm:text-[11px] font-extrabold text-slate-600 uppercase mb-1 truncate">
               Driver Name *
             </label>
-            <div className="flex items-center space-x-1.5 min-w-0">
+            <div className="flex items-center space-x-1 min-w-0">
               <EditableCombobox
                 name="driverName"
                 value={headerData.driverName}
                 onChange={handleHeaderChange}
                 options={masters.drivers}
                 placeholder=""
-                className="px-3 py-2 border border-slate-200 bg-white rounded-xl text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-[#1d4ed8]"
+                className="px-2.5 py-1.5 sm:px-3 sm:py-2 border border-slate-200 bg-white rounded-xl text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-[#1d4ed8]"
               />
               <button
                 type="button"
                 onClick={() => handleOpenQuickAdd('drivers', 'Driver Name', 'driverName', true)}
-                className="px-2.5 py-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl font-black text-xs text-slate-700 transition-colors shadow-2xs flex-shrink-0 cursor-pointer"
+                className="px-2 py-1.5 sm:px-2.5 sm:py-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl font-black text-xs text-slate-700 transition-colors shadow-2xs flex-shrink-0 cursor-pointer"
                 title="Quick Add Driver"
               >
                 +
@@ -611,7 +611,7 @@ export const OutwardCreate = () => {
           </div>
 
           <div>
-            <label className="block text-[11px] font-extrabold text-slate-600 uppercase mb-1.5">
+            <label className="block text-[10px] sm:text-[11px] font-extrabold text-slate-600 uppercase mb-1 truncate">
               Memo No.
             </label>
             <input
@@ -620,7 +620,7 @@ export const OutwardCreate = () => {
               value={headerData.memoNo}
               onChange={handleHeaderChange}
               placeholder="e.g. OUT-MM-01"
-              className="w-full px-3 py-2 border border-slate-200 bg-white rounded-xl text-xs font-bold text-slate-800 uppercase focus:ring-2 focus:ring-[#1d4ed8] outline-none placeholder-slate-400"
+              className="w-full px-2.5 py-1.5 sm:px-3 sm:py-2 border border-slate-200 bg-white rounded-xl text-xs font-bold text-slate-800 uppercase focus:ring-2 focus:ring-[#1d4ed8] outline-none placeholder-slate-400"
             />
           </div>
         </div>
