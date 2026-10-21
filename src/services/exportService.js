@@ -1,11 +1,9 @@
-import * as XLSX from 'xlsx';
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
 import { formatDate } from '../utils/dateUtils';
 import { formatCurrency } from '../utils/numberUtils';
 
-export const exportToExcel = (data, filename = 'export', columns = []) => {
+export const exportToExcel = async (data, filename = 'export', columns = []) => {
   if (!data || data.length === 0) return;
+  const XLSX = await import('xlsx');
 
   const validColumns = columns.filter((col) => col.key !== 'actions' && col.label !== 'Actions');
 
@@ -31,7 +29,9 @@ const formatPdfCurrency = (amount) => {
   })}`;
 };
 
-export const exportToPDF = (title, columns, data, filename = 'report') => {
+export const exportToPDF = async (title, columns, data, filename = 'report') => {
+  const { default: jsPDF } = await import('jspdf');
+  await import('jspdf-autotable');
   const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
