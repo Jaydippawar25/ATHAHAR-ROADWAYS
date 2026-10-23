@@ -22,7 +22,7 @@ import { printRecordDetails, exportToExcel } from '../services/exportService';
 import { Modal } from '../components/common/Modal';
 
 export const Dashboard = () => {
-  const { inwards, inwardItems, pendingStock, outwardItems, masters } = useApp();
+  const { inwards, inwardItems, pendingStock, masters, cachedDashboardStats } = useApp();
   const navigate = useNavigate();
 
   // Search & Filters
@@ -53,24 +53,18 @@ export const Dashboard = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [navigate]);
 
-  // Derived KPI Calculations
-  const totalInwardCount = inwardItems.length;
-  const totalInwardPackages = inwardItems.reduce((acc, curr) => acc + (Number(curr.pkg) || 0), 0);
-  const totalPendingCount = pendingStock.length;
-  const totalPendingPackages = pendingStock.reduce((acc, curr) => acc + (Number(curr.pkg) || 0), 0);
-  const totalDispatchedCount = outwardItems.length;
-  const totalDispatchedPackages = outwardItems.reduce((acc, curr) => acc + (Number(curr.pkg) || 0), 0);
-
-  const totalToPayPending = pendingStock.reduce(
-    (acc, curr) => acc + (Number(curr.toPayAmount) || 0),
-    0
-  );
-  const pendingStockToPayCount = pendingStock.filter((i) => Number(i.toPayAmount) > 0).length;
-
-  const dispatchRate =
-    totalInwardCount > 0
-      ? ((totalDispatchedCount / totalInwardCount) * 100).toFixed(1)
-      : '0.0';
+  // Instant Smart In-Memory Cached KPIs (Zero multi-pass re-calculations on route navigation)
+  const {
+    totalInwardCount,
+    totalInwardPackages,
+    totalPendingCount,
+    totalPendingPackages,
+    totalDispatchedCount,
+    totalDispatchedPackages,
+    totalToPayPending,
+    pendingStockToPayCount,
+    dispatchRate,
+  } = cachedDashboardStats;
 
   const query = searchTerm.trim().toLowerCase();
 

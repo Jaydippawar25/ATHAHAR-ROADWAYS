@@ -10,7 +10,14 @@ import { formatCurrency } from '../../utils/numberUtils';
 import { exportToExcel, exportToPDF, printRecordDetails } from '../../services/exportService';
 
 export const PendingStock = () => {
-  const { inwards, inwardItems, pendingStock, handleDeleteInwardItem, handleUpdateInwardItem } = useApp();
+  const {
+    inwards,
+    inwardItems,
+    pendingStock,
+    handleDeleteInwardItem,
+    handleUpdateInwardItem,
+    cachedPendingSummary,
+  } = useApp();
   const navigate = useNavigate();
   const [selectedIds, setSelectedIds] = useState([]);
 
@@ -156,11 +163,13 @@ export const PendingStock = () => {
     navigate('/outward/new', { state: { selectedPendingItems: selectedItems } });
   };
 
-  // Statistics
-  const totalPendingPkg = pendingStock.reduce((sum, i) => sum + (Number(i.pkg) || 0), 0);
-  const totalToPay = pendingStock.reduce((sum, i) => sum + (Number(i.toPayAmount) || 0), 0);
-  const totalTbb = pendingStock.reduce((sum, i) => sum + (Number(i.tbbAmount) || 0), 0);
-  const totalPaid = pendingStock.reduce((sum, i) => sum + (Number(i.paidAmount) || 0), 0);
+  // Instant Smart In-Memory Cached Statistics (O(1) retrieval across page navigation)
+  const {
+    totalPackages: totalPendingPkg,
+    totalToPay,
+    totalTbb,
+    totalPaid,
+  } = cachedPendingSummary;
 
   return (
     <div className="space-y-5">

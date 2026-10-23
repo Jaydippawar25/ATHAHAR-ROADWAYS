@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { getMasters, addMasterItem, updateMasterItem, deleteMasterItem } from '../services/masterService';
 import {
   getAllInwards,
@@ -48,22 +48,54 @@ import { STATUS } from '../utils/constants';
 const AppContext = createContext(null);
 
 export const AppProvider = ({ children }) => {
-  const [masters, setMasters] = useState(getMasters());
-  const [inwards, setInwards] = useState(getAllInwards());
-  const [inwardItems, setInwardItems] = useState(getAllInwardItems());
-  const [outwards, setOutwards] = useState(getAllOutwards());
-  const [outwardItems, setOutwardItems] = useState(getAllOutwardItems());
-  const [pendingStock, setPendingStock] = useState(getPendingStockItems());
-  const [vouchers, setVouchers] = useState(getAllVouchers());
-  const [expenses, setExpenses] = useState(getAllExpenses());
+  const [masters, setMasters] = useState(getMasters);
+  const [inwards, setInwards] = useState(getAllInwards);
+  const [inwardItems, setInwardItems] = useState(getAllInwardItems);
+  const [outwards, setOutwards] = useState(getAllOutwards);
+  const [outwardItems, setOutwardItems] = useState(getAllOutwardItems);
+  const [pendingStock, setPendingStock] = useState(getPendingStockItems);
+  const [vouchers, setVouchers] = useState(getAllVouchers);
+  const [expenses, setExpenses] = useState(getAllExpenses);
 
-  // Cloud Sync Status Tracking
-  const [syncStatus, setSyncStatus] = useState({
-    state: 'connecting', // 'connecting' | 'connected' | 'syncing' | 'offline' | 'error'
-    message: 'Connecting to Cloud Firestore...',
-    lastSync: null,
-    source: 'local',
+  // Module revision counters for cache invalidation tracking
+  const [dataVersions, setDataVersions] = useState({
+    inwards: 1,
+    outwards: 1,
+    expenses: 1,
+    masters: 1,
+    vouchers: 1,
   });
+
+  // Targeted Auto-Invalidation Functions (Eliminate blanket re-reading of unrelated modules)
+  const invalidateInwardData = () => {
+    setInwards(getAllInwards());
+    setInwardItems(getAllInwardItems());
+    setPendingStock(getPendingStockItems());
+    setDataVersions((v) => ({ ...v, inwards: v.inwards + 1 }));
+  };
+
+  const invalidateOutwardData = () => {
+    setOutwards(getAllOutwards());
+    setOutwardItems(getAllOutwardItems());
+    setInwardItems(getAllInwardItems());
+    setPendingStock(getPendingStockItems());
+    setDataVersions((v) => ({ ...v, outwards: v.outwards + 1 }));
+  };
+
+  const invalidateExpenseData = () => {
+    setExpenses(getAllExpenses());
+    setDataVersions((v) => ({ ...v, expenses: v.expenses + 1 }));
+  };
+
+  const invalidateMasterData = () => {
+    setMasters(getMasters());
+    setDataVersions((v) => ({ ...v, masters: v.masters + 1 }));
+  };
+
+  const invalidateVoucherData = () => {
+    setVouchers(getAllVouchers());
+    setDataVersions((v) => ({ ...v, vouchers: v.vouchers + 1 }));
+  };
 
   const refreshData = () => {
     setMasters(getMasters());
@@ -74,7 +106,69 @@ export const AppProvider = ({ children }) => {
     setPendingStock(getPendingStockItems());
     setVouchers(getAllVouchers());
     setExpenses(getAllExpenses());
+    setDataVersions((v) => ({
+      inwards: v.inwards + 1,
+      outwards: v.outwards + 1,
+      expenses: v.expenses + 1,
+      masters: v.masters + 1,
+      vouchers: v.vouchers + 1,
+    }));
   };
+
+  // Smart In-Memory Pre-Calculated Caches (Instant O(1) retrieval across page navigation)
+  const cachedDashboardStats = useMemo(() => {
+    const totalInwardCount = inwardItems.length;
+    const totalInwardPackages = inwardItems.reduce((acc, curr) => acc + (Number(curr.pkg) || 0), 0);
+    const totalPendingCount = pendingStock.length;
+    const totalPendingPackages = pendingStock.reduce((acc, curr) => acc + (Number(curr.pkg) || 0), 0);
+    const totalDispatchedCount = outwardItems.length;
+    const totalDispatchedPackages = outwardItems.reduce((acc, curr) => acc + (Number(curr.pkg) || 0), 0);
+    const totalToPayPending = pendingStock.reduce(
+      (acc, curr) => acc + (Number(curr.toPayAmount) || 0),
+      0
+    );
+    const pendingStockToPayCount = pendingStock.filter((i) => Number(i.toPayAmount) > 0).length;
+    const dispatchRate =
+      totalInwardCount > 0
+        ? ((totalDispatchedCount / totalInwardCount) * 100).toFixed(1)
+        : '0.0';
+
+    return {
+      totalInwardCount,
+      totalInwardPackages,
+      totalPendingCount,
+      totalPendingPackages,
+      totalDispatchedCount,
+      totalDispatchedPackages,
+      totalToPayPending,
+      pendingStockToPayCount,
+      dispatchRate,
+    };
+  }, [inwardItems, pendingStock, outwardItems]);
+
+  const cachedPendingSummary = useMemo(() => {
+    return {
+      totalCount: pendingStock.length,
+      totalPackages: pendingStock.reduce((acc, curr) => acc + (Number(curr.pkg) || 0), 0),
+      totalToPay: pendingStock.reduce((acc, curr) => acc + (Number(curr.toPayAmount) || 0), 0),
+      totalTbb: pendingStock.reduce((acc, curr) => acc + (Number(curr.tbbAmount) || 0), 0),
+      totalPaid: pendingStock.reduce((acc, curr) => acc + (Number(curr.paidAmount) || 0), 0),
+    };
+  }, [pendingStock]);
+
+  const cachedExpenseSummary = useMemo(() => {
+    const totalExpenses = expenses.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+    const totalCount = expenses.length;
+    return { totalExpenses, totalCount };
+  }, [expenses]);
+
+  // Cloud Sync Status Tracking
+  const [syncStatus, setSyncStatus] = useState({
+    state: 'connecting', // 'connecting' | 'connected' | 'syncing' | 'offline' | 'error'
+    message: 'Connecting to Cloud Firestore...',
+    lastSync: null,
+    source: 'local',
+  });
 
   // Safe Cloud Hydration and Real-Time Bidirectional Synchronization
   useEffect(() => {
@@ -116,25 +210,32 @@ export const AppProvider = ({ children }) => {
           switch (updatedKey) {
             case STORAGE_KEYS.MASTERS:
               setMasters(newData);
+              setDataVersions((v) => ({ ...v, masters: v.masters + 1 }));
               break;
             case STORAGE_KEYS.INWARDS:
               setInwards(newData);
+              setDataVersions((v) => ({ ...v, inwards: v.inwards + 1 }));
               break;
             case STORAGE_KEYS.INWARD_ITEMS:
               setInwardItems(newData);
               setPendingStock((newData || []).filter((item) => item.status === STATUS.PENDING));
+              setDataVersions((v) => ({ ...v, inwards: v.inwards + 1 }));
               break;
             case STORAGE_KEYS.OUTWARDS:
               setOutwards(newData);
+              setDataVersions((v) => ({ ...v, outwards: v.outwards + 1 }));
               break;
             case STORAGE_KEYS.OUTWARD_ITEMS:
               setOutwardItems(newData);
+              setDataVersions((v) => ({ ...v, outwards: v.outwards + 1 }));
               break;
             case STORAGE_KEYS.ACCOUNTING_VOUCHERS:
               setVouchers(newData);
+              setDataVersions((v) => ({ ...v, vouchers: v.vouchers + 1 }));
               break;
             case STORAGE_KEYS.EXPENSES:
               setExpenses(newData);
+              setDataVersions((v) => ({ ...v, expenses: v.expenses + 1 }));
               break;
             default:
               refreshData();
@@ -223,133 +324,133 @@ export const AppProvider = ({ children }) => {
 
   const handleCreateInward = (headerData, lrItems, username) => {
     const res = createInward(headerData, lrItems, username);
-    refreshData();
+    invalidateInwardData();
     return res;
   };
 
   const handleUpdateFullInward = (id, headerData, lrItems, username) => {
     const res = updateFullInward(id, headerData, lrItems, username);
-    refreshData();
+    invalidateInwardData();
     return res;
   };
 
   const handleDeleteInward = (id) => {
     const res = deleteInward(id);
-    refreshData();
+    invalidateInwardData();
     return res;
   };
 
   const handleDeleteInwardItem = (id) => {
     const res = deleteInwardItem(id);
-    refreshData();
+    invalidateInwardData();
     return res;
   };
 
   const handleUpdateInwardHeader = (id, fields) => {
     const res = updateInwardHeader(id, fields);
-    refreshData();
+    invalidateInwardData();
     return res;
   };
 
   const handleUpdateInwardItem = (id, fields) => {
     const res = updateInwardItem(id, fields);
-    refreshData();
+    invalidateInwardData();
     return res;
   };
 
   const handleCreateOutward = (headerData, selectedPendingItems, username) => {
     const res = createOutward(headerData, selectedPendingItems, username);
-    refreshData();
+    invalidateOutwardData();
     return res;
   };
 
   const handleUpdateFullOutward = (id, headerData, selectedPendingItems, username) => {
     const res = updateFullOutward(id, headerData, selectedPendingItems, username);
-    refreshData();
+    invalidateOutwardData();
     return res;
   };
 
   const handleDeleteOutward = (id) => {
     const res = deleteOutward(id);
-    refreshData();
+    invalidateOutwardData();
     return res;
   };
 
   const handleDeleteOutwardItem = (id) => {
     const res = deleteOutwardItem(id);
-    refreshData();
+    invalidateOutwardData();
     return res;
   };
 
   const handleUpdateOutwardHeader = (id, fields) => {
     const res = updateOutwardHeader(id, fields);
-    refreshData();
+    invalidateOutwardData();
     return res;
   };
 
   const handleUpdateOutwardItem = (id, fields) => {
     const res = updateOutwardItem(id, fields);
-    refreshData();
+    invalidateOutwardData();
     return res;
   };
 
   const handleAddMaster = (category, item) => {
     const res = addMasterItem(category, item);
-    refreshData();
+    invalidateMasterData();
     return res;
   };
 
   const handleUpdateMaster = (category, id, fields) => {
     const res = updateMasterItem(category, id, fields);
-    refreshData();
+    invalidateMasterData();
     return res;
   };
 
   const handleDeleteMaster = (category, id) => {
     const res = deleteMasterItem(category, id);
-    refreshData();
+    invalidateMasterData();
     return res;
   };
 
   const handleCreateVoucher = (voucherData, username) => {
     const res = createVoucher(voucherData, username);
-    refreshData();
+    invalidateVoucherData();
     return res;
   };
 
   const handleUpdateVoucher = (id, fields) => {
     const res = updateVoucher(id, fields);
-    refreshData();
+    invalidateVoucherData();
     return res;
   };
 
   const handleDeleteVoucher = (id) => {
     const res = deleteVoucher(id);
-    refreshData();
+    invalidateVoucherData();
     return res;
   };
 
   const handleCreateExpense = (expenseData, username) => {
     const res = createExpense(expenseData, username);
-    refreshData();
+    invalidateExpenseData();
     return res;
   };
 
   const handleUpdateExpense = (id, fields, username) => {
     const res = updateExpense(id, fields, username);
-    refreshData();
+    invalidateExpenseData();
     return res;
   };
 
   const handleDeleteExpense = async (id) => {
     const res = await deleteExpense(id);
-    refreshData();
+    invalidateExpenseData();
     return res;
   };
 
   const handleClearAllExpenses = async () => {
     const res = await clearAllExpenses();
-    refreshData();
+    invalidateExpenseData();
     return res;
   };
 
@@ -364,8 +465,17 @@ export const AppProvider = ({ children }) => {
         pendingStock,
         vouchers,
         expenses,
+        dataVersions,
+        cachedDashboardStats,
+        cachedPendingSummary,
+        cachedExpenseSummary,
         syncStatus,
         refreshData,
+        invalidateInwardData,
+        invalidateOutwardData,
+        invalidateExpenseData,
+        invalidateMasterData,
+        invalidateVoucherData,
         handlePullFromCloud,
         handlePushToCloud,
         handleClearAllData,
