@@ -416,12 +416,12 @@ export const DataTable = ({
       </div>
 
       {/* Desktop Table Container (hidden on mobile) */}
-      <div className="hidden sm:block w-full overflow-x-auto">
+      <div className="hidden sm:block w-full overflow-x-auto scrollbar-thin scrollbar-thumb-slate-300 scrollbar-track-transparent">
         <table className={`w-full text-slate-800 border-collapse table-${tableLayout}`}>
           <thead className="bg-slate-100/90 text-[#0b2545] uppercase font-black text-[10px] tracking-wider border-b-2 border-slate-200">
             <tr>
               {selectable && (
-                <th className="p-3 w-8 text-center">
+                <th className={`${isCompact ? 'px-1.5 py-2 w-7' : 'p-3 w-8'} text-center`}>
                   <input
                     type="checkbox"
                     checked={isAllSelected}
@@ -444,14 +444,15 @@ export const DataTable = ({
                   ? col.width
                   : isAction
                   ? isCompact
-                    ? 'w-16 min-w-[62px]'
+                    ? 'w-14 min-w-[56px]'
                     : 'w-20 min-w-[76px]'
                   : '';
+                const thPadding = isCompact ? 'px-1.5 py-2 text-[10px]' : 'px-3 py-3 text-[11px]';
 
                 return (
                   <th
                     key={idx}
-                    className={`p-3 ${alignCls} ${widthCls} whitespace-nowrap select-none`}
+                    className={`${thPadding} ${alignCls} ${widthCls} whitespace-nowrap select-none`}
                   >
                     {col.label}
                   </th>
@@ -481,7 +482,7 @@ export const DataTable = ({
                     }`}
                   >
                     {selectable && (
-                      <td className="p-3 text-center">
+                      <td className={`${isCompact ? 'px-1.5 py-1.5 w-7' : 'p-3 w-8'} text-center`}>
                         <input
                           type="checkbox"
                           checked={isRowSelected}
@@ -523,8 +524,8 @@ export const DataTable = ({
                         col.key === 'totalQty' ||
                         col.key === 'srNo';
 
-                      const paddingCls = isCompact ? 'px-2 py-2' : 'px-3 py-2.5';
-                      const textCls = isCompact ? 'text-[11px]' : 'text-xs';
+                      const paddingCls = isCompact ? 'px-1.5 py-1.5' : 'px-3 py-2.5';
+                      const textCls = isCompact ? 'text-[10.5px]' : 'text-xs';
                       const alignCls = isRight ? 'text-right font-black' : isCenter ? 'text-center' : 'text-left';
                       const isBadgeCol = col.type === 'status' || col.key === 'type';
                       const wrapCls =
@@ -535,16 +536,16 @@ export const DataTable = ({
                         ? col.width
                         : isAction
                         ? isCompact
-                          ? 'w-16 min-w-[62px]'
+                          ? 'w-14 min-w-[56px]'
                           : 'w-20 min-w-[76px]'
                         : col.type === 'status'
-                        ? 'min-w-[96px]'
+                        ? isCompact ? 'min-w-[68px]' : 'min-w-[96px]'
                         : col.key === 'type'
                         ? 'min-w-[105px]'
                         : isNumOrDate
                         ? 'whitespace-nowrap'
                         : isCompact
-                        ? 'max-w-[110px] truncate'
+                        ? 'max-w-[100px] truncate'
                         : 'max-w-[140px] truncate';
 
                       return (
@@ -590,13 +591,13 @@ export const DataTable = ({
                 ? lastTotalIndex + 1
                 : -1;
 
-            const padCls = isCompact ? 'px-2 py-2' : 'px-3 py-2.5';
-            const fTextCls = isCompact ? 'text-[11px]' : 'text-xs';
+            const padCls = isCompact ? 'px-1.5 py-1.5' : 'px-3 py-2.5';
+            const fTextCls = isCompact ? 'text-[10.5px]' : 'text-xs';
 
             return (
               <tfoot className={`bg-blue-50/80 border-t-2 border-slate-300 font-black text-slate-900 ${fTextCls}`}>
                 <tr>
-                  {selectable && <td className="p-3"></td>}
+                  {selectable && <td className={`${isCompact ? 'px-1.5 py-1.5 w-7' : 'p-3 w-8'}`}></td>}
                   {columns.map((col, colIdx) => {
                     const isAction = col.key === 'actions';
 
@@ -659,7 +660,7 @@ export const DataTable = ({
                       ? col.width
                       : isAction
                       ? isCompact
-                        ? 'w-16 min-w-[62px]'
+                        ? 'w-14 min-w-[56px]'
                         : 'w-20 min-w-[76px]'
                       : '';
 

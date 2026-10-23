@@ -91,28 +91,46 @@ export const PendingStock = () => {
     {
       label: 'LR No.',
       key: 'lrNo',
-      width: 'w-[82px]',
+      width: 'w-[76px]',
       render: (row) => (
-        <span className="font-extrabold text-sky-800 bg-sky-50 px-1.5 py-0.5 rounded border border-sky-200 text-[10.5px] block text-center truncate">
+        <span className="font-extrabold text-sky-800 bg-sky-50 px-1 py-0.5 rounded border border-sky-200 text-[10px] block text-center truncate">
           {row.lrNo}
         </span>
       ),
     },
-    { label: 'Inw Date', key: 'inwardDate', type: 'date', width: 'w-[74px]' },
-    { label: 'Inw No.', key: 'inwardNo', width: 'w-[72px]' },
-    { label: 'Memo No.', key: 'memoNo', width: 'w-[70px]' },
-    { label: 'CT To', key: 'ctTo', width: 'w-[84px]' },
-    { label: 'Consignor', key: 'consignorName', width: 'w-[96px]' },
-    { label: 'Consignee', key: 'consigneeName', width: 'w-[96px]' },
-    { label: 'PKG', key: 'pkg', width: 'w-[44px]', render: (row) => <span className="font-bold">{row.pkg}</span> },
-    { label: 'To Pay', key: 'toPayAmount', type: 'currency', width: 'w-[72px]' },
-    { label: 'T.B.B', key: 'tbbAmount', type: 'currency', width: 'w-[68px]' },
-    { label: 'Paid', key: 'paidAmount', type: 'currency', width: 'w-[66px]' },
-    { label: 'Status', key: 'status', type: 'status', width: 'w-[72px]' },
+    { label: 'Date', key: 'inwardDate', type: 'date', width: 'w-[66px]' },
+    { label: 'Inw #', key: 'inwardNo', width: 'w-[60px]' },
+    { label: 'Memo', key: 'memoNo', width: 'w-[58px]' },
+    { label: 'CT To', key: 'ctTo', width: 'w-[68px]' },
     {
-      label: 'Actions',
+      label: 'Consignor',
+      key: 'consignorName',
+      width: 'w-[84px]',
+      render: (row) => (
+        <span className="truncate block max-w-[84px] text-[11px]" title={row.consignorName}>
+          {row.consignorName || '-'}
+        </span>
+      ),
+    },
+    {
+      label: 'Consignee',
+      key: 'consigneeName',
+      width: 'w-[84px]',
+      render: (row) => (
+        <span className="truncate block max-w-[84px] text-[11px]" title={row.consigneeName}>
+          {row.consigneeName || '-'}
+        </span>
+      ),
+    },
+    { label: 'PKG', key: 'pkg', width: 'w-[36px]', render: (row) => <span className="font-bold">{row.pkg}</span> },
+    { label: 'To Pay', key: 'toPayAmount', type: 'currency', width: 'w-[62px]' },
+    { label: 'T.B.B', key: 'tbbAmount', type: 'currency', width: 'w-[58px]' },
+    { label: 'Paid', key: 'paidAmount', type: 'currency', width: 'w-[56px]' },
+    { label: 'Status', key: 'status', type: 'status', width: 'w-[68px]' },
+    {
+      label: 'Action',
       key: 'actions',
-      width: 'w-[64px]',
+      width: 'w-[56px]',
       render: (row) => (
         <div className="flex items-center justify-center space-x-0.5">
           <button
@@ -284,7 +302,7 @@ export const PendingStock = () => {
         onExportExcel={(data) => exportToExcel(data, 'Pending_Stock_Report', pendingColumns)}
         onExportPDF={(data) => exportToPDF('Pending Stock Register', pendingColumns, data, 'Pending_Stock_Report')}
         compact={true}
-        tableLayout="fixed"
+        tableLayout="auto"
       />
 
       {/* VIEW MODAL */}
