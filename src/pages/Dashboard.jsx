@@ -15,6 +15,16 @@ import {
   Building2,
   Route,
   Wallet,
+  Truck,
+  User,
+  Clock,
+  MapPin,
+  FileText,
+  Layers,
+  ExternalLink,
+  AlertCircle,
+  Calendar,
+  Send,
 } from 'lucide-react';
 import { formatDate } from '../utils/dateUtils';
 import { formatCurrency } from '../utils/numberUtils';
@@ -22,7 +32,15 @@ import { printRecordDetails, exportToExcel } from '../services/exportService';
 import { Modal } from '../components/common/Modal';
 
 export const Dashboard = () => {
-  const { inwards, inwardItems, pendingStock, masters, cachedDashboardStats } = useApp();
+  const {
+    inwards,
+    inwardItems,
+    pendingStock,
+    outwards,
+    outwardItems,
+    masters,
+    cachedDashboardStats,
+  } = useApp();
   const navigate = useNavigate();
 
   // Search & Filters
@@ -67,6 +85,177 @@ export const Dashboard = () => {
   } = cachedDashboardStats;
 
   const query = searchTerm.trim().toLowerCase();
+
+  // Unified Master List of ALL LR Entries across Inward, Godown Pending Stock, Outward & Cross Stock-Out
+  const combinedLREntries = useMemo(() => {
+    const allLREntriesMap = new Map();
+
+    // 1. Inward Items
+    (inwardItems || []).forEach((item) => {
+      const parentInw = (inwards || []).find(
+        (inw) => inw.id === item.inwardId || inw.inwardNo === item.inwardNo
+      );
+      allLREntriesMap.set(item.id || item.lrNo, {
+        ...item,
+        transporterName: item.transporterName || parentInw?.transporterName || '-',
+        fromStation: item.from || item.fromStation || parentInw?.from || parentInw?.fromStation || '-',
+        inwardVehicleNo: item.vehicleNo || parentInw?.vehicleNo || '-',
+        inwardDriverName: item.driverName || parentInw?.driverName || '-',
+        memoNo: item.memoNo || parentInw?.memoNo || '-',
+        inwardDate: item.date || item.inwardDate || parentInw?.date || '-',
+        inwardNo: item.inwardNo || parentInw?.inwardNo || '-',
+        outwardDate: item.outwardDate || '-',
+        outwardNo: item.outwardNo || '-',
+        outwardVehicleNo: '-',
+        outwardDriverName: '-',
+        deliveryPersonName: item.deliveryPersonName || '-',
+        status: item.status || 'PENDING',
+        recordCategory: 'inward_item',
+      });
+    });
+
+    // 2. Outward Items (both standard godown dispatches and cross stock-out)
+    (outwardItems || []).forEach((item) => {
+      const parentOut = (outwards || []).find(
+        (out) => out.id === item.outwardId || out.outwardNo === item.outwardNo
+      );
+      const isStockOut = Boolean(
+        item.isCrossOutward ||
+        parentOut?.isCrossOutward ||
+        String(item.outwardNo || parentOut?.outwardNo || '').toUpperCase().startsWith('STOCK-OUT')
+      );
+
+      if (isStockOut) {
+        // Cross Stock Out is a manual direct dispatch
+        allLREntriesMap.set(`stockout-${item.id}`, {
+          ...item,
+          transporterName: item.transporterName || parentOut?.transporterName || '-',
+          fromStation: item.from || parentOut?.from || '-',
+          inwardVehicleNo: '-',
+          inwardDriverName: '-',
+          memoNo: item.memoNo || parentOut?.memoNo || '-',
+          inwardDate: '-',
+          inwardNo: '-',
+          outwardDate: item.outwardDate || item.date || parentOut?.date || '-',
+          outwardNo: item.outwardNo || parentOut?.outwardNo || '-',
+          outwardVehicleNo: item.vehicleNo || parentOut?.vehicleNo || '-',
+          outwardDriverName: item.driverName || parentOut?.driverName || '-',
+          ownerName: item.ownerName || parentOut?.ownerName || '-',
+          deliveryPersonName: item.deliveryPersonName || parentOut?.deliveryPersonName || '-',
+          status: 'DISPATCHED',
+          recordCategory: 'stock_out_item',
+        });
+      } else {
+        // Standard Outward delivered from Godown pending stock
+        const inwKey = Array.from(allLREntriesMap.keys()).find((k) => {
+          const val = allLREntriesMap.get(k);
+          return (
+            val.recordCategory === 'inward_item' &&
+            ((item.inwardItemId && val.id === item.inwardItemId) ||
+              val.id === item.id ||
+              String(val.lrNo ?? '').trim().toLowerCase() === String(item.lrNo ?? '').trim().toLowerCase())
+          );
+        });
+
+        if (inwKey) {
+          const existing = allLREntriesMap.get(inwKey);
+          allLREntriesMap.set(inwKey, {
+            ...existing,
+            ...item,
+            inwardDate: existing.inwardDate || item.inwardDate || item.date || '-',
+            inwardNo: existing.inwardNo || item.inwardNo || '-',
+            inwardVehicleNo: existing.inwardVehicleNo || existing.vehicleNo || '-',
+            inwardDriverName: existing.inwardDriverName || existing.driverName || '-',
+            outwardDate: item.outwardDate || item.date || parentOut?.date || '-',
+            outwardNo: item.outwardNo || parentOut?.outwardNo || '-',
+            outwardVehicleNo: item.vehicleNo || parentOut?.vehicleNo || '-',
+            outwardDriverName: item.driverName || parentOut?.driverName || '-',
+            ownerName: item.ownerName || parentOut?.ownerName || existing.ownerName || '-',
+            deliveryPersonName: item.deliveryPersonName || parentOut?.deliveryPersonName || existing.deliveryPersonName || '-',
+            status: 'DELIVERED',
+            recordCategory: 'outward_item',
+          });
+        } else {
+          allLREntriesMap.set(`outward-${item.id}`, {
+            ...item,
+            transporterName: item.transporterName || parentOut?.transporterName || '-',
+            fromStation: item.from || parentOut?.from || '-',
+            inwardVehicleNo: '-',
+            inwardDriverName: '-',
+            memoNo: item.memoNo || parentOut?.memoNo || '-',
+            inwardDate: '-',
+            inwardNo: '-',
+            outwardDate: item.outwardDate || item.date || parentOut?.date || '-',
+            outwardNo: item.outwardNo || parentOut?.outwardNo || '-',
+            outwardVehicleNo: item.vehicleNo || parentOut?.vehicleNo || '-',
+            outwardDriverName: item.driverName || parentOut?.driverName || '-',
+            ownerName: item.ownerName || parentOut?.ownerName || '-',
+            deliveryPersonName: item.deliveryPersonName || parentOut?.deliveryPersonName || '-',
+            status: 'DELIVERED',
+            recordCategory: 'outward_item',
+          });
+        }
+      }
+    });
+
+    return Array.from(allLREntriesMap.values());
+  }, [inwardItems, inwards, outwardItems, outwards]);
+
+  // Universal LR Search: Searches ANY LR across Inward, Godown Pending Stock, Outward & Cross Stock-Out
+  const matchedAllLRs = useMemo(() => {
+    if (!query) return [];
+    return combinedLREntries
+      .filter((item) => {
+        // Query match across all fields
+        const match =
+          String(item.lrNo ?? '').toLowerCase().includes(query) ||
+          String(item.inwardNo ?? '').toLowerCase().includes(query) ||
+          String(item.outwardNo ?? '').toLowerCase().includes(query) ||
+          String(item.consigneeName ?? '').toLowerCase().includes(query) ||
+          String(item.consignorName ?? '').toLowerCase().includes(query) ||
+          String(item.ctTo ?? '').toLowerCase().includes(query) ||
+          String(item.memoNo ?? '').toLowerCase().includes(query) ||
+          String(item.invoiceNo ?? '').toLowerCase().includes(query) ||
+          String(item.inwardVehicleNo ?? '').toLowerCase().includes(query) ||
+          String(item.outwardVehicleNo ?? '').toLowerCase().includes(query) ||
+          String(item.vehicleNo ?? '').toLowerCase().includes(query) ||
+          String(item.deliveryPersonName ?? '').toLowerCase().includes(query) ||
+          String(item.driverName ?? '').toLowerCase().includes(query);
+
+        if (!match) return false;
+
+        // Station filter
+        if (selectedStation !== 'ALL') {
+          const itemStation = String(item.ctTo || item.fromStation || item.from || '').toUpperCase();
+          if (!itemStation.includes(selectedStation.toUpperCase())) return false;
+        }
+
+        // Status filter
+        if (selectedStatusFilter === 'pending' && item.status !== 'PENDING') return false;
+        if (selectedStatusFilter === 'dispatched' && item.status === 'PENDING') return false;
+
+        return true;
+      })
+      .sort((a, b) => {
+        // Exact LR match placed first
+        const aExact = String(a.lrNo ?? '').trim().toLowerCase() === query;
+        const bExact = String(b.lrNo ?? '').trim().toLowerCase() === query;
+        if (aExact && !bExact) return -1;
+        if (!aExact && bExact) return 1;
+        return 0;
+      });
+  }, [combinedLREntries, query, selectedStation, selectedStatusFilter]);
+
+  // Enriched Viewing Item resolving full consignment tracking lifecycle
+  const enrichedViewingItem = useMemo(() => {
+    if (!viewingItem) return null;
+    const found = combinedLREntries.find(
+      (e) =>
+        (e.id && e.id === viewingItem.id) ||
+        (e.lrNo && String(e.lrNo).trim().toLowerCase() === String(viewingItem.lrNo).trim().toLowerCase())
+    );
+    return found ? { ...viewingItem, ...found } : viewingItem;
+  }, [viewingItem, combinedLREntries]);
 
   // Filtered Pending Stock
   const filteredPending = useMemo(() => {
@@ -143,21 +332,36 @@ export const Dashboard = () => {
   };
 
   const handlePrintLR = (item) => {
+    const toPay = Number(item.toPayAmount) || 0;
+    const tbb = Number(item.tbbAmount) || 0;
+    const paid = Number(item.paidAmount) || 0;
+    const totalFreight = toPay + tbb + paid;
+    const status = String(item.status || 'PENDING').toUpperCase();
+
     printRecordDetails({
-      title: `Lorry Receipt #${item.lrNo}`,
+      title: `Consignment Lorry Receipt #${item.lrNo}`,
       fields: [
         { label: 'LR No.', value: item.lrNo },
-        { label: 'Inward Date', value: formatDate(item.inwardDate || item.date) },
+        { label: 'Status', value: status },
+        { label: 'Inward Date', value: item.inwardDate && item.inwardDate !== '-' ? formatDate(item.inwardDate) : '-' },
         { label: 'Inward No.', value: item.inwardNo || '-' },
         { label: 'Memo No.', value: item.memoNo || '-' },
-        { label: 'Vehicle No.', value: item.vehicleNo || '-' },
+        { label: 'Transporter', value: item.transporterName || '-' },
+        { label: 'Inward Vehicle', value: item.inwardVehicleNo || item.vehicleNo || '-' },
+        { label: 'Inward Driver', value: item.inwardDriverName || item.driverName || '-' },
         { label: 'Destination', value: item.ctTo || '-' },
         { label: 'Consignor', value: item.consignorName || '-' },
         { label: 'Consignee', value: item.consigneeName || '-' },
-        { label: 'Packages', value: item.pkg },
-        { label: 'To Pay (₹)', value: formatCurrency(item.toPayAmount) },
-        { label: 'Paid (₹)', value: formatCurrency(item.paidAmount) },
-        { label: 'T.B.B. (₹)', value: formatCurrency(item.tbbAmount) },
+        { label: 'Packages (PKG)', value: `${item.pkg} PKG` },
+        { label: 'Invoice No.', value: item.invoiceNo || '-' },
+        { label: 'Outward No.', value: item.outwardNo && item.outwardNo !== '-' ? item.outwardNo : 'Not Dispatched Yet' },
+        { label: 'Outward Date', value: item.outwardDate && item.outwardDate !== '-' ? formatDate(item.outwardDate) : '-' },
+        { label: 'Delivery Vehicle', value: item.outwardVehicleNo && item.outwardVehicleNo !== '-' ? item.outwardVehicleNo : '-' },
+        { label: 'Delivery Person', value: item.deliveryPersonName && item.deliveryPersonName !== '-' ? item.deliveryPersonName : '-' },
+        { label: 'To Pay Freight', value: formatCurrency(toPay) },
+        { label: 'T.B.B. Freight', value: formatCurrency(tbb) },
+        { label: 'Paid Freight', value: formatCurrency(paid) },
+        { label: 'Total Freight', value: formatCurrency(totalFreight) },
       ],
       items: [item],
     });
@@ -341,6 +545,311 @@ export const Dashboard = () => {
           </button>
         </div>
       </div>
+
+      {/* Universal LR Consignment Search Results (Active when searching any LR No., Vehicle, Consignee, etc.) */}
+      {query && (
+        <div className="bg-white rounded-2xl border-2 border-blue-500/40 shadow-lg overflow-hidden transition-all animate-fadeIn">
+          {/* Header */}
+          <div className="bg-gradient-to-r from-[#0b2545] to-[#153e75] text-white p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center space-x-3">
+              <div className="p-2 sm:p-2.5 bg-blue-500/20 rounded-xl border border-blue-400/30 flex-shrink-0">
+                <Search className="w-4 h-4 sm:w-5 sm:h-5 text-blue-300" />
+              </div>
+              <div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <h3 className="font-black text-xs sm:text-sm tracking-tight text-white">
+                    Consignment Master Search Results
+                  </h3>
+                  <span className="bg-blue-400/20 text-blue-200 border border-blue-400/30 text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full">
+                    Query: "{searchTerm}"
+                  </span>
+                </div>
+                <p className="text-[10px] sm:text-[11px] text-blue-200/80 font-medium mt-0.5">
+                  Full consignment history across Inward Arrivals, Godown Pending Floor, and Outward Deliveries
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center space-x-2 self-end sm:self-auto flex-shrink-0">
+              <span className="text-[11px] sm:text-xs font-bold px-2.5 py-1 bg-white/10 rounded-lg text-white border border-white/15">
+                {matchedAllLRs.length} {matchedAllLRs.length === 1 ? 'Record' : 'Records'} Found
+              </span>
+              <button
+                onClick={() => setSearchTerm('')}
+                className="p-1 sm:p-1.5 text-blue-200 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                title="Clear Search Filter"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+
+          {matchedAllLRs.length === 0 ? (
+            <div className="p-8 sm:p-12 text-center">
+              <div className="w-12 h-12 mx-auto mb-3 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400">
+                <Search className="w-6 h-6" />
+              </div>
+              <h4 className="font-black text-sm sm:text-base text-slate-800">
+                No Consignment Found Matching "{searchTerm}"
+              </h4>
+              <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto">
+                No LR matches this number, vehicle, consignee, or station across all records. Try verifying the digits or clearing the filter.
+              </p>
+              <button
+                onClick={() => setSearchTerm('')}
+                className="mt-3 px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-all"
+              >
+                Clear Search Filter
+              </button>
+            </div>
+          ) : (
+            <>
+              {/* Desktop Table */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-slate-50 border-b border-slate-200 text-[10px] sm:text-[11px] font-black uppercase text-slate-500 tracking-wider">
+                    <tr>
+                      <th className="py-3 px-4">LR No. &amp; Inv</th>
+                      <th className="py-3 px-4">Status</th>
+                      <th className="py-3 px-4">Parties &amp; Destination</th>
+                      <th className="py-3 px-4">Inward Details</th>
+                      <th className="py-3 px-4">Outward Details</th>
+                      <th className="py-3 px-4 text-center">PKG</th>
+                      <th className="py-3 px-4 text-right">Freight (₹)</th>
+                      <th className="py-3 px-4 text-center">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 text-slate-700">
+                    {matchedAllLRs.map((item, idx) => {
+                      const toPay = Number(item.toPayAmount) || 0;
+                      const paid = Number(item.paidAmount) || 0;
+                      const tbb = Number(item.tbbAmount) || 0;
+                      const totalFreight = toPay + paid + tbb;
+                      const isDelivered = item.status === 'DELIVERED';
+                      const isStockOut = item.status === 'DISPATCHED' && item.recordCategory === 'stock_out_item';
+                      const isPending = item.status === 'PENDING';
+
+                      return (
+                        <tr
+                          key={item.id || idx}
+                          className="hover:bg-blue-50/50 transition-colors group cursor-pointer"
+                          onClick={() => setViewingItem(item)}
+                        >
+                          <td className="py-3.5 px-4">
+                            <div className="font-black text-sm text-blue-700 group-hover:text-blue-900 flex items-center space-x-1">
+                              <span>#{item.lrNo}</span>
+                            </div>
+                            {item.invoiceNo && (
+                              <div className="text-[10px] text-slate-400 font-mono mt-0.5">
+                                Inv: {item.invoiceNo}
+                              </div>
+                            )}
+                          </td>
+                          <td className="py-3.5 px-4">
+                            {isPending && (
+                              <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-black uppercase bg-amber-50 text-amber-700 border border-amber-200">
+                                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 mr-1.5 animate-pulse"></span>
+                                Pending Godown
+                              </span>
+                            )}
+                            {isDelivered && (
+                              <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-black uppercase bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                <CheckCircle2 className="w-3 h-3 mr-1 text-emerald-600" />
+                                Outward Delivered
+                              </span>
+                            )}
+                            {isStockOut && (
+                              <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-black uppercase bg-purple-50 text-purple-700 border border-purple-200">
+                                <Route className="w-3 h-3 mr-1 text-purple-600" />
+                                Stock-Out Dispatched
+                              </span>
+                            )}
+                          </td>
+                          <td className="py-3.5 px-4">
+                            <div className="font-bold text-slate-900 truncate max-w-[200px]" title={item.consigneeName}>
+                              {item.consigneeName || '-'}
+                            </div>
+                            <div className="text-[10px] text-slate-400 truncate max-w-[200px]" title={item.consignorName}>
+                              From: {item.consignorName || '-'}
+                            </div>
+                            {item.ctTo && (
+                              <span className="inline-block mt-1 text-[9px] font-bold text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded border border-orange-100">
+                                TO: {item.ctTo}
+                              </span>
+                            )}
+                          </td>
+                          <td className="py-3.5 px-4">
+                            {item.inwardNo && item.inwardNo !== '-' ? (
+                              <div>
+                                <div className="font-bold text-slate-800">
+                                  {item.inwardNo} &bull; <span className="text-slate-500 font-medium text-[11px]">{formatDate(item.inwardDate)}</span>
+                                </div>
+                                <div className="text-[11px] text-slate-500 mt-0.5">
+                                  Veh: <span className="font-mono font-semibold text-slate-700">{item.inwardVehicleNo || '-'}</span>
+                                </div>
+                                {item.transporterName && item.transporterName !== '-' && (
+                                  <div className="text-[10px] text-slate-400 truncate max-w-[150px]">
+                                    {item.transporterName}
+                                  </div>
+                                )}
+                              </div>
+                            ) : (
+                              <span className="text-slate-400 italic text-[11px]">Direct Entry</span>
+                            )}
+                          </td>
+                          <td className="py-3.5 px-4">
+                            {item.outwardNo && item.outwardNo !== '-' ? (
+                              <div>
+                                <div className="font-bold text-slate-800">
+                                  {item.outwardNo} &bull; <span className="text-slate-500 font-medium text-[11px]">{formatDate(item.outwardDate)}</span>
+                                </div>
+                                <div className="text-[11px] text-slate-500 mt-0.5">
+                                  {item.deliveryPersonName && item.deliveryPersonName !== '-' ? (
+                                    <span>Agent: <strong className="text-slate-700">{item.deliveryPersonName}</strong></span>
+                                  ) : item.outwardVehicleNo && item.outwardVehicleNo !== '-' ? (
+                                    <span>Veh: <span className="font-mono font-semibold text-slate-700">{item.outwardVehicleNo}</span></span>
+                                  ) : (
+                                    <span>Dispatched</span>
+                                  )}
+                                </div>
+                              </div>
+                            ) : (
+                              <span className="text-amber-700 font-semibold text-[10px] bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                                In Godown Floor
+                              </span>
+                            )}
+                          </td>
+                          <td className="py-3.5 px-4 text-center">
+                            <span className="font-black text-slate-900 bg-slate-100 px-2.5 py-1 rounded-lg">
+                              {item.pkg}
+                            </span>
+                          </td>
+                          <td className="py-3.5 px-4 text-right">
+                            <div className="font-black text-slate-900 text-xs">
+                              {formatCurrency(totalFreight)}
+                            </div>
+                            <div className="text-[9px] font-bold mt-0.5 space-x-1">
+                              {toPay > 0 && <span className="text-rose-600">ToPay: {formatCurrency(toPay)}</span>}
+                              {paid > 0 && <span className="text-sky-600">Paid: {formatCurrency(paid)}</span>}
+                              {tbb > 0 && <span className="text-indigo-600">TBB: {formatCurrency(tbb)}</span>}
+                            </div>
+                          </td>
+                          <td className="py-3.5 px-4 text-center">
+                            <div className="flex items-center justify-center space-x-1.5" onClick={(e) => e.stopPropagation()}>
+                              <button
+                                onClick={() => setViewingItem(item)}
+                                className="px-2.5 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-600 hover:text-white rounded-lg transition-colors font-bold text-[11px] flex items-center space-x-1"
+                                title="View Full LR History & Lifecycle"
+                              >
+                                <Eye className="w-3.5 h-3.5" />
+                                <span>Full Info</span>
+                              </button>
+                              <button
+                                onClick={() => handlePrintLR(item)}
+                                className="p-1.5 bg-slate-100 text-slate-600 hover:bg-slate-200 rounded-lg transition-colors"
+                                title="Print Complete Consignment LR Record"
+                              >
+                                <Printer className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile View: Cards */}
+              <div className="md:hidden divide-y divide-slate-100">
+                {matchedAllLRs.map((item, idx) => {
+                  const toPay = Number(item.toPayAmount) || 0;
+                  const paid = Number(item.paidAmount) || 0;
+                  const tbb = Number(item.tbbAmount) || 0;
+                  const totalFreight = toPay + paid + tbb;
+                  const isDelivered = item.status === 'DELIVERED';
+                  const isStockOut = item.status === 'DISPATCHED' && item.recordCategory === 'stock_out_item';
+                  const isPending = item.status === 'PENDING';
+
+                  return (
+                    <div
+                      key={item.id || idx}
+                      className="p-3.5 space-y-2.5 hover:bg-blue-50/30 transition-colors"
+                      onClick={() => setViewingItem(item)}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="font-black text-sm text-blue-700">#{item.lrNo}</span>
+                        {isPending && (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-black uppercase bg-amber-50 text-amber-700 border border-amber-200">
+                            Pending Godown
+                          </span>
+                        )}
+                        {isDelivered && (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-black uppercase bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            Delivered
+                          </span>
+                        )}
+                        {isStockOut && (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-black uppercase bg-purple-50 text-purple-700 border border-purple-200">
+                            Dispatched
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="text-xs">
+                        <div className="font-bold text-slate-900">{item.consigneeName || 'Consignee'}</div>
+                        <div className="text-[11px] text-slate-400">From: {item.consignorName || '-'}</div>
+                        {item.ctTo && (
+                          <div className="text-[10px] font-bold text-orange-600 mt-0.5">
+                            TO: {item.ctTo}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2 text-[10px] bg-slate-50 p-2 rounded-lg border border-slate-100">
+                        <div>
+                          <span className="text-slate-400 block font-bold">INWARD:</span>
+                          <span className="font-semibold text-slate-700">{item.inwardNo || '-'} ({formatDate(item.inwardDate)})</span>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 block font-bold">OUTWARD:</span>
+                          <span className="font-semibold text-slate-700">
+                            {item.outwardNo && item.outwardNo !== '-' ? `${item.outwardNo} (${formatDate(item.outwardDate)})` : 'In Godown'}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between pt-1 border-t border-slate-100 text-xs">
+                        <div className="flex items-center space-x-2">
+                          <span className="font-black text-slate-900 bg-slate-100 px-2 py-0.5 rounded">
+                            {item.pkg} PKG
+                          </span>
+                          <span className="font-black text-slate-800">
+                            {formatCurrency(totalFreight)}
+                          </span>
+                        </div>
+                        <div className="flex items-center space-x-1.5" onClick={(e) => e.stopPropagation()}>
+                          <button
+                            onClick={() => setViewingItem(item)}
+                            className="px-2.5 py-1 bg-blue-600 text-white rounded-lg font-bold text-[10px]"
+                          >
+                            Full Info
+                          </button>
+                          <button
+                            onClick={() => handlePrintLR(item)}
+                            className="p-1 bg-slate-100 text-slate-600 rounded-lg"
+                          >
+                            <Printer className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          )}
+        </div>
+      )}
 
       {/* 4 Primary Metric Stat Cards with Brand Theme Accents */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
@@ -904,60 +1413,234 @@ export const Dashboard = () => {
         </div>
       </div>
 
-      {/* Modal for viewing LR item details */}
+      {/* Modal for viewing LR item full consignment details & tracking */}
       <Modal
         isOpen={!!viewingItem}
         onClose={() => setViewingItem(null)}
-        title={`Lorry Receipt #${viewingItem?.lrNo}`}
+        title={`Consignment LR #${enrichedViewingItem?.lrNo || viewingItem?.lrNo || ''} Lifecycle`}
+        maxWidth="max-w-3xl"
       >
-        {viewingItem && (
-          <div className="space-y-4 text-xs text-slate-700">
-            <div className="grid grid-cols-2 gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
-              <div>
-                <span className="text-slate-400 font-bold block">LR NUMBER</span>
-                <span className="font-black text-sm text-blue-700">{viewingItem.lrNo}</span>
-              </div>
-              <div>
-                <span className="text-slate-400 font-bold block">DATE</span>
-                <span className="font-bold">{formatDate(viewingItem.inwardDate || viewingItem.date)}</span>
-              </div>
-              <div>
-                <span className="text-slate-400 font-bold block">CONSIGNOR</span>
-                <span className="font-bold">{viewingItem.consignorName || '-'}</span>
-              </div>
-              <div>
-                <span className="text-slate-400 font-bold block">CONSIGNEE</span>
-                <span className="font-bold">{viewingItem.consigneeName || '-'}</span>
-              </div>
-              <div>
-                <span className="text-slate-400 font-bold block">DESTINATION</span>
-                <span className="font-bold">{viewingItem.ctTo || '-'}</span>
-              </div>
-              <div>
-                <span className="text-slate-400 font-bold block">PACKAGES</span>
-                <span className="font-black text-sm">{viewingItem.pkg}</span>
-              </div>
-              <div>
-                <span className="text-slate-400 font-bold block">TO PAY AMOUNT</span>
-                <span className="font-black text-rose-600">{formatCurrency(viewingItem.toPayAmount)}</span>
-              </div>
-              <div>
-                <span className="text-slate-400 font-bold block">STATUS</span>
-                <span className="font-black text-emerald-700">{viewingItem.status}</span>
-              </div>
-            </div>
+        {enrichedViewingItem && (() => {
+          const item = enrichedViewingItem;
+          const toPay = Number(item.toPayAmount) || 0;
+          const tbb = Number(item.tbbAmount) || 0;
+          const paid = Number(item.paidAmount) || 0;
+          const totalFreight = toPay + tbb + paid;
+          const isPending = item.status === 'PENDING';
+          const isDelivered = item.status === 'DELIVERED';
+          const isStockOut = item.status === 'DISPATCHED';
 
-            <div className="flex justify-end space-x-2 pt-2">
-              <button
-                onClick={() => handlePrintLR(viewingItem)}
-                className="px-4 py-2 bg-blue-700 text-white font-bold rounded-xl hover:bg-blue-800 transition-colors flex items-center space-x-1.5"
-              >
-                <Printer className="w-3.5 h-3.5" />
-                <span>Print LR</span>
-              </button>
+          return (
+            <div className="space-y-4 text-xs text-slate-700">
+              {/* Hero Banner */}
+              <div className="bg-gradient-to-r from-[#0b2545] to-[#1a406c] p-4 sm:p-5 rounded-2xl text-white shadow-xs">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <span className="text-[10px] font-black uppercase tracking-wider text-blue-200">
+                      Consignment Lorry Receipt
+                    </span>
+                    <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-white flex items-center space-x-2">
+                      <span>#{item.lrNo}</span>
+                    </h2>
+                    {item.invoiceNo && (
+                      <p className="text-xs text-blue-200/90 font-mono mt-0.5">
+                        Invoice Ref: <strong className="text-white">{item.invoiceNo}</strong>
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap sm:flex-col items-start sm:items-end gap-1.5">
+                    {isPending && (
+                      <span className="px-3 py-1 rounded-full text-xs font-black uppercase bg-amber-400 text-amber-950 border border-amber-300 shadow-xs flex items-center space-x-1.5">
+                        <span className="w-2 h-2 rounded-full bg-amber-950 animate-ping"></span>
+                        <span>Pending in Godown</span>
+                      </span>
+                    )}
+                    {isDelivered && (
+                      <span className="px-3 py-1 rounded-full text-xs font-black uppercase bg-emerald-400 text-emerald-950 border border-emerald-300 shadow-xs flex items-center space-x-1.5">
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        <span>Outward Delivered</span>
+                      </span>
+                    )}
+                    {isStockOut && (
+                      <span className="px-3 py-1 rounded-full text-xs font-black uppercase bg-purple-300 text-purple-950 border border-purple-200 shadow-xs flex items-center space-x-1.5">
+                        <Route className="w-3.5 h-3.5" />
+                        <span>Stock-Out Dispatched</span>
+                      </span>
+                    )}
+                    <div className="flex items-center space-x-2 text-[11px] text-blue-100 font-bold mt-1">
+                      <span className="bg-white/10 px-2 py-0.5 rounded">{item.pkg} Packages</span>
+                      <span className="bg-white/10 px-2 py-0.5 rounded text-amber-300">{formatCurrency(totalFreight)}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 4 Detail Grid Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                {/* 1. Consignment & Route */}
+                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200/80 space-y-2.5">
+                  <div className="flex items-center space-x-2 pb-2 border-b border-slate-200 text-slate-800 font-black text-xs uppercase tracking-wide">
+                    <MapPin className="w-3.5 h-3.5 text-blue-600" />
+                    <span>Consignment &amp; Route</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <span className="text-[10px] text-slate-400 font-bold block uppercase">Consignor (Sender)</span>
+                      <span className="font-bold text-slate-900 truncate block" title={item.consignorName}>{item.consignorName || '-'}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-slate-400 font-bold block uppercase">Consignee (Receiver)</span>
+                      <span className="font-bold text-slate-900 truncate block" title={item.consigneeName}>{item.consigneeName || '-'}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-slate-400 font-bold block uppercase">Destination (CT TO)</span>
+                      <span className="font-bold text-orange-600 truncate block">{item.ctTo || '-'}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-slate-400 font-bold block uppercase">Origin Station</span>
+                      <span className="font-bold text-slate-800 truncate block">{item.fromStation || item.from || '-'}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-slate-400 font-bold block uppercase">Total Packages</span>
+                      <span className="font-black text-slate-900 text-sm">{item.pkg} PKG</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-slate-400 font-bold block uppercase">Memo No.</span>
+                      <span className="font-bold text-slate-800 font-mono">{item.memoNo || '-'}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 2. Inward Receipt & Hub Arrival */}
+                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200/80 space-y-2.5">
+                  <div className="flex items-center space-x-2 pb-2 border-b border-slate-200 text-slate-800 font-black text-xs uppercase tracking-wide">
+                    <ArrowDownLeft className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>Inward Hub Arrival</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <span className="text-[10px] text-slate-400 font-bold block uppercase">Inward Receipt</span>
+                      <span className="font-bold text-blue-700">{item.inwardNo || '-'}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-slate-400 font-bold block uppercase">Arrival Date</span>
+                      <span className="font-bold text-slate-800">
+                        {item.inwardDate && item.inwardDate !== '-' ? formatDate(item.inwardDate) : '-'}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-slate-400 font-bold block uppercase">Incoming Vehicle</span>
+                      <span className="font-mono font-bold text-slate-900">{item.inwardVehicleNo || item.vehicleNo || '-'}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-slate-400 font-bold block uppercase">Inward Driver</span>
+                      <span className="font-bold text-slate-800 truncate block">{item.inwardDriverName || item.driverName || '-'}</span>
+                    </div>
+                    <div className="col-span-2">
+                      <span className="text-[10px] text-slate-400 font-bold block uppercase">Transporter Agency</span>
+                      <span className="font-bold text-slate-800 truncate block">{item.transporterName || '-'}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 3. Outward Dispatch & Delivery */}
+                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200/80 space-y-2.5">
+                  <div className="flex items-center space-x-2 pb-2 border-b border-slate-200 text-slate-800 font-black text-xs uppercase tracking-wide">
+                    <ArrowUpRight className="w-3.5 h-3.5 text-purple-600" />
+                    <span>Outward Dispatch / Delivery</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <span className="text-[10px] text-slate-400 font-bold block uppercase">Outward / Stock-Out</span>
+                      <span className={`font-bold ${item.outwardNo && item.outwardNo !== '-' ? 'text-purple-700' : 'text-slate-400'}`}>
+                        {item.outwardNo && item.outwardNo !== '-' ? item.outwardNo : 'Not Dispatched Yet'}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-slate-400 font-bold block uppercase">Dispatch Date</span>
+                      <span className="font-bold text-slate-800">
+                        {item.outwardDate && item.outwardDate !== '-' ? formatDate(item.outwardDate) : '-'}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-slate-400 font-bold block uppercase">Delivery Vehicle</span>
+                      <span className="font-mono font-bold text-slate-900">{item.outwardVehicleNo || '-'}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-slate-400 font-bold block uppercase">Delivery Driver / Agent</span>
+                      <span className="font-bold text-slate-800 truncate block">{item.deliveryPersonName || item.outwardDriverName || '-'}</span>
+                    </div>
+                    {item.ownerName && item.ownerName !== '-' && (
+                      <div className="col-span-2">
+                        <span className="text-[10px] text-slate-400 font-bold block uppercase">Vehicle Owner</span>
+                        <span className="font-bold text-slate-800 truncate block">{item.ownerName}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* 4. Financial & Freight Breakdown */}
+                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200/80 space-y-2.5">
+                  <div className="flex items-center space-x-2 pb-2 border-b border-slate-200 text-slate-800 font-black text-xs uppercase tracking-wide">
+                    <Wallet className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>Freight &amp; Payment Breakdown</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <span className="text-[10px] text-slate-400 font-bold block uppercase">To Pay Freight</span>
+                      <span className="font-black text-rose-600 text-sm">{formatCurrency(toPay)}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-slate-400 font-bold block uppercase">Paid Freight</span>
+                      <span className="font-black text-sky-600 text-sm">{formatCurrency(paid)}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-slate-400 font-bold block uppercase">T.B.B. (Billed)</span>
+                      <span className="font-black text-indigo-600 text-sm">{formatCurrency(tbb)}</span>
+                    </div>
+                    <div className="bg-white p-2 rounded-lg border border-slate-200">
+                      <span className="text-[10px] text-slate-400 font-bold block uppercase">Total Freight</span>
+                      <span className="font-black text-slate-900 text-sm">{formatCurrency(totalFreight)}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Actions Footer */}
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 pt-3 border-t border-slate-200">
+                <div>
+                  {isPending && (
+                    <button
+                      onClick={() => {
+                        setViewingItem(null);
+                        navigate('/outward/new', { state: { prefillLR: item.lrNo } });
+                      }}
+                      className="w-full sm:w-auto px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs transition-colors flex items-center justify-center space-x-1.5 shadow-xs"
+                    >
+                      <ArrowUpRight className="w-4 h-4" />
+                      <span>Dispatch LR in Outward</span>
+                    </button>
+                  )}
+                </div>
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={() => handlePrintLR(item)}
+                    className="flex-1 sm:flex-none px-4 py-2 bg-blue-700 text-white font-bold rounded-xl hover:bg-blue-800 transition-colors flex items-center justify-center space-x-1.5 text-xs shadow-xs"
+                  >
+                    <Printer className="w-4 h-4" />
+                    <span>Print Consignment LR</span>
+                  </button>
+                  <button
+                    onClick={() => setViewingItem(null)}
+                    className="flex-1 sm:flex-none px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition-colors"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
       </Modal>
     </div>
   );
