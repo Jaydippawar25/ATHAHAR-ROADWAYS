@@ -4,7 +4,36 @@ import { STATUS } from '../utils/constants';
 seedInitialData();
 
 export const getAllOutwards = () => {
-  return getStoredItem(STORAGE_KEYS.OUTWARDS);
+  const rawList = getStoredItem(STORAGE_KEYS.OUTWARDS, []);
+  if (!Array.isArray(rawList)) return [];
+
+  // Deduplicate by normalized outwardNo to eliminate any duplicate entries in storage
+  const seenMap = new Map();
+  let hasDuplicates = false;
+
+  for (const item of rawList) {
+    if (!item) continue;
+    const key = String(item.outwardNo || item.id || '').trim().toLowerCase();
+    if (!key) continue;
+
+    if (!seenMap.has(key)) {
+      seenMap.set(key, item);
+    } else {
+      hasDuplicates = true;
+      const existing = seenMap.get(key);
+      const existingTime = new Date(existing.updatedAt || existing.createdAt || 0).getTime();
+      const currTime = new Date(item.updatedAt || item.createdAt || 0).getTime();
+      if (currTime >= existingTime) {
+        seenMap.set(key, { ...existing, ...item });
+      }
+    }
+  }
+
+  const deduplicated = Array.from(seenMap.values());
+  if (hasDuplicates && deduplicated.length !== rawList.length) {
+    setStoredItem(STORAGE_KEYS.OUTWARDS, deduplicated);
+  }
+  return deduplicated;
 };
 
 export const getNextOutwardNo = (outwardsList) => {
@@ -32,7 +61,37 @@ export const getNextCrossOutwardNo = (outwardsList) => {
 };
 
 export const getAllOutwardItems = () => {
-  return getStoredItem(STORAGE_KEYS.OUTWARD_ITEMS);
+  const rawList = getStoredItem(STORAGE_KEYS.OUTWARD_ITEMS, []);
+  if (!Array.isArray(rawList)) return [];
+
+  // Deduplicate items by unique key (outwardNo/outwardId + lrNo, or id)
+  const seenMap = new Map();
+  let hasDuplicates = false;
+
+  for (const item of rawList) {
+    if (!item) continue;
+    const outKey = String(item.outwardNo || item.outwardId || '').trim().toLowerCase();
+    const lrKey = String(item.lrNo || '').trim().toLowerCase();
+    const uniqueKey = outKey && lrKey ? `${outKey}__${lrKey}` : String(item.id || '').trim();
+
+    if (!seenMap.has(uniqueKey)) {
+      seenMap.set(uniqueKey, item);
+    } else {
+      hasDuplicates = true;
+      const existing = seenMap.get(uniqueKey);
+      const existingTotal = (Number(existing.toPayAmount) || 0) + (Number(existing.tbbAmount) || 0) + (Number(existing.paidAmount) || 0);
+      const currTotal = (Number(item.toPayAmount) || 0) + (Number(item.tbbAmount) || 0) + (Number(item.paidAmount) || 0);
+      if (currTotal >= existingTotal) {
+        seenMap.set(uniqueKey, { ...existing, ...item });
+      }
+    }
+  }
+
+  const deduplicated = Array.from(seenMap.values());
+  if (hasDuplicates && deduplicated.length !== rawList.length) {
+    setStoredItem(STORAGE_KEYS.OUTWARD_ITEMS, deduplicated);
+  }
+  return deduplicated;
 };
 
 export const createOutward = (headerData, selectedPendingItems, currentUser = 'Operator') => {
@@ -41,8 +100,19 @@ export const createOutward = (headerData, selectedPendingItems, currentUser = 'O
   }
 
   const outwards = getAllOutwards();
+  const normalizedNo = String(headerData.outwardNo || '').trim().toLowerCase();
+
+  // If an outward record with this outwardNo already exists, update it in-place instead of creating a duplicate
+  const existingOutward = normalizedNo
+    ? outwards.find((out) => String(out.outwardNo || '').trim().toLowerCase() === normalizedNo)
+    : null;
+
+  if (existingOutward) {
+    return updateFullOutward(existingOutward.id, headerData, selectedPendingItems, currentUser);
+  }
+
   const outwardItems = getAllOutwardItems();
-  const inwardItems = getStoredItem(STORAGE_KEYS.INWARD_ITEMS);
+  const inwardItems = getStoredItem(STORAGE_KEYS.INWARD_ITEMS, []);
   const isCrossOutward = Boolean(
     headerData.isCrossOutward ||
       String(headerData.outwardNo || '').toUpperCase().startsWith('STOCK-OUT')
@@ -196,7 +266,14 @@ export const deleteOutward = (outwardId) => {
   let outwards = getAllOutwards();
   let outwardItems = getAllOutwardItems();
 
-  const targetOutward = outwards.find((out) => out.id === outwardId);
+  const targetOutward = outwards.find(
+    (out) =>
+      out.id === outwardId ||
+      String(out.outwardNo || '').trim().toLowerCase() === String(outwardId || '').trim().toLowerCase()
+  );
+  const targetId = targetOutward ? targetOutward.id : outwardId;
+  const targetNoLower = String(targetOutward?.outwardNo || outwardId || '').trim().toLowerCase();
+
   const isCrossOutward = Boolean(
     targetOutward?.isCrossOutward ||
       String(targetOutward?.outwardNo || '').toUpperCase().startsWith('STOCK-OUT')
@@ -205,12 +282,20 @@ export const deleteOutward = (outwardId) => {
   // Revert status in inwardItems back to PENDING ONLY for standard Godown Outward
   // Cross Stock Out has NO connections to Pending Stock or Inward
   if (!isCrossOutward) {
-    let inwardItems = getStoredItem(STORAGE_KEYS.INWARD_ITEMS);
-    const itemsToRevert = outwardItems.filter((item) => item.outwardId === outwardId);
+    let inwardItems = getStoredItem(STORAGE_KEYS.INWARD_ITEMS, []);
+    const itemsToRevert = outwardItems.filter(
+      (item) =>
+        item.outwardId === targetId ||
+        (targetNoLower && String(item.outwardNo || '').trim().toLowerCase() === targetNoLower)
+    );
     const inwardItemIds = new Set(itemsToRevert.map((item) => item.inwardItemId || item.id));
 
     inwardItems = inwardItems.map((item) => {
-      if (inwardItemIds.has(item.id) || item.outwardId === outwardId) {
+      if (
+        inwardItemIds.has(item.id) ||
+        item.outwardId === targetId ||
+        (targetNoLower && String(item.outwardNo || '').trim().toLowerCase() === targetNoLower)
+      ) {
         const { deliveredAt: _deliveredAt, outwardId: _oId, outwardNo: _outwardNo, ...rest } = item;
         return {
           ...rest,
@@ -222,8 +307,16 @@ export const deleteOutward = (outwardId) => {
     setStoredItem(STORAGE_KEYS.INWARD_ITEMS, inwardItems);
   }
 
-  outwards = outwards.filter((out) => out.id !== outwardId);
-  outwardItems = outwardItems.filter((item) => item.outwardId !== outwardId);
+  outwards = outwards.filter((out) => {
+    if (out.id === targetId) return false;
+    if (targetNoLower && String(out.outwardNo || '').trim().toLowerCase() === targetNoLower) return false;
+    return true;
+  });
+  outwardItems = outwardItems.filter((item) => {
+    if (item.outwardId === targetId) return false;
+    if (targetNoLower && String(item.outwardNo || '').trim().toLowerCase() === targetNoLower) return false;
+    return true;
+  });
 
   setStoredItem(STORAGE_KEYS.OUTWARDS, outwards);
   setStoredItem(STORAGE_KEYS.OUTWARD_ITEMS, outwardItems);
@@ -244,7 +337,7 @@ export const deleteOutwardItem = (outwardItemId) => {
 
   // Revert status in inwardItems ONLY for standard Godown Outward
   if (!isCrossOutward && targetItem.inwardItemId) {
-    let inwardItems = getStoredItem(STORAGE_KEYS.INWARD_ITEMS);
+    let inwardItems = getStoredItem(STORAGE_KEYS.INWARD_ITEMS, []);
     inwardItems = inwardItems.map((item) => {
       if (item.id === targetItem.inwardItemId) {
         const { deliveredAt: _deliveredAt, outwardId: _outwardId, outwardNo: _outwardNo, ...rest } = item;
@@ -286,18 +379,30 @@ export const updateOutwardHeader = (outwardId, updatedFields) => {
   let outwards = getAllOutwards();
   let outwardItems = getAllOutwardItems();
 
-  const targetOutward = outwards.find((out) => out.id === outwardId);
+  const targetOutward = outwards.find(
+    (out) =>
+      out.id === outwardId ||
+      String(out.outwardNo || '').trim().toLowerCase() === String(outwardId || '').trim().toLowerCase()
+  );
+  const targetId = targetOutward ? targetOutward.id : outwardId;
+  const targetNoLower = String(targetOutward?.outwardNo || outwardId || '').trim().toLowerCase();
+
   const isCrossOutward = Boolean(
     targetOutward?.isCrossOutward ||
       String(targetOutward?.outwardNo || '').toUpperCase().startsWith('STOCK-OUT')
   );
 
   outwards = outwards.map((out) =>
-    out.id === outwardId ? { ...out, ...updatedFields } : out
+    out.id === targetId || (targetNoLower && String(out.outwardNo || '').trim().toLowerCase() === targetNoLower)
+      ? { ...out, ...updatedFields }
+      : out
   );
 
   outwardItems = outwardItems.map((item) => {
-    if (item.outwardId === outwardId) {
+    if (
+      item.outwardId === targetId ||
+      (targetNoLower && String(item.outwardNo || '').trim().toLowerCase() === targetNoLower)
+    ) {
       return {
         ...item,
         vehicleNo: updatedFields.vehicleNo ?? item.vehicleNo,
@@ -311,9 +416,12 @@ export const updateOutwardHeader = (outwardId, updatedFields) => {
   });
 
   if (!isCrossOutward) {
-    let inwardItems = getStoredItem(STORAGE_KEYS.INWARD_ITEMS);
+    let inwardItems = getStoredItem(STORAGE_KEYS.INWARD_ITEMS, []);
     inwardItems = inwardItems.map((item) => {
-      if (item.outwardId === outwardId) {
+      if (
+        item.outwardId === targetId ||
+        (targetNoLower && String(item.outwardNo || '').trim().toLowerCase() === targetNoLower)
+      ) {
         return {
           ...item,
           outwardDate: updatedFields.date ?? item.outwardDate,
@@ -434,10 +542,13 @@ export const updateFullOutward = (outwardId, headerData, selectedPendingItems, c
   let outwards = getAllOutwards();
   let outwardItems = getAllOutwardItems();
 
+  const cleanOutwardNo = String(headerData.outwardNo || '').trim();
+  const normalizedOutwardNo = cleanOutwardNo.toLowerCase();
+
   const existingHeader = outwards.find(
     (out) =>
-      out.id === outwardId ||
-      (headerData.outwardNo && out.outwardNo === headerData.outwardNo)
+      (outwardId && out.id === outwardId) ||
+      (normalizedOutwardNo && String(out.outwardNo || '').trim().toLowerCase() === normalizedOutwardNo)
   );
   const resolvedOutwardId = existingHeader ? existingHeader.id : outwardId || `out-${Date.now()}`;
   const isCrossOutward = Boolean(
@@ -446,24 +557,31 @@ export const updateFullOutward = (outwardId, headerData, selectedPendingItems, c
       String(headerData.outwardNo || existingHeader?.outwardNo || '').toUpperCase().startsWith('STOCK-OUT')
   );
 
+  const finalOutwardNo =
+    cleanOutwardNo ||
+    existingHeader?.outwardNo ||
+    (isCrossOutward ? getNextCrossOutwardNo(outwards) : getNextOutwardNo(outwards));
+  const finalOutwardNoLower = finalOutwardNo.toLowerCase();
+
   // Find previous outward items belonging to this outward
   const oldOutwardItems = outwardItems.filter(
     (item) =>
       item.outwardId === resolvedOutwardId ||
-      (existingHeader && item.outwardNo === existingHeader.outwardNo) ||
-      (headerData.outwardNo && item.outwardNo === headerData.outwardNo)
+      (existingHeader && String(item.outwardNo || '').trim().toLowerCase() === String(existingHeader.outwardNo || '').trim().toLowerCase()) ||
+      (finalOutwardNoLower && String(item.outwardNo || '').trim().toLowerCase() === finalOutwardNoLower)
   );
   const oldOutwardItemIds = new Set(oldOutwardItems.map((i) => i.id));
   const oldInwardIds = new Set(oldOutwardItems.map((item) => item.inwardItemId || item.id));
 
   // ONLY for standard Godown Outward: revert inwardItems previously belonging to this outward back to PENDING
   if (!isCrossOutward) {
-    let inwardItems = getStoredItem(STORAGE_KEYS.INWARD_ITEMS);
+    let inwardItems = getStoredItem(STORAGE_KEYS.INWARD_ITEMS, []);
     inwardItems = inwardItems.map((item) => {
       if (
         oldInwardIds.has(item.id) ||
         item.outwardId === resolvedOutwardId ||
-        (existingHeader && item.outwardNo === existingHeader.outwardNo)
+        (existingHeader && item.outwardNo === existingHeader.outwardNo) ||
+        (finalOutwardNo && item.outwardNo === finalOutwardNo)
       ) {
         const {
           deliveredAt: _deliveredAt,
@@ -492,11 +610,9 @@ export const updateFullOutward = (outwardId, headerData, selectedPendingItems, c
   const consigneeName = Array.from(new Set(selectedPendingItems.map((i) => i.consigneeName).filter(Boolean))).join(', ');
 
   const updatedHeaderFields = {
+    ...(existingHeader || {}),
     id: resolvedOutwardId,
-    outwardNo:
-      headerData.outwardNo ||
-      existingHeader?.outwardNo ||
-      (isCrossOutward ? getNextCrossOutwardNo(outwards) : getNextOutwardNo(outwards)),
+    outwardNo: finalOutwardNo,
     date: headerData.date,
     transporterName: headerData.transporterName || existingHeader?.transporterName || '',
     vehicleNo: headerData.vehicleNo,
@@ -516,17 +632,16 @@ export const updateFullOutward = (outwardId, headerData, selectedPendingItems, c
     updatedBy: currentUser,
   };
 
-  if (existingHeader) {
-    outwards = outwards.map((out) =>
-      out.id === resolvedOutwardId ? { ...out, ...updatedHeaderFields } : out
-    );
-  } else {
-    outwards.unshift({
-      ...updatedHeaderFields,
-      createdAt: new Date().toISOString(),
-      createdBy: currentUser,
-    });
-  }
+  // Filter out ANY previous records matching either resolvedOutwardId OR finalOutwardNoLower to completely eliminate duplicates
+  const cleanRemainingOutwards = outwards.filter((out) => {
+    if (out.id === resolvedOutwardId) return false;
+    if (finalOutwardNoLower && String(out.outwardNo || '').trim().toLowerCase() === finalOutwardNoLower) {
+      return false;
+    }
+    return true;
+  });
+
+  outwards = [updatedHeaderFields, ...cleanRemainingOutwards];
 
   const newOutwardItemsList = selectedPendingItems.map((item, index) => {
     const matchedOld =
@@ -573,8 +688,8 @@ export const updateFullOutward = (outwardId, headerData, selectedPendingItems, c
 
   // ONLY for standard Godown Outward: sync to inwardItems and recalculate inwards
   if (!isCrossOutward) {
-    let inwardItems = getStoredItem(STORAGE_KEYS.INWARD_ITEMS);
-    let inwards = getStoredItem(STORAGE_KEYS.INWARDS);
+    let inwardItems = getStoredItem(STORAGE_KEYS.INWARD_ITEMS, []);
+    let inwards = getStoredItem(STORAGE_KEYS.INWARDS, []);
 
     const selectedByInwardId = new Map();
     newOutwardItemsList.forEach((outItem) => {
@@ -632,17 +747,21 @@ export const updateFullOutward = (outwardId, headerData, selectedPendingItems, c
   }
 
   const newOutwardIds = new Set(newOutwardItemsList.map((i) => i.id));
-  const otherOutwardItems = outwardItems.filter(
-    (item) =>
-      item.outwardId !== resolvedOutwardId &&
-      !oldOutwardItemIds.has(item.id) &&
-      !newOutwardIds.has(item.id)
-  );
+  const otherOutwardItems = outwardItems.filter((item) => {
+    if (item.outwardId === resolvedOutwardId) return false;
+    if (finalOutwardNoLower && String(item.outwardNo || '').trim().toLowerCase() === finalOutwardNoLower) {
+      return false;
+    }
+    if (oldOutwardItemIds.has(item.id)) return false;
+    if (newOutwardIds.has(item.id)) return false;
+    return true;
+  });
+
   const updatedOutwardItems = [...newOutwardItemsList, ...otherOutwardItems];
 
   setStoredItem(STORAGE_KEYS.OUTWARDS, outwards);
   setStoredItem(STORAGE_KEYS.OUTWARD_ITEMS, updatedOutwardItems);
 
-  return outwards.find((out) => out.id === resolvedOutwardId);
+  return outwards.find((out) => out.id === resolvedOutwardId) || updatedHeaderFields;
 };
 

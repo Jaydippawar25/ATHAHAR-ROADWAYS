@@ -389,10 +389,18 @@ export const OutwardCreate = () => {
     };
 
     if (shouldPrint) {
-      if (editingOutwardId || editOutwardData) {
+      const targetOutwardNo = String(submitHeader.outwardNo || '').trim().toLowerCase();
+      const existingOutward = outwards.find(
+        (out) =>
+          (editingOutwardId && out.id === editingOutwardId) ||
+          (targetOutwardNo && String(out.outwardNo || '').trim().toLowerCase() === targetOutwardNo)
+      );
+      const resolvedId = editingOutwardId || editOutwardData?.id || existingOutward?.id;
+
+      if (resolvedId) {
         try {
           handleUpdateFullOutward(
-            editingOutwardId || editOutwardData?.outwardNo,
+            resolvedId,
             submitHeader,
             finalItems,
             user?.displayName || 'Operator'
@@ -427,9 +435,17 @@ export const OutwardCreate = () => {
       // Auto-register any new manual inputs into Central Masters
       autoRegisterOutwardMasters(submitHeader, finalItems);
 
-      if (editingOutwardId || editOutwardData) {
+      const targetOutwardNo = String(submitHeader.outwardNo || '').trim().toLowerCase();
+      const existingOutward = outwards.find(
+        (out) =>
+          (editingOutwardId && out.id === editingOutwardId) ||
+          (targetOutwardNo && String(out.outwardNo || '').trim().toLowerCase() === targetOutwardNo)
+      );
+      const resolvedId = editingOutwardId || editOutwardData?.id || existingOutward?.id;
+
+      if (resolvedId) {
         handleUpdateFullOutward(
-          editingOutwardId || editOutwardData?.outwardNo,
+          resolvedId,
           submitHeader,
           finalItems,
           user?.displayName || 'Operator'

@@ -300,8 +300,26 @@ export const AllEntries = () => {
   const isStockOutRecord = (out) =>
     Boolean(out.isCrossOutward || String(out.outwardNo || '').toUpperCase().startsWith('STOCK-OUT'));
 
-  const enrichedOutwards = allEnrichedOutwards.filter((out) => !isStockOutRecord(out));
-  const enrichedStockOuts = allEnrichedOutwards.filter((out) => isStockOutRecord(out));
+  const deduplicateOutwardHeaders = (list) => {
+    const map = new Map();
+    for (const item of list) {
+      const key = String(item.outwardNo || item.id || '').trim().toLowerCase();
+      if (!map.has(key)) {
+        map.set(key, item);
+      } else {
+        const existing = map.get(key);
+        const existingTime = new Date(existing.updatedAt || existing.createdAt || 0).getTime();
+        const currTime = new Date(item.updatedAt || item.createdAt || 0).getTime();
+        if (currTime >= existingTime) {
+          map.set(key, { ...existing, ...item });
+        }
+      }
+    }
+    return Array.from(map.values());
+  };
+
+  const enrichedOutwards = deduplicateOutwardHeaders(allEnrichedOutwards.filter((out) => !isStockOutRecord(out)));
+  const enrichedStockOuts = deduplicateOutwardHeaders(allEnrichedOutwards.filter((out) => isStockOutRecord(out)));
 
   // Combine inward and outward items into a unified master list of all LR entries
   const allLREntriesMap = new Map();

@@ -166,8 +166,8 @@ export const CrossOutwardCreate = () => {
         setEditingIndex(0);
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- Intentionally synchronize only on route state changes
-  }, [location.state, masters]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Synchronize only when navigation route state changes
+  }, [location.state]);
 
   // List of added LR rows
   const [lrItems, setLrItems] = useState([]);
@@ -458,9 +458,17 @@ export const CrossOutwardCreate = () => {
       // Auto-register any new manual inputs into Central Masters
       autoRegisterCrossOutwardMasters(headerData, finalItems);
 
-      if (editingOutwardId) {
+      const targetOutwardNo = String(headerData.outwardNo || '').trim().toLowerCase();
+      const existingOutward = outwards.find(
+        (out) =>
+          (editingOutwardId && out.id === editingOutwardId) ||
+          (targetOutwardNo && String(out.outwardNo || '').trim().toLowerCase() === targetOutwardNo)
+      );
+      const resolvedId = editingOutwardId || existingOutward?.id;
+
+      if (resolvedId) {
         handleUpdateFullOutward(
-          editingOutwardId,
+          resolvedId,
           { ...headerData, isCrossOutward: true },
           finalItems,
           user?.displayName || 'Operator'
@@ -479,7 +487,7 @@ export const CrossOutwardCreate = () => {
         if (location.state?.returnPath) {
           navigate(location.state.returnPath);
         } else {
-          navigate('/all-entries', { state: { tab: 'cross_outward_headers' } });
+          navigate('/all-entries', { state: { tab: 'stock_out_headers' } });
         }
       }, 300);
     } catch (err) {
