@@ -1016,6 +1016,10 @@ export const OutwardCreate = () => {
                         <input
                           type="text"
                           inputMode="decimal"
+                          autoComplete="off"
+                          autoCorrect="off"
+                          spellCheck={false}
+                          data-lpignore="true"
                           value={item.toPayAmount !== undefined && item.toPayAmount !== null ? item.toPayAmount : ''}
                           onChange={(e) => {
                             const val = e.target.value;
@@ -1031,6 +1035,10 @@ export const OutwardCreate = () => {
                         <input
                           type="text"
                           inputMode="decimal"
+                          autoComplete="off"
+                          autoCorrect="off"
+                          spellCheck={false}
+                          data-lpignore="true"
                           value={item.tbbAmount !== undefined && item.tbbAmount !== null ? item.tbbAmount : ''}
                           onChange={(e) => {
                             const val = e.target.value;
@@ -1046,6 +1054,10 @@ export const OutwardCreate = () => {
                         <input
                           type="text"
                           inputMode="decimal"
+                          autoComplete="off"
+                          autoCorrect="off"
+                          spellCheck={false}
+                          data-lpignore="true"
                           value={item.paidAmount !== undefined && item.paidAmount !== null ? item.paidAmount : ''}
                           onChange={(e) => {
                             const val = e.target.value;
@@ -1232,6 +1244,10 @@ export const OutwardCreate = () => {
                 type="text"
                 inputMode="decimal"
                 name="toPayAmount"
+                autoComplete="off"
+                autoCorrect="off"
+                spellCheck={false}
+                data-lpignore="true"
                 value={itemForm.toPayAmount}
                 onChange={handleItemChange}
                 className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm font-bold text-amber-800"
@@ -1243,6 +1259,10 @@ export const OutwardCreate = () => {
                 type="text"
                 inputMode="decimal"
                 name="tbbAmount"
+                autoComplete="off"
+                autoCorrect="off"
+                spellCheck={false}
+                data-lpignore="true"
                 value={itemForm.tbbAmount}
                 onChange={handleItemChange}
                 className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm font-bold text-sky-800"
@@ -1254,6 +1274,10 @@ export const OutwardCreate = () => {
                 type="text"
                 inputMode="decimal"
                 name="paidAmount"
+                autoComplete="off"
+                autoCorrect="off"
+                spellCheck={false}
+                data-lpignore="true"
                 value={itemForm.paidAmount}
                 onChange={handleItemChange}
                 className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm font-bold text-emerald-800"

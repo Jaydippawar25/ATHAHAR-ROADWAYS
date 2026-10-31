@@ -1088,6 +1088,10 @@ export const Expenses = () => {
                   type="number"
                   step="0.01"
                   min="1"
+                  autoComplete="off"
+                  autoCorrect="off"
+                  spellCheck={false}
+                  data-lpignore="true"
                   value={formData.amount}
                   onChange={(e) => setFormData((prev) => ({ ...prev, amount: e.target.value }))}
                   required

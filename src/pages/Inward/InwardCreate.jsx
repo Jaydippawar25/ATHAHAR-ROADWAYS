@@ -728,6 +728,10 @@ export const InwardCreate = () => {
             <input
               type="text"
               name="memoNo"
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck={false}
+              data-lpignore="true"
               value={headerData.memoNo}
               onChange={handleHeaderChange}
               placeholder="e.g. MM-8801"
@@ -849,6 +853,10 @@ export const InwardCreate = () => {
               onKeyDown={(e) => handleKeyDown(e, 0)}
               type="text"
               name="lrNo"
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck={false}
+              data-lpignore="true"
               value={itemForm.lrNo}
               onChange={handleItemChange}
               placeholder="e.g. 13941"
@@ -864,6 +872,7 @@ export const InwardCreate = () => {
               onKeyDown={(e) => handleKeyDown(e, 1)}
               type="date"
               name="date"
+              autoComplete="off"
               value={itemForm.date}
               onChange={handleItemChange}
               className="w-full px-2.5 py-1.5 sm:px-3 sm:py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-[#1d4ed8] outline-none"
@@ -877,6 +886,10 @@ export const InwardCreate = () => {
               onKeyDown={(e) => handleKeyDown(e, 2)}
               type="text"
               name="invoiceNo"
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck={false}
+              data-lpignore="true"
               value={itemForm.invoiceNo}
               onChange={handleItemChange}
               placeholder="e.g. INV-902"
@@ -976,6 +989,10 @@ export const InwardCreate = () => {
               type="text"
               inputMode="numeric"
               name="pkg"
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck={false}
+              data-lpignore="true"
               value={itemForm.pkg}
               onChange={handleItemChange}
               placeholder="1"
@@ -994,6 +1011,10 @@ export const InwardCreate = () => {
               type="text"
               inputMode="decimal"
               name="toPayAmount"
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck={false}
+              data-lpignore="true"
               value={itemForm.toPayAmount}
               onChange={handleItemChange}
               placeholder="0.00"
@@ -1009,6 +1030,10 @@ export const InwardCreate = () => {
               type="text"
               inputMode="decimal"
               name="tbbAmount"
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck={false}
+              data-lpignore="true"
               value={itemForm.tbbAmount}
               onChange={handleItemChange}
               placeholder="0.00"
@@ -1024,6 +1049,10 @@ export const InwardCreate = () => {
               type="text"
               inputMode="decimal"
               name="paidAmount"
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck={false}
+              data-lpignore="true"
               value={itemForm.paidAmount}
               onChange={handleItemChange}
               placeholder="0.00"

@@ -1358,6 +1358,10 @@ export const AllEntries = () => {
                   <label className="block text-slate-600 mb-1 uppercase font-bold">PKG</label>
                   <input
                     type="number"
+                    autoComplete="off"
+                    autoCorrect="off"
+                    spellCheck={false}
+                    data-lpignore="true"
                     value={editFormData.pkg || ''}
                     onChange={(e) => setEditFormData({ ...editFormData, pkg: e.target.value })}
                     className="w-full p-2 border border-slate-300 rounded"
@@ -1367,6 +1371,10 @@ export const AllEntries = () => {
                   <label className="block text-slate-600 mb-1 uppercase font-bold">To Pay</label>
                   <input
                     type="number"
+                    autoComplete="off"
+                    autoCorrect="off"
+                    spellCheck={false}
+                    data-lpignore="true"
                     value={editFormData.toPayAmount || ''}
                     onChange={(e) => setEditFormData({ ...editFormData, toPayAmount: e.target.value })}
                     className="w-full p-2 border border-slate-300 rounded"
@@ -1376,6 +1384,10 @@ export const AllEntries = () => {
                   <label className="block text-slate-600 mb-1 uppercase font-bold">T.B.B</label>
                   <input
                     type="number"
+                    autoComplete="off"
+                    autoCorrect="off"
+                    spellCheck={false}
+                    data-lpignore="true"
                     value={editFormData.tbbAmount || ''}
                     onChange={(e) => setEditFormData({ ...editFormData, tbbAmount: e.target.value })}
                     className="w-full p-2 border border-slate-300 rounded"
@@ -1385,6 +1397,10 @@ export const AllEntries = () => {
                   <label className="block text-slate-600 mb-1 uppercase font-bold">Paid</label>
                   <input
                     type="number"
+                    autoComplete="off"
+                    autoCorrect="off"
+                    spellCheck={false}
+                    data-lpignore="true"
                     value={editFormData.paidAmount || ''}
                     onChange={(e) => setEditFormData({ ...editFormData, paidAmount: e.target.value })}
                     className="w-full p-2 border border-slate-300 rounded"

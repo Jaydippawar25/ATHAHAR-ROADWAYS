@@ -773,6 +773,10 @@ export const CrossOutwardCreate = () => {
               <input
                 ref={(el) => (fieldRefs.current[0] = el)}
                 type="text"
+                autoComplete="off"
+                autoCorrect="off"
+                spellCheck={false}
+                data-lpignore="true"
                 value={itemForm.lrNo}
                 onChange={(e) => handleItemChange('lrNo', e.target.value)}
                 onKeyDown={(e) => handleKeyDown(e, 0)}
@@ -788,6 +792,7 @@ export const CrossOutwardCreate = () => {
               <input
                 ref={(el) => (fieldRefs.current[1] = el)}
                 type="date"
+                autoComplete="off"
                 value={itemForm.date}
                 onChange={(e) => handleItemChange('date', e.target.value)}
                 onKeyDown={(e) => handleKeyDown(e, 1)}
@@ -802,6 +807,10 @@ export const CrossOutwardCreate = () => {
               <input
                 ref={(el) => (fieldRefs.current[2] = el)}
                 type="text"
+                autoComplete="off"
+                autoCorrect="off"
+                spellCheck={false}
+                data-lpignore="true"
                 value={itemForm.invoiceNo}
                 onChange={(e) => handleItemChange('invoiceNo', e.target.value)}
                 onKeyDown={(e) => handleKeyDown(e, 2)}
@@ -902,6 +911,10 @@ export const CrossOutwardCreate = () => {
                 ref={(el) => (fieldRefs.current[6] = el)}
                 type="number"
                 min="1"
+                autoComplete="off"
+                autoCorrect="off"
+                spellCheck={false}
+                data-lpignore="true"
                 value={itemForm.pkg}
                 onChange={(e) => handleItemChange('pkg', e.target.value)}
                 onKeyDown={(e) => handleKeyDown(e, 6)}
@@ -922,6 +935,10 @@ export const CrossOutwardCreate = () => {
                 type="number"
                 min="0"
                 step="0.01"
+                autoComplete="off"
+                autoCorrect="off"
+                spellCheck={false}
+                data-lpignore="true"
                 value={itemForm.toPayAmount}
                 onChange={(e) => handleItemChange('toPayAmount', e.target.value)}
                 onKeyDown={(e) => handleKeyDown(e, 7)}
@@ -939,6 +956,10 @@ export const CrossOutwardCreate = () => {
                 type="number"
                 min="0"
                 step="0.01"
+                autoComplete="off"
+                autoCorrect="off"
+                spellCheck={false}
+                data-lpignore="true"
                 value={itemForm.tbbAmount}
                 onChange={(e) => handleItemChange('tbbAmount', e.target.value)}
                 onKeyDown={(e) => handleKeyDown(e, 8)}
@@ -956,6 +977,10 @@ export const CrossOutwardCreate = () => {
                 type="number"
                 min="0"
                 step="0.01"
+                autoComplete="off"
+                autoCorrect="off"
+                spellCheck={false}
+                data-lpignore="true"
                 value={itemForm.paidAmount}
                 onChange={(e) => handleItemChange('paidAmount', e.target.value)}
                 onKeyDown={(e) => handleKeyDown(e, 9)}
