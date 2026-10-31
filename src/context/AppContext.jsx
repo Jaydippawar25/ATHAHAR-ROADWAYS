@@ -1,5 +1,12 @@
 import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
-import { getMasters, addMasterItem, updateMasterItem, deleteMasterItem } from '../services/masterService';
+import {
+  getMasters,
+  addMasterItem,
+  updateMasterItem,
+  deleteMasterItem,
+  ensureMasterItem,
+  ensureMultipleMasterItems,
+} from '../services/masterService';
 import {
   getAllInwards,
   getAllInwardItems,
@@ -400,6 +407,22 @@ export const AppProvider = ({ children }) => {
     return res;
   };
 
+  const handleEnsureMasterItem = (category, valOrObj) => {
+    const res = ensureMasterItem(category, valOrObj);
+    if (res) {
+      invalidateMasterData();
+    }
+    return res;
+  };
+
+  const handleEnsureMultipleMasters = (entries) => {
+    const changed = ensureMultipleMasterItems(entries);
+    if (changed) {
+      invalidateMasterData();
+    }
+    return changed;
+  };
+
   const handleUpdateMaster = (category, id, fields) => {
     const res = updateMasterItem(category, id, fields);
     invalidateMasterData();
@@ -493,6 +516,8 @@ export const AppProvider = ({ children }) => {
         handleUpdateOutwardHeader,
         handleUpdateOutwardItem,
         handleAddMaster,
+        handleEnsureMasterItem,
+        handleEnsureMultipleMasters,
         handleUpdateMaster,
         handleDeleteMaster,
         handleCreateVoucher,

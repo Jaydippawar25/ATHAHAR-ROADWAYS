@@ -1,11 +1,38 @@
 import React, { useState, useRef, useEffect, useMemo, forwardRef } from 'react';
-import { ChevronDown, Check } from 'lucide-react';
+import { ChevronDown, Check, Plus } from 'lucide-react';
+import { useApp } from '../../context/AppContext';
+
+const FIELD_TO_MASTER_CATEGORY = {
+  transporterName: 'transporters',
+  transporter: 'transporters',
+  fromStation: 'stations',
+  originStation: 'stations',
+  from: 'stations',
+  destinationStation: 'stations',
+  station: 'stations',
+  ctTo: 'stations',
+  vehicleNo: 'vehicles',
+  vehicle: 'vehicles',
+  driverName: 'drivers',
+  driver: 'drivers',
+  ownerName: 'owners',
+  vehicleOwner: 'owners',
+  owner: 'owners',
+  consignorName: 'consignors',
+  consignor: 'consignors',
+  consigneeName: 'consignees',
+  consignee: 'consignees',
+  deliveryPersonName: 'deliveryPersons',
+  deliveryPerson: 'deliveryPersons',
+};
 
 /**
  * EditableCombobox Component
  * Allows users to either:
  * 1. Type any custom manual text directly into the input.
  * 2. Click the dropdown arrow or press down arrow to select from existing master options.
+ * 3. Automatically persists custom manually filled values into Master directory
+ *    so they show up in dropdown options for subsequent entries.
  */
 export const EditableCombobox = forwardRef(
   (
@@ -14,6 +41,7 @@ export const EditableCombobox = forwardRef(
       name,
       value = '',
       onChange,
+      onBlur,
       options = [],
       placeholder = '',
       className = '',
@@ -24,6 +52,8 @@ export const EditableCombobox = forwardRef(
       uppercase = true,
       autoFocus = false,
       title = '',
+      masterCategory,
+      autoSaveMaster = true,
     },
     ref
   ) => {
@@ -31,6 +61,16 @@ export const EditableCombobox = forwardRef(
     const [highlightedIndex, setHighlightedIndex] = useState(-1);
     const containerRef = useRef(null);
     const internalInputRef = useRef(null);
+
+    // Safely retrieve AppContext
+    let appCtx = null;
+    try {
+      appCtx = useApp();
+    } catch (e) {
+      // Gracefully handle if mounted outside AppProvider
+    }
+
+    const resolvedCategory = masterCategory || (name ? FIELD_TO_MASTER_CATEGORY[name] : null);
 
     // Merge external ref and inputRef prop with internalInputRef
     const setRefs = (el) => {
@@ -58,7 +98,7 @@ export const EditableCombobox = forwardRef(
         const val =
           typeof opt === 'string'
             ? opt
-            : opt.name || opt.vehicleNo || opt.value || opt.label || '';
+            : opt.name || opt.vehicleNo || opt.ownerName || opt.value || opt.label || '';
         if (val && !seen.has(String(val).toLowerCase())) {
           seen.add(String(val).toLowerCase());
           result.push({
@@ -82,16 +122,46 @@ export const EditableCombobox = forwardRef(
         opt.value.toLowerCase().includes(query)
       );
 
-      // If user typed something but matches are found, show matches; if query equals exactly one, still show all on open
-      return matches.length > 0 ? matches : normalizedOptions;
+      // If matches are found, show matches; else fallback to all options
+      return matches.length > 0 ? matches : [];
     }, [normalizedOptions, value]);
 
-    // Handle outside click to close dropdown
+    // Check if the current value is a new custom master item
+    const trimmedValue = String(value || '').trim();
+    const hasExactMatch = useMemo(() => {
+      if (!trimmedValue) return false;
+      return normalizedOptions.some(
+        (opt) => opt.value.trim().toLowerCase() === trimmedValue.toLowerCase()
+      );
+    }, [normalizedOptions, trimmedValue]);
+
+    const isCustomValue = Boolean(
+      trimmedValue.length >= 2 && !hasExactMatch && resolvedCategory
+    );
+
+    // Auto-save value into Master directory
+    const handleAutoSave = (valToSave = value) => {
+      if (!autoSaveMaster || !resolvedCategory || !appCtx?.handleEnsureMasterItem) return;
+      const clean = String(valToSave || '').trim();
+      if (!clean || clean === '...' || clean === '-' || clean.length < 2) return;
+
+      const exists = normalizedOptions.some(
+        (opt) => opt.value.trim().toLowerCase() === clean.toLowerCase()
+      );
+      if (!exists) {
+        appCtx.handleEnsureMasterItem(resolvedCategory, clean);
+      }
+    };
+
+    // Handle outside click to close dropdown & auto-save
     useEffect(() => {
       const handleOutsideClick = (e) => {
         if (containerRef.current && !containerRef.current.contains(e.target)) {
-          setIsOpen(false);
-          setHighlightedIndex(-1);
+          if (isOpen) {
+            handleAutoSave();
+            setIsOpen(false);
+            setHighlightedIndex(-1);
+          }
         }
       };
 
@@ -103,7 +173,8 @@ export const EditableCombobox = forwardRef(
         document.removeEventListener('mousedown', handleOutsideClick);
         document.removeEventListener('touchstart', handleOutsideClick);
       };
-    }, [isOpen]);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isOpen, value, resolvedCategory]);
 
     // Propagate change
     const triggerChange = (newVal) => {
@@ -136,7 +207,16 @@ export const EditableCombobox = forwardRef(
       const rawVal = e.target.value;
       triggerChange(rawVal);
       if (!isOpen) setIsOpen(true);
-      setHighlightedIndex(0);
+      setHighlightedIndex(-1);
+    };
+
+    const handleInputBlur = (e) => {
+      if (value && String(value).trim()) {
+        handleAutoSave(value);
+      }
+      if (onBlur) {
+        onBlur(e);
+      }
     };
 
     const handleInputKeyDown = (e) => {
@@ -180,6 +260,8 @@ export const EditableCombobox = forwardRef(
       if (e.key === 'Enter' || (e.key === 'Tab' && !e.shiftKey)) {
         if (isOpen && highlightedIndex >= 0 && filteredOptions[highlightedIndex]) {
           triggerChange(filteredOptions[highlightedIndex].value);
+        } else if (value && String(value).trim()) {
+          handleAutoSave(value);
         }
         setIsOpen(false);
         setHighlightedIndex(-1);
@@ -191,6 +273,9 @@ export const EditableCombobox = forwardRef(
 
       // Shift+Tab backward navigation
       if (e.key === 'Tab' && e.shiftKey) {
+        if (value && String(value).trim()) {
+          handleAutoSave(value);
+        }
         setIsOpen(false);
         setHighlightedIndex(-1);
         if (onKeyDown) {
@@ -217,6 +302,7 @@ export const EditableCombobox = forwardRef(
             name={name}
             value={value || ''}
             onChange={handleInputChange}
+            onBlur={handleInputBlur}
             onKeyDown={handleInputKeyDown}
             onFocus={() => {
               // Open dropdown on focus for easy discovery
@@ -257,7 +343,33 @@ export const EditableCombobox = forwardRef(
 
         {/* Dropdown Menu */}
         {isOpen && (
-          <div className="absolute left-0 z-50 mt-1 max-h-56 w-full min-w-[180px] overflow-y-auto rounded-lg bg-white border border-slate-300 shadow-xl py-1 text-xs">
+          <div className="absolute left-0 z-50 mt-1 max-h-56 w-full min-w-[200px] overflow-y-auto rounded-xl bg-white border border-slate-300 shadow-xl py-1 text-xs">
+            {/* Actionable Save Banner if typing a new custom master */}
+            {isCustomValue && (
+              <div
+                onMouseDown={(e) => {
+                  e.preventDefault(); // Prevent blur before click executes
+                  handleAutoSave(trimmedValue);
+                  setIsOpen(false);
+                  if (internalInputRef.current) {
+                    internalInputRef.current.focus();
+                  }
+                }}
+                className="px-3 py-2 flex items-center justify-between cursor-pointer bg-orange-50 hover:bg-orange-100 text-orange-900 border-b border-orange-200 transition-colors"
+                title={`Click or press Enter to add "${uppercase ? trimmedValue.toUpperCase() : trimmedValue}" to Master records`}
+              >
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <Plus className="w-3.5 h-3.5 text-orange-600 shrink-0" />
+                  <span className="font-bold text-xs truncate">
+                    Save &ldquo;{uppercase ? trimmedValue.toUpperCase() : trimmedValue}&rdquo; to Masters
+                  </span>
+                </div>
+                <span className="text-[9px] font-black tracking-wider uppercase bg-orange-200 text-orange-800 px-1.5 py-0.5 rounded shrink-0 ml-1">
+                  NEW MASTER
+                </span>
+              </div>
+            )}
+
             {filteredOptions.length > 0 ? (
               filteredOptions.map((opt, idx) => {
                 const isSelected =
@@ -285,6 +397,13 @@ export const EditableCombobox = forwardRef(
                   </div>
                 );
               })
+            ) : isCustomValue ? (
+              <div className="px-3 py-2 text-slate-500 font-medium text-[11px] bg-slate-50 flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                <span>
+                  Press <kbd className="px-1 py-0.5 bg-white border border-slate-300 rounded text-[10px] font-bold text-slate-700">Enter</kbd> or <kbd className="px-1 py-0.5 bg-white border border-slate-300 rounded text-[10px] font-bold text-slate-700">Tab</kbd> to save to Masters
+                </span>
+              </div>
             ) : (
               <div className="px-3 py-2 text-slate-400 italic text-[11px]">
                 No matching option (typing custom value)

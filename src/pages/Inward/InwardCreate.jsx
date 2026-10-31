@@ -13,7 +13,14 @@ import { getNextInwardNo } from '../../services/inwardService';
 export const InwardCreate = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { masters, inwards, handleCreateInward, handleUpdateFullInward, handleAddMaster } = useApp();
+  const {
+    masters,
+    inwards,
+    handleCreateInward,
+    handleUpdateFullInward,
+    handleAddMaster,
+    handleEnsureMultipleMasters,
+  } = useApp();
   const { user } = useAuth();
 
   const editInwardData = location.state?.editInward || null;
@@ -274,6 +281,48 @@ export const InwardCreate = () => {
     setEditingIndex(null);
   };
 
+  // Auto-register any manually filled master fields into Central Masters
+  const autoRegisterInwardMasters = (header, items) => {
+    if (!handleEnsureMultipleMasters) return;
+    const entries = [];
+
+    if (header?.transporterName) {
+      entries.push({ category: 'transporters', value: header.transporterName });
+    }
+    if (header?.fromStation) {
+      entries.push({ category: 'stations', value: header.fromStation });
+    }
+    if (header?.vehicleNo) {
+      entries.push({
+        category: 'vehicles',
+        value: header.vehicleNo,
+        extra: { ownerName: header.ownerName || '' },
+      });
+    }
+    if (header?.driverName) {
+      entries.push({ category: 'drivers', value: header.driverName });
+    }
+    if (header?.ownerName) {
+      entries.push({ category: 'owners', value: header.ownerName });
+    }
+
+    (items || []).forEach((item) => {
+      if (item?.ctTo) {
+        entries.push({ category: 'stations', value: item.ctTo });
+      }
+      if (item?.consignorName) {
+        entries.push({ category: 'consignors', value: item.consignorName });
+      }
+      if (item?.consigneeName) {
+        entries.push({ category: 'consignees', value: item.consigneeName });
+      }
+    });
+
+    if (entries.length > 0) {
+      handleEnsureMultipleMasters(entries);
+    }
+  };
+
   // Add / Update LR item in staged list
   const handleAddOrUpdateLR = (e) => {
     if (e) e.preventDefault();
@@ -306,6 +355,9 @@ export const InwardCreate = () => {
       tbbAmount: Number(itemForm.tbbAmount) || 0,
       paidAmount: Number(itemForm.paidAmount) || 0,
     };
+
+    // Auto-save manually filled inputs to Master page immediately
+    autoRegisterInwardMasters(headerData, [newItem]);
 
     let nextItems;
     if (editingIndex !== null && editingIndex < stagedItems.length) {
@@ -472,6 +524,9 @@ export const InwardCreate = () => {
     }
 
     try {
+      // Automatically register any new manual inputs into Central Masters
+      autoRegisterInwardMasters(headerData, finalItems);
+
       if (editingInwardId || editInwardData) {
         handleUpdateFullInward(
           editingInwardId || editInwardData?.inwardNo,
@@ -601,6 +656,7 @@ export const InwardCreate = () => {
                 value={headerData.transporterName}
                 onChange={handleHeaderChange}
                 options={masters.transporters}
+                masterCategory="transporters"
                 placeholder=""
                 className="px-2.5 py-1.5 sm:px-3 sm:py-2 border border-slate-200 bg-white rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-[#1d4ed8]"
               />
@@ -625,6 +681,7 @@ export const InwardCreate = () => {
                 value={headerData.fromStation}
                 onChange={handleHeaderChange}
                 options={masters.stations}
+                masterCategory="stations"
                 placeholder=""
                 className="px-2.5 py-1.5 sm:px-3 sm:py-2 border border-slate-200 bg-white rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-[#1d4ed8]"
               />
@@ -649,6 +706,7 @@ export const InwardCreate = () => {
                 value={headerData.vehicleNo}
                 onChange={handleHeaderChange}
                 options={masters.vehicles}
+                masterCategory="vehicles"
                 placeholder=""
                 className="px-2.5 py-1.5 sm:px-3 sm:py-2 border border-slate-200 bg-white rounded-xl text-xs font-black text-slate-900 focus:ring-2 focus:ring-[#1d4ed8]"
               />
@@ -687,6 +745,7 @@ export const InwardCreate = () => {
                 value={headerData.driverName}
                 onChange={handleHeaderChange}
                 options={masters.drivers}
+                masterCategory="drivers"
                 placeholder=""
                 className="px-2.5 py-1.5 sm:px-3 sm:py-2 border border-slate-200 bg-white rounded-xl text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-[#1d4ed8]"
               />
@@ -717,6 +776,7 @@ export const InwardCreate = () => {
                     headerData.ownerName,
                   ].filter(Boolean))
                 )}
+                masterCategory="owners"
                 placeholder=""
                 className="px-2.5 py-1.5 sm:px-3 sm:py-2 border border-slate-200 bg-white rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-[#1d4ed8]"
               />
@@ -838,6 +898,7 @@ export const InwardCreate = () => {
                 value={itemForm.ctTo}
                 onChange={handleItemChange}
                 options={masters.stations}
+                masterCategory="stations"
                 placeholder=""
                 className="px-2.5 py-1.5 sm:px-3 sm:py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-[#1d4ed8]"
               />
@@ -864,6 +925,7 @@ export const InwardCreate = () => {
                 value={itemForm.consignorName}
                 onChange={handleItemChange}
                 options={masters.consignors}
+                masterCategory="consignors"
                 placeholder=""
                 className="px-2.5 py-1.5 sm:px-3 sm:py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-[#1d4ed8]"
               />
@@ -890,6 +952,7 @@ export const InwardCreate = () => {
                 value={itemForm.consigneeName}
                 onChange={handleItemChange}
                 options={masters.consignees}
+                masterCategory="consignees"
                 placeholder=""
                 className="px-2.5 py-1.5 sm:px-3 sm:py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-[#1d4ed8]"
               />

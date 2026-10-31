@@ -33,7 +33,17 @@ export const Masters = () => {
 
   const handleSaveMaster = (e) => {
     e.preventDefault();
-    handleAddMaster(activeMaster, formData);
+    const itemToSave = { ...formData };
+    if (activeMaster === 'vehicles') {
+      itemToSave.vehicleNo = String(itemToSave.vehicleNo || itemToSave.name || '').trim().toUpperCase();
+      itemToSave.name = itemToSave.vehicleNo;
+    } else if (activeMaster === 'owners') {
+      itemToSave.name = String(itemToSave.name || itemToSave.ownerName || '').trim().toUpperCase();
+      itemToSave.ownerName = itemToSave.name;
+    } else if (itemToSave.name) {
+      itemToSave.name = String(itemToSave.name).trim().toUpperCase();
+    }
+    handleAddMaster(activeMaster, itemToSave);
     setIsModalOpen(false);
     setFormData({});
   };
@@ -45,7 +55,18 @@ export const Masters = () => {
 
   const handleSaveEdit = (e) => {
     e.preventDefault();
-    handleUpdateMaster(activeMaster, editingItem.id, editFormData);
+    const updated = { ...editFormData };
+    if (activeMaster === 'vehicles' && (updated.vehicleNo || updated.name)) {
+      updated.vehicleNo = String(updated.vehicleNo || updated.name).trim().toUpperCase();
+      updated.name = updated.vehicleNo;
+    } else if (activeMaster === 'owners') {
+      const ownerVal = String(updated.name || updated.ownerName || '').trim().toUpperCase();
+      updated.name = ownerVal;
+      updated.ownerName = ownerVal;
+    } else if (updated.name) {
+      updated.name = String(updated.name).trim().toUpperCase();
+    }
+    handleUpdateMaster(activeMaster, editingItem.id, updated);
     setEditingItem(null);
   };
 

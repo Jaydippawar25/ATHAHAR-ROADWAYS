@@ -13,7 +13,14 @@ import { getNextCrossOutwardNo } from '../../services/outwardService';
 export const CrossOutwardCreate = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { masters, outwards, handleCreateOutward, handleUpdateFullOutward, handleAddMaster } = useApp();
+  const {
+    masters,
+    outwards,
+    handleCreateOutward,
+    handleUpdateFullOutward,
+    handleAddMaster,
+    handleEnsureMultipleMasters,
+  } = useApp();
   const { user } = useAuth();
 
   const editOutwardData = location.state?.editOutward || null;
@@ -200,6 +207,48 @@ export const CrossOutwardCreate = () => {
     setItemForm((prev) => ({ ...prev, [field]: value }));
   };
 
+  // Auto-register manually filled fields into Central Masters
+  const autoRegisterCrossOutwardMasters = (header, items) => {
+    if (!handleEnsureMultipleMasters) return;
+    const entries = [];
+
+    if (header?.transporterName) {
+      entries.push({ category: 'transporters', value: header.transporterName });
+    }
+    if (header?.fromStation) {
+      entries.push({ category: 'stations', value: header.fromStation });
+    }
+    if (header?.vehicleNo) {
+      entries.push({
+        category: 'vehicles',
+        value: header.vehicleNo,
+        extra: { ownerName: header.ownerName || '' },
+      });
+    }
+    if (header?.driverName) {
+      entries.push({ category: 'drivers', value: header.driverName });
+    }
+    if (header?.ownerName) {
+      entries.push({ category: 'owners', value: header.ownerName });
+    }
+
+    (items || []).forEach((item) => {
+      if (item?.ctTo) {
+        entries.push({ category: 'stations', value: item.ctTo });
+      }
+      if (item?.consignorName) {
+        entries.push({ category: 'consignors', value: item.consignorName });
+      }
+      if (item?.consigneeName) {
+        entries.push({ category: 'consignees', value: item.consigneeName });
+      }
+    });
+
+    if (entries.length > 0) {
+      handleEnsureMultipleMasters(entries);
+    }
+  };
+
   // Add or Update row in table
   const handleAddOrUpdateLR = (e) => {
     if (e) e.preventDefault();
@@ -225,6 +274,9 @@ export const CrossOutwardCreate = () => {
       tbbAmount: Number(itemForm.tbbAmount) || 0,
       paidAmount: Number(itemForm.paidAmount) || 0,
     };
+
+    // Auto-save manually filled inputs to Master page immediately
+    autoRegisterCrossOutwardMasters(headerData, [rowItem]);
 
     if (editingIndex !== null) {
       setLrItems((prev) => {
@@ -345,18 +397,19 @@ export const CrossOutwardCreate = () => {
     if (!quickAddValue.trim()) return;
 
     const val = quickAddValue.trim();
+    const cat = quickAddModal.category === 'vehicleOwners' ? 'owners' : quickAddModal.category;
     let newItem = { name: val };
-    if (quickAddModal.category === 'vehicles') {
-      newItem = { vehicleNo: val, type: 'Own', capacity: '10 Ton' };
-    } else if (quickAddModal.category === 'vehicleOwners') {
-      newItem = { name: val, phone: '9800000000' };
-    } else if (quickAddModal.category === 'stations') {
+    if (cat === 'vehicles') {
+      newItem = { vehicleNo: val, name: val, type: 'Own', capacity: '10 Ton' };
+    } else if (cat === 'owners') {
+      newItem = { name: val, ownerName: val, phone: '9800000000' };
+    } else if (cat === 'stations') {
       newItem = { name: val, state: 'MH' };
-    } else if (quickAddModal.category === 'drivers') {
+    } else if (cat === 'drivers') {
       newItem = { name: val, licenseNo: 'DL-9902', phone: '9800000000' };
     }
 
-    handleAddMaster(quickAddModal.category, newItem);
+    handleAddMaster(cat, newItem);
 
     if (quickAddModal.isHeader) {
       handleHeaderChange(quickAddModal.targetField, val);
@@ -402,6 +455,9 @@ export const CrossOutwardCreate = () => {
     }
 
     try {
+      // Auto-register any new manual inputs into Central Masters
+      autoRegisterCrossOutwardMasters(headerData, finalItems);
+
       if (editingOutwardId) {
         handleUpdateFullOutward(
           editingOutwardId,
@@ -531,6 +587,7 @@ export const CrossOutwardCreate = () => {
                 value={headerData.transporterName}
                 onChange={(e, val) => handleHeaderChange('transporterName', val)}
                 options={masters.transporters}
+                masterCategory="transporters"
                 placeholder=""
                 className="px-2.5 py-1.5 sm:px-3 sm:py-2 border border-slate-200 bg-white rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-[#1d4ed8]"
               />
@@ -555,6 +612,7 @@ export const CrossOutwardCreate = () => {
                 value={headerData.fromStation}
                 onChange={(e, val) => handleHeaderChange('fromStation', val)}
                 options={masters.stations}
+                masterCategory="stations"
                 placeholder=""
                 className="px-2.5 py-1.5 sm:px-3 sm:py-2 border border-slate-200 bg-white rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-[#1d4ed8]"
               />
@@ -579,6 +637,7 @@ export const CrossOutwardCreate = () => {
                 value={headerData.vehicleNo}
                 onChange={(e, val) => handleHeaderChange('vehicleNo', val)}
                 options={masters.vehicles}
+                masterCategory="vehicles"
                 placeholder=""
                 className="px-2.5 py-1.5 sm:px-3 sm:py-2 border border-slate-200 bg-white rounded-xl text-xs font-black text-slate-900 focus:ring-2 focus:ring-[#1d4ed8]"
               />
@@ -617,6 +676,7 @@ export const CrossOutwardCreate = () => {
                 value={headerData.driverName}
                 onChange={(e, val) => handleHeaderChange('driverName', val)}
                 options={masters.drivers}
+                masterCategory="drivers"
                 placeholder=""
                 className="px-2.5 py-1.5 sm:px-3 sm:py-2 border border-slate-200 bg-white rounded-xl text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-[#1d4ed8]"
               />
@@ -640,13 +700,20 @@ export const CrossOutwardCreate = () => {
                 name="ownerName"
                 value={headerData.ownerName}
                 onChange={(e, val) => handleHeaderChange('ownerName', val)}
-                options={(masters.vehicleOwners || []).map((o) => o.name)}
+                options={Array.from(
+                  new Set([
+                    ...(masters.owners || []).map((o) => o.name),
+                    ...(masters.vehicles || []).map((v) => v.ownerName).filter(Boolean),
+                    headerData.ownerName,
+                  ].filter(Boolean))
+                )}
+                masterCategory="owners"
                 placeholder=""
                 className="px-2.5 py-1.5 sm:px-3 sm:py-2 border border-slate-200 bg-white rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-[#1d4ed8]"
               />
               <button
                 type="button"
-                onClick={() => openQuickAdd('vehicleOwners', 'Add Vehicle Owner', 'ownerName', true)}
+                onClick={() => openQuickAdd('owners', 'Add Vehicle Owner', 'ownerName', true)}
                 className="px-2 py-1.5 sm:px-2.5 sm:py-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl font-black text-xs text-slate-700 transition-colors shadow-2xs flex-shrink-0 cursor-pointer"
                 title="Add Owner"
               >
@@ -756,42 +823,54 @@ export const CrossOutwardCreate = () => {
               <label className="block text-[10px] sm:text-[11px] font-extrabold text-slate-600 uppercase mb-1 truncate">
                 CONSIGNOR
               </label>
-              <input
-                ref={(el) => (fieldRefs.current[3] = el)}
-                type="text"
-                list="cross-consignors-datalist"
-                value={itemForm.consignorName}
-                onChange={(e) => handleItemChange('consignorName', e.target.value)}
-                onKeyDown={(e) => handleKeyDown(e, 3)}
-                placeholder="Type Consignor"
-                className="w-full px-2.5 py-1.5 sm:px-3 sm:py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-[#1d4ed8] outline-none placeholder-slate-400"
-              />
-              <datalist id="cross-consignors-datalist">
-                {masters.consignors.map((c) => (
-                  <option key={c.id} value={c.name} />
-                ))}
-              </datalist>
+              <div className="flex items-center space-x-1 min-w-0">
+                <EditableCombobox
+                  ref={(el) => (fieldRefs.current[3] = el)}
+                  inputRef={(el) => (fieldRefs.current[3] = el)}
+                  name="consignorName"
+                  value={itemForm.consignorName}
+                  onChange={(e, val) => handleItemChange('consignorName', val)}
+                  onKeyDown={(e) => handleKeyDown(e, 3)}
+                  options={masters.consignors}
+                  masterCategory="consignors"
+                  placeholder=""
+                  className="px-2.5 py-1.5 sm:px-3 sm:py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-[#1d4ed8]"
+                />
+                <button
+                  type="button"
+                  onClick={() => openQuickAdd('consignors', 'Add Consignor', 'consignorName', false)}
+                  className="px-2 py-1.5 sm:px-2.5 sm:py-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl font-black text-xs text-slate-700 transition-colors shadow-2xs flex-shrink-0 cursor-pointer"
+                >
+                  +
+                </button>
+              </div>
             </div>
 
             <div>
               <label className="block text-[10px] sm:text-[11px] font-extrabold text-slate-600 uppercase mb-1 truncate">
                 CONSIGNEE
               </label>
-              <input
-                ref={(el) => (fieldRefs.current[4] = el)}
-                type="text"
-                list="cross-consignees-datalist"
-                value={itemForm.consigneeName}
-                onChange={(e) => handleItemChange('consigneeName', e.target.value)}
-                onKeyDown={(e) => handleKeyDown(e, 4)}
-                placeholder="Type Consignee"
-                className="w-full px-2.5 py-1.5 sm:px-3 sm:py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-[#1d4ed8] outline-none placeholder-slate-400"
-              />
-              <datalist id="cross-consignees-datalist">
-                {masters.consignees.map((c) => (
-                  <option key={c.id} value={c.name} />
-                ))}
-              </datalist>
+              <div className="flex items-center space-x-1 min-w-0">
+                <EditableCombobox
+                  ref={(el) => (fieldRefs.current[4] = el)}
+                  inputRef={(el) => (fieldRefs.current[4] = el)}
+                  name="consigneeName"
+                  value={itemForm.consigneeName}
+                  onChange={(e, val) => handleItemChange('consigneeName', val)}
+                  onKeyDown={(e) => handleKeyDown(e, 4)}
+                  options={masters.consignees}
+                  masterCategory="consignees"
+                  placeholder=""
+                  className="px-2.5 py-1.5 sm:px-3 sm:py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-[#1d4ed8]"
+                />
+                <button
+                  type="button"
+                  onClick={() => openQuickAdd('consignees', 'Add Consignee', 'consigneeName', false)}
+                  className="px-2 py-1.5 sm:px-2.5 sm:py-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl font-black text-xs text-slate-700 transition-colors shadow-2xs flex-shrink-0 cursor-pointer"
+                >
+                  +
+                </button>
+              </div>
             </div>
 
             <div>
@@ -801,11 +880,13 @@ export const CrossOutwardCreate = () => {
               <div className="flex items-center space-x-1 min-w-0">
                 <EditableCombobox
                   ref={(el) => (fieldRefs.current[5] = el)}
+                  inputRef={(el) => (fieldRefs.current[5] = el)}
                   name="ctTo"
                   value={itemForm.ctTo}
                   onChange={(e, val) => handleItemChange('ctTo', val)}
                   onKeyDown={(e) => handleKeyDown(e, 5)}
                   options={masters.stations}
+                  masterCategory="stations"
                   placeholder=""
                   className="px-2.5 py-1.5 sm:px-3 sm:py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-[#1d4ed8]"
                 />

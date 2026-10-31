@@ -13,7 +13,15 @@ import { getNextOutwardNo } from '../../services/outwardService';
 export const OutwardCreate = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { masters, outwards, pendingStock, handleCreateOutward, handleUpdateFullOutward, handleAddMaster } = useApp();
+  const {
+    masters,
+    outwards,
+    pendingStock,
+    handleCreateOutward,
+    handleUpdateFullOutward,
+    handleAddMaster,
+    handleEnsureMultipleMasters,
+  } = useApp();
   const { user } = useAuth();
 
   const editOutwardData = location.state?.editOutward || null;
@@ -228,12 +236,53 @@ export const OutwardCreate = () => {
     setEditingIndex(null);
   };
 
+  // Auto-register any manually filled master fields into Central Masters
+  const autoRegisterOutwardMasters = (header, items) => {
+    if (!handleEnsureMultipleMasters) return;
+    const entries = [];
+
+    if (header?.transporterName) {
+      entries.push({ category: 'transporters', value: header.transporterName });
+    }
+    if (header?.fromStation) {
+      entries.push({ category: 'stations', value: header.fromStation });
+    }
+    if (header?.vehicleNo) {
+      entries.push({ category: 'vehicles', value: header.vehicleNo });
+    }
+    if (header?.driverName) {
+      entries.push({ category: 'drivers', value: header.driverName });
+    }
+    if (header?.deliveryPersonName) {
+      entries.push({ category: 'deliveryPersons', value: header.deliveryPersonName });
+    }
+
+    (items || []).forEach((item) => {
+      if (item?.ctTo) {
+        entries.push({ category: 'stations', value: item.ctTo });
+      }
+      if (item?.deliveryPersonName) {
+        entries.push({ category: 'deliveryPersons', value: item.deliveryPersonName });
+      }
+      if (item?.consignorName) {
+        entries.push({ category: 'consignors', value: item.consignorName });
+      }
+      if (item?.consigneeName) {
+        entries.push({ category: 'consignees', value: item.consigneeName });
+      }
+    });
+
+    if (entries.length > 0) {
+      handleEnsureMultipleMasters(entries);
+    }
+  };
+
   const handleAddOrUpdateLR = (e) => {
     if (e) e.preventDefault();
     if (editingIndex === null) return;
 
     const updated = [...selectedItems];
-    updated[editingIndex] = {
+    const editedItem = {
       ...updated[editingIndex],
       lrNo: itemForm.lrNo,
       pkg: Number(itemForm.pkg) || 1,
@@ -246,7 +295,11 @@ export const OutwardCreate = () => {
       tbbAmount: Number(itemForm.tbbAmount) || 0,
       paidAmount: Number(itemForm.paidAmount) || 0,
     };
+    updated[editingIndex] = editedItem;
     setSelectedItems(updated);
+
+    // Auto-save edited values to Master page immediately
+    autoRegisterOutwardMasters(headerData, [editedItem]);
     resetForm();
   };
 
@@ -371,6 +424,9 @@ export const OutwardCreate = () => {
     }
 
     try {
+      // Auto-register any new manual inputs into Central Masters
+      autoRegisterOutwardMasters(submitHeader, finalItems);
+
       if (editingOutwardId || editOutwardData) {
         handleUpdateFullOutward(
           editingOutwardId || editOutwardData?.outwardNo,
@@ -500,6 +556,7 @@ export const OutwardCreate = () => {
                 value={headerData.transporterName}
                 onChange={handleHeaderChange}
                 options={masters.transporters}
+                masterCategory="transporters"
                 placeholder=""
                 className="px-2.5 py-1.5 sm:px-3 sm:py-2 border border-slate-200 bg-white rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-[#1d4ed8]"
               />
@@ -524,6 +581,7 @@ export const OutwardCreate = () => {
                 value={headerData.fromStation}
                 onChange={handleHeaderChange}
                 options={masters.stations}
+                masterCategory="stations"
                 placeholder=""
                 className="px-2.5 py-1.5 sm:px-3 sm:py-2 border border-slate-200 bg-white rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-[#1d4ed8]"
               />
@@ -548,6 +606,7 @@ export const OutwardCreate = () => {
                 value={headerData.vehicleNo}
                 onChange={handleHeaderChange}
                 options={masters.vehicles}
+                masterCategory="vehicles"
                 placeholder=""
                 className="px-2.5 py-1.5 sm:px-3 sm:py-2 border border-slate-200 bg-white rounded-xl text-xs font-black text-slate-900 focus:ring-2 focus:ring-[#1d4ed8]"
               />
@@ -572,6 +631,7 @@ export const OutwardCreate = () => {
                 value={headerData.deliveryPersonName}
                 onChange={handleHeaderChange}
                 options={masters.deliveryPersons}
+                masterCategory="deliveryPersons"
                 placeholder=""
                 className="px-2.5 py-1.5 sm:px-3 sm:py-2 border border-emerald-200 bg-emerald-50/50 rounded-xl text-xs font-extrabold text-emerald-900 focus:ring-2 focus:ring-emerald-500"
               />
@@ -596,6 +656,7 @@ export const OutwardCreate = () => {
                 value={headerData.driverName}
                 onChange={handleHeaderChange}
                 options={masters.drivers}
+                masterCategory="drivers"
                 placeholder=""
                 className="px-2.5 py-1.5 sm:px-3 sm:py-2 border border-slate-200 bg-white rounded-xl text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-[#1d4ed8]"
               />
@@ -1108,6 +1169,7 @@ export const OutwardCreate = () => {
                 value={itemForm.ctTo}
                 onChange={handleItemChange}
                 options={masters.stations}
+                masterCategory="stations"
                 placeholder=""
                 className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm"
               />
@@ -1119,27 +1181,32 @@ export const OutwardCreate = () => {
                 value={itemForm.deliveryPersonName}
                 onChange={handleItemChange}
                 options={masters.deliveryPersons}
+                masterCategory="deliveryPersons"
                 placeholder=""
                 className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm font-semibold"
               />
             </div>
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Consignor</label>
-              <input
-                type="text"
+              <EditableCombobox
                 name="consignorName"
                 value={itemForm.consignorName}
                 onChange={handleItemChange}
+                options={masters.consignors}
+                masterCategory="consignors"
+                placeholder=""
                 className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm"
               />
             </div>
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Consignee</label>
-              <input
-                type="text"
+              <EditableCombobox
                 name="consigneeName"
                 value={itemForm.consigneeName}
                 onChange={handleItemChange}
+                options={masters.consignees}
+                masterCategory="consignees"
+                placeholder=""
                 className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm"
               />
             </div>

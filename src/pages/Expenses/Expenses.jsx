@@ -1125,6 +1125,7 @@ export const Expenses = () => {
                 value={formData.vehicleNo}
                 onChange={(e, val) => setFormData((prev) => ({ ...prev, vehicleNo: val }))}
                 options={masters.vehicles}
+                masterCategory="vehicles"
                 placeholder=""
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs font-bold text-slate-900 focus:outline-none focus:ring-1 focus:ring-sky-500"
               />
