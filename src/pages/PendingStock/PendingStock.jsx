@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useApp } from '../../context/AppContext';
 import { useNavigate } from 'react-router-dom';
 import { PackageCheck, ArrowUpRight, Pencil, Trash2, AlertTriangle, Eye, FileSpreadsheet, Printer } from 'lucide-react';
@@ -20,6 +20,22 @@ export const PendingStock = () => {
   } = useApp();
   const navigate = useNavigate();
   const [selectedIds, setSelectedIds] = useState([]);
+
+  // Ensure every pending item carries its transporter name for filtering and display
+  const enrichedPendingStock = useMemo(() => {
+    return (pendingStock || []).map((item) => {
+      if (item.transporterName && item.transporterName !== '-') {
+        return item;
+      }
+      const parentInw = inwards?.find(
+        (inw) => (item.inwardId && inw.id === item.inwardId) || (item.inwardNo && inw.inwardNo === item.inwardNo)
+      );
+      return {
+        ...item,
+        transporterName: parentInw?.transporterName || item.transporterName || '-',
+      };
+    });
+  }, [pendingStock, inwards]);
 
   // Modal states for view, edit & delete
   const [viewingRecord, setViewingRecord] = useState(null);
@@ -301,7 +317,7 @@ export const PendingStock = () => {
 
       <DataTable
         columns={pendingColumns}
-        data={pendingStock}
+        data={enrichedPendingStock}
         selectable={true}
         selectedIds={selectedIds}
         onSelectRow={handleSelectRow}

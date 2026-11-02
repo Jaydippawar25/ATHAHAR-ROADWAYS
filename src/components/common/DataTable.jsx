@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, FileSpreadsheet, FileText, Calendar, MapPin, Tag } from 'lucide-react';
+import { Search, FileSpreadsheet, FileText, Calendar, MapPin, Tag, Truck } from 'lucide-react';
 import { StatusBadge } from './StatusBadge';
 import { formatDate } from '../../utils/dateUtils';
 import { formatCurrency } from '../../utils/numberUtils';
@@ -27,10 +27,22 @@ export const DataTable = ({
   const [dateFilter, setDateFilter] = useState('ALL');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [transporterFilter, setTransporterFilter] = useState('ALL');
   const [stationFilter, setStationFilter] = useState('ALL');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [consignerFilter, setConsignerFilter] = useState('ALL');
   const [consigneeFilter, setConsigneeFilter] = useState('ALL');
+
+  // Extract transporter options dynamically from data rows
+  const transporterOptions = Array.from(
+    new Set(
+      data
+        .flatMap((row) => [row.transporterName, row.transporter, row.transporters])
+        .filter(Boolean)
+        .map((s) => (typeof s === 'string' ? s.trim() : ''))
+        .filter((s) => s && s !== '-')
+    )
+  ).sort((a, b) => a.localeCompare(b));
 
   // Extract station options dynamically from data rows
   const stationOptions = Array.from(
@@ -106,7 +118,13 @@ export const DataTable = ({
       }
     }
 
-    // 3. Station Filter
+    // 3. Transporter Filter
+    if (transporterFilter !== 'ALL') {
+      const rowTransporter = String(row.transporterName || row.transporter || row.transporters || '');
+      if (!rowTransporter.toLowerCase().includes(transporterFilter.toLowerCase())) return false;
+    }
+
+    // 4. Station Filter
     if (stationFilter !== 'ALL') {
       const rowStations = [
         row.from,
@@ -229,6 +247,26 @@ export const DataTable = ({
           )}
         </div>
 
+        {/* Transporter Filter */}
+        {transporterOptions.length > 0 && (
+          <div className="flex items-center space-x-1.5">
+            <Truck className="w-3.5 h-3.5 text-slate-400" />
+            <span className="text-slate-500 font-bold">Transporter:</span>
+            <select
+              value={transporterFilter}
+              onChange={(e) => setTransporterFilter(e.target.value)}
+              className="px-2.5 py-1 bg-white border border-slate-200 rounded-lg font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-600 shadow-2xs text-xs max-w-[170px] truncate cursor-pointer"
+            >
+              <option value="ALL">All Transporters</option>
+              {transporterOptions.map((tr) => (
+                <option key={tr} value={tr}>
+                  {tr}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
         {/* Station Filter */}
         <div className="flex items-center space-x-1.5">
           <MapPin className="w-3.5 h-3.5 text-slate-400" />
@@ -299,6 +337,30 @@ export const DataTable = ({
               ))}
             </select>
           </div>
+        )}
+
+        {(dateFilter !== 'ALL' ||
+          transporterFilter !== 'ALL' ||
+          stationFilter !== 'ALL' ||
+          statusFilter !== 'ALL' ||
+          consignerFilter !== 'ALL' ||
+          consigneeFilter !== 'ALL') && (
+          <button
+            onClick={() => {
+              setDateFilter('ALL');
+              setTransporterFilter('ALL');
+              setStationFilter('ALL');
+              setStatusFilter('ALL');
+              setConsignerFilter('ALL');
+              setConsigneeFilter('ALL');
+              setStartDate('');
+              setEndDate('');
+            }}
+            className="text-[11px] text-blue-600 hover:text-blue-800 underline font-bold cursor-pointer ml-auto"
+            title="Reset all active filters"
+          >
+            Reset Filters
+          </button>
         )}
       </div>
 

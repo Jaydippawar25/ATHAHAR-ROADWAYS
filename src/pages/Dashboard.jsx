@@ -46,6 +46,7 @@ export const Dashboard = () => {
   // Search & Filters
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStation, setSelectedStation] = useState('ALL');
+  const [selectedTransporter, setSelectedTransporter] = useState('ALL');
   const [selectedDateFilter, setSelectedDateFilter] = useState('all');
   const [selectedStatusFilter, setSelectedStatusFilter] = useState('all');
   const [stockTab, setStockTab] = useState('all'); // 'all' | 'priority' | 'heavy'
@@ -231,6 +232,12 @@ export const Dashboard = () => {
           if (!itemStation.includes(selectedStation.toUpperCase())) return false;
         }
 
+        // Transporter filter
+        if (selectedTransporter !== 'ALL') {
+          const itemTrans = String(item.transporterName || '').toUpperCase();
+          if (!itemTrans.includes(selectedTransporter.toUpperCase())) return false;
+        }
+
         // Status filter
         if (selectedStatusFilter === 'pending' && item.status !== 'PENDING') return false;
         if (selectedStatusFilter === 'dispatched' && item.status === 'PENDING') return false;
@@ -245,7 +252,7 @@ export const Dashboard = () => {
         if (!aExact && bExact) return 1;
         return 0;
       });
-  }, [combinedLREntries, query, selectedStation, selectedStatusFilter]);
+  }, [combinedLREntries, query, selectedStation, selectedTransporter, selectedStatusFilter]);
 
   // Enriched Viewing Item resolving full consignment tracking lifecycle
   const enrichedViewingItem = useMemo(() => {
@@ -278,6 +285,11 @@ export const Dashboard = () => {
         const itemStation = String(item.ctTo || item.fromStation || '').toUpperCase();
         if (!itemStation.includes(selectedStation.toUpperCase())) return false;
       }
+      // Transporter filter
+      if (selectedTransporter !== 'ALL') {
+        const itemTrans = String(item.transporterName || '').toUpperCase();
+        if (!itemTrans.includes(selectedTransporter.toUpperCase())) return false;
+      }
       // Tab filter (Priority / Heavy)
       if (stockTab === 'priority') {
         return Number(item.toPayAmount || 0) > 2000;
@@ -287,7 +299,7 @@ export const Dashboard = () => {
       }
       return true;
     });
-  }, [pendingStock, query, selectedStation, stockTab]);
+  }, [pendingStock, query, selectedStation, selectedTransporter, stockTab]);
 
   // Filtered Inwards
   const filteredInwards = useMemo(() => {
@@ -513,6 +525,19 @@ export const Dashboard = () => {
           </select>
 
           <select
+            value={selectedTransporter}
+            onChange={(e) => setSelectedTransporter(e.target.value)}
+            className="px-2 sm:px-3 py-1.5 sm:py-2 bg-slate-50 border border-slate-200 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-bold text-slate-700 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-600 cursor-pointer flex-1 md:flex-none max-w-[150px] truncate"
+          >
+            <option value="ALL">All Transporters</option>
+            {masters.transporters?.map((t) => (
+              <option key={t.id || t.name} value={t.name}>
+                {t.name}
+              </option>
+            ))}
+          </select>
+
+          <select
             value={selectedDateFilter}
             onChange={(e) => setSelectedDateFilter(e.target.value)}
             className="px-2 sm:px-3 py-1.5 sm:py-2 bg-slate-50 border border-slate-200 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-bold text-slate-700 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-600 cursor-pointer flex-1 md:flex-none"
@@ -536,6 +561,7 @@ export const Dashboard = () => {
             onClick={() => {
               setSearchTerm('');
               setSelectedStation('ALL');
+              setSelectedTransporter('ALL');
               setSelectedDateFilter('all');
               setSelectedStatusFilter('all');
             }}
