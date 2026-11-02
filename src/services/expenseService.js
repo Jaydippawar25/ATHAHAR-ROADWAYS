@@ -5,7 +5,9 @@ import { doc, deleteDoc, setDoc, collection, getDocs } from 'firebase/firestore'
 export const EXPENSE_CATEGORIES = [
   'Diesel / Fuel Expense',
   'Vehicle Maintenance',
-  'Toll and Road Charges',
+  'RTO and Insurance',
+  'Salary',
+  'Local Charges',
   'Driver and Helper Expenses',
   'Loading Expense',
   'Unloading Expense',

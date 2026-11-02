@@ -21,6 +21,9 @@ import {
   CheckCircle2,
   AlertCircle,
   DollarSign,
+  ShieldCheck,
+  Banknote,
+  MapPin,
 } from 'lucide-react';
 import { Modal } from '../../components/common/Modal';
 import { EditableCombobox } from '../../components/common/EditableCombobox';
@@ -93,6 +96,30 @@ export const Expenses = () => {
       color: 'text-rose-700 bg-rose-50 border-rose-200',
       badge: 'bg-rose-100 text-rose-800 border-rose-300',
       cardBorder: 'border-l-4 border-l-rose-500',
+    },
+    'RTO and Insurance': {
+      icon: ShieldCheck,
+      color: 'text-purple-700 bg-purple-50 border-purple-200',
+      badge: 'bg-purple-100 text-purple-800 border-purple-300',
+      cardBorder: 'border-l-4 border-l-purple-500',
+    },
+    'Salary': {
+      icon: Banknote,
+      color: 'text-indigo-700 bg-indigo-50 border-indigo-200',
+      badge: 'bg-indigo-100 text-indigo-800 border-indigo-300',
+      cardBorder: 'border-l-4 border-l-indigo-500',
+    },
+    'Local Charges': {
+      icon: MapPin,
+      color: 'text-cyan-700 bg-cyan-50 border-cyan-200',
+      badge: 'bg-cyan-100 text-cyan-800 border-cyan-300',
+      cardBorder: 'border-l-4 border-l-cyan-500',
+    },
+    'Local': {
+      icon: MapPin,
+      color: 'text-cyan-700 bg-cyan-50 border-cyan-200',
+      badge: 'bg-cyan-100 text-cyan-800 border-cyan-300',
+      cardBorder: 'border-l-4 border-l-cyan-500',
     },
     'Toll and Road Charges': {
       icon: Navigation,
@@ -214,7 +241,9 @@ export const Expenses = () => {
       total: 0,
       'Diesel / Fuel Expense': 0,
       'Vehicle Maintenance': 0,
-      'Toll and Road Charges': 0,
+      'RTO and Insurance': 0,
+      'Salary': 0,
+      'Local Charges': 0,
       'Driver and Helper Expenses': 0,
       'Loading Expense': 0,
       'Unloading Expense': 0,
@@ -233,6 +262,7 @@ export const Expenses = () => {
         } else {
           totals['Loading Expense'] += amt;
         }
+
       } else {
         totals['Other Expenses'] += amt;
       }
@@ -306,6 +336,7 @@ export const Expenses = () => {
       if (editingExpenseId) {
         handleUpdateExpense(editingExpenseId, formData, user?.displayName || 'Administrator');
         setFormSuccess('Expense record updated successfully!');
+
       } else {
         handleCreateExpense(formData, user?.displayName || 'Administrator');
         setFormSuccess('Expense record created successfully!');
@@ -396,6 +427,9 @@ export const Expenses = () => {
   const getCategoryShortLabel = (cat) => {
     if (cat === 'Diesel / Fuel Expense') return 'Diesel / Fuel';
     if (cat === 'Vehicle Maintenance') return 'Maintenance';
+    if (cat === 'RTO and Insurance') return 'RTO & Insurance';
+    if (cat === 'Salary') return 'Salary';
+    if (cat === 'Local Charges' || cat === 'Local') return 'Local';
     if (cat === 'Toll and Road Charges') return 'Toll & Road';
     if (cat === 'Driver and Helper Expenses') return 'Driver / Helper';
     if (cat === 'Loading Expense') return 'Loading';
@@ -431,7 +465,7 @@ export const Expenses = () => {
           </h2>
 
           <p className="text-blue-100 text-xs sm:text-sm font-medium">
-            Record and track Diesel/Fuel, Vehicle Maintenance, Toll, Driver Advances, Loading/Unloading, and Other operational expenses.
+            Record and track Diesel/Fuel, Vehicle Maintenance, RTO & Insurance, Salary, Local Charges, Driver Advances, Loading/Unloading, and Other operational expenses.
           </p>
         </div>
 
@@ -474,9 +508,9 @@ export const Expenses = () => {
       </div>
 
       {/* TOP KPI CARDS FOR CATEGORIES */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2.5">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2.5">
         {/* Total Overall Expenses */}
-        <div className="col-span-2 sm:col-span-4 lg:col-span-1 bg-gradient-to-br from-[#072440] to-[#0c3761] text-white p-3 rounded-xl shadow-md border border-sky-950 flex flex-col justify-between">
+        <div className="col-span-2 sm:col-span-1 bg-gradient-to-br from-[#072440] to-[#0c3761] text-white p-3 rounded-xl shadow-md border border-sky-950 flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-black uppercase tracking-wider text-sky-300">
               Total Expenses
@@ -539,30 +573,76 @@ export const Expenses = () => {
           </div>
         </div>
 
-        {/* 3. Toll and Road Charges */}
+        {/* 3. RTO and Insurance, Salary, Local Charges */}
         <div
-          onClick={() => setSelectedCategory(selectedCategory === 'Toll and Road Charges' ? 'ALL' : 'Toll and Road Charges')}
+          onClick={() => setSelectedCategory(selectedCategory === 'RTO and Insurance' ? 'ALL' : 'RTO and Insurance')}
           className={`bg-white p-3 rounded-xl border transition-all cursor-pointer shadow-2xs hover:shadow-md ${
-            selectedCategory === 'Toll and Road Charges' ? 'ring-2 ring-purple-500 border-purple-500' : 'border-slate-200'
-          } ${categoryConfig['Toll and Road Charges'].cardBorder}`}
+            selectedCategory === 'RTO and Insurance' ? 'ring-2 ring-purple-500 border-purple-500' : 'border-slate-200'
+          } ${categoryConfig['RTO and Insurance'].cardBorder}`}
         >
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold uppercase text-slate-500 truncate">Toll & Road</span>
+            <span className="text-[10px] font-bold uppercase text-slate-500 truncate">RTO & Insurance</span>
             <div className="p-1 rounded-md bg-purple-50 text-purple-600">
-              <Navigation className="w-3.5 h-3.5" />
+              <ShieldCheck className="w-3.5 h-3.5" />
             </div>
           </div>
           <div className="mt-2">
             <div className="text-base font-black text-slate-900">
-              {formatCurrency(categoryTotals['Toll and Road Charges'])}
+              {formatCurrency(categoryTotals['RTO and Insurance'])}
             </div>
             <div className="text-[10px] font-bold text-purple-600 mt-0.5 truncate">
-              Fastag & RTO
+              Tax, Permit & Policy
             </div>
           </div>
         </div>
 
-        {/* 4. Driver and Helper Expenses */}
+        {/* 4. Salary */}
+        <div
+          onClick={() => setSelectedCategory(selectedCategory === 'Salary' ? 'ALL' : 'Salary')}
+          className={`bg-white p-3 rounded-xl border transition-all cursor-pointer shadow-2xs hover:shadow-md ${
+            selectedCategory === 'Salary' ? 'ring-2 ring-indigo-500 border-indigo-500' : 'border-slate-200'
+          } ${categoryConfig['Salary'].cardBorder}`}
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-bold uppercase text-slate-500 truncate">Salary</span>
+            <div className="p-1 rounded-md bg-indigo-50 text-indigo-600">
+              <Banknote className="w-3.5 h-3.5" />
+            </div>
+          </div>
+          <div className="mt-2">
+            <div className="text-base font-black text-slate-900">
+              {formatCurrency(categoryTotals['Salary'])}
+            </div>
+            <div className="text-[10px] font-bold text-indigo-600 mt-0.5 truncate">
+              Staff & Driver Wages
+            </div>
+          </div>
+        </div>
+
+        {/* 5. Local Charges */}
+        <div
+          onClick={() => setSelectedCategory(selectedCategory === 'Local Charges' ? 'ALL' : 'Local Charges')}
+          className={`bg-white p-3 rounded-xl border transition-all cursor-pointer shadow-2xs hover:shadow-md ${
+            selectedCategory === 'Local Charges' ? 'ring-2 ring-cyan-500 border-cyan-500' : 'border-slate-200'
+          } ${categoryConfig['Local Charges'].cardBorder}`}
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-bold uppercase text-slate-500 truncate">Local Charges</span>
+            <div className="p-1 rounded-md bg-cyan-50 text-cyan-600">
+              <MapPin className="w-3.5 h-3.5" />
+            </div>
+          </div>
+          <div className="mt-2">
+            <div className="text-base font-black text-slate-900">
+              {formatCurrency(categoryTotals['Local Charges'])}
+            </div>
+            <div className="text-[10px] font-bold text-cyan-600 mt-0.5 truncate">
+              Local Hamali & Cartage
+            </div>
+          </div>
+        </div>
+
+        {/* 6. Driver and Helper Expenses */}
         <div
           onClick={() => setSelectedCategory(selectedCategory === 'Driver and Helper Expenses' ? 'ALL' : 'Driver and Helper Expenses')}
           className={`bg-white p-3 rounded-xl border transition-all cursor-pointer shadow-2xs hover:shadow-md ${
