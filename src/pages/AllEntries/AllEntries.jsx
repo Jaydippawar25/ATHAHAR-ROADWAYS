@@ -366,7 +366,8 @@ export const AllEntries = () => {
           val.recordCategory === 'inward_item' &&
           ((item.inwardItemId && val.id === item.inwardItemId) ||
             val.id === item.id ||
-            String(val.lrNo ?? '').trim().toLowerCase() === String(item.lrNo ?? '').trim().toLowerCase())
+            (String(val.lrNo ?? '').trim().toLowerCase() === String(item.lrNo ?? '').trim().toLowerCase() &&
+              (!item.transporterName || !val.transporterName || String(item.transporterName).trim().toLowerCase() === String(val.transporterName).trim().toLowerCase())))
         );
       });
 

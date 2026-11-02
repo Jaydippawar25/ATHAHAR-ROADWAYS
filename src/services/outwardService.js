@@ -72,7 +72,8 @@ export const getAllOutwardItems = () => {
     if (!item) continue;
     const outKey = String(item.outwardNo || item.outwardId || '').trim().toLowerCase();
     const lrKey = String(item.lrNo || '').trim().toLowerCase();
-    const uniqueKey = outKey && lrKey ? `${outKey}__${lrKey}` : String(item.id || '').trim();
+    const transKey = String(item.transporterName || '').trim().toLowerCase();
+    const uniqueKey = item.id ? String(item.id).trim() : `${outKey}__${transKey}__${lrKey}`;
 
     if (!seenMap.has(uniqueKey)) {
       seenMap.set(uniqueKey, item);
@@ -195,12 +196,19 @@ export const createOutward = (headerData, selectedPendingItems, currentUser = 'O
     let inwards = getStoredItem(STORAGE_KEYS.INWARDS);
     const updatedInwardItems = inwardItems.map((item) => {
       const lrKey = String(item.lrNo ?? '').trim().toLowerCase();
-      const matchedPending = selectedPendingItems.find(
-        (p) =>
-          p.id === item.id ||
-          (p.inwardItemId && p.inwardItemId === item.id) ||
-          (String(p.lrNo ?? '').trim().toLowerCase() === lrKey)
-      );
+      const matchedPending = selectedPendingItems.find((p) => {
+        if (p.id && p.id === item.id) return true;
+        if (p.inwardItemId && p.inwardItemId === item.id) return true;
+
+        const pLR = String(p.lrNo ?? '').trim().toLowerCase();
+        if (pLR !== lrKey) return false;
+
+        const pTrans = String(p.transporterName || '').trim().toLowerCase();
+        const itemTrans = String(item.transporterName || '').trim().toLowerCase();
+        if (pTrans && itemTrans && pTrans !== itemTrans) return false;
+
+        return true;
+      });
 
       if (matchedPending) {
         return {

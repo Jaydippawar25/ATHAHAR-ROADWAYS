@@ -354,6 +354,7 @@ export const InwardCreate = () => {
       toPayAmount: Number(itemForm.toPayAmount) || 0,
       tbbAmount: Number(itemForm.tbbAmount) || 0,
       paidAmount: Number(itemForm.paidAmount) || 0,
+      transporterName: headerData.transporterName || '',
     };
 
     // Auto-save manually filled inputs to Master page immediately
@@ -482,6 +483,7 @@ export const InwardCreate = () => {
       .map((item) => ({
         ...item,
         pkg: Number(item.pkg) || 1,
+        transporterName: item.transporterName || headerData.transporterName || '',
       }));
 
     if (finalItems.length === 0) {

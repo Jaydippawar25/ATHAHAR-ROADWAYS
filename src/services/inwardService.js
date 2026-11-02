@@ -28,11 +28,54 @@ export const getPendingStockItems = () => {
   return items.filter((item) => item.status === STATUS.PENDING);
 };
 
-export const checkDuplicatePendingLR = (lrNo) => {
-  const items = getPendingStockItems();
-  return items.some(
-    (item) => item.lrNo.trim().toLowerCase() === String(lrNo).trim().toLowerCase()
+/**
+ * Resolves the transporter name for an inward item, checking item.transporterName
+ * and falling back to its parent inward header.
+ */
+export const resolveItemTransporter = (item, inwardsList = null) => {
+  if (item?.transporterName && String(item.transporterName).trim() && String(item.transporterName).trim() !== '-') {
+    return String(item.transporterName).trim();
+  }
+  const inwards = inwardsList || getAllInwards();
+  const parentInw = inwards.find(
+    (inw) => (item?.inwardId && inw.id === item.inwardId) || (item?.inwardNo && inw.inwardNo === item.inwardNo)
   );
+  return String(parentInw?.transporterName || '').trim();
+};
+
+/**
+ * Checks if an LR number is already present in Pending Stock.
+ * Scoped by Transporter: Different transport carriers (e.g. MAHARASHTRA TRANSPORT vs
+ * MAHARASHTRA ROADWAYS) maintain independent LR books and CAN share the same LR number.
+ */
+export const checkDuplicatePendingLR = (lrNo, transporterName = '', excludeInwardId = null) => {
+  const items = getPendingStockItems();
+  const inwards = getAllInwards();
+  const cleanLR = String(lrNo ?? '').trim().toLowerCase();
+  if (!cleanLR) return false;
+
+  const targetTransporter = String(transporterName ?? '').trim().toLowerCase();
+
+  return items.some((item) => {
+    if (excludeInwardId && (item.inwardId === excludeInwardId || item.id === excludeInwardId)) {
+      return false;
+    }
+    const itemLR = String(item.lrNo ?? '').trim().toLowerCase();
+    if (itemLR !== cleanLR) {
+      return false;
+    }
+
+    // If transporter is specified, only flag duplicate if the same transporter already has this LR pending!
+    if (targetTransporter) {
+      const existingTransporter = resolveItemTransporter(item, inwards).toLowerCase();
+      // If both transporters are known and they are DIFFERENT, they are NOT duplicates!
+      if (existingTransporter && existingTransporter !== targetTransporter) {
+        return false;
+      }
+    }
+
+    return true;
+  });
 };
 
 export const createInward = (headerData, lrItems, currentUser = 'Operator') => {
@@ -43,6 +86,8 @@ export const createInward = (headerData, lrItems, currentUser = 'Operator') => {
 
   // Check duplicate LR in current submission or pending database
   const seenLRs = new Set();
+  const inwardTransporter = String(headerData.transporterName || '').trim();
+
   for (const item of lrItems) {
     const cleanLR = String(item.lrNo).trim();
     if (!cleanLR) {
@@ -53,8 +98,10 @@ export const createInward = (headerData, lrItems, currentUser = 'Operator') => {
     }
     seenLRs.add(cleanLR.toLowerCase());
 
-    if (checkDuplicatePendingLR(cleanLR)) {
-      throw new Error(`LR No. "${cleanLR}" is already present in Pending Stock.`);
+    const itemTransporter = String(item.transporterName || inwardTransporter).trim();
+    if (checkDuplicatePendingLR(cleanLR, itemTransporter)) {
+      const transMsg = itemTransporter ? ` for transporter "${itemTransporter}"` : '';
+      throw new Error(`LR No. "${cleanLR}"${transMsg} is already present in Pending Stock.`);
     }
   }
 
@@ -357,6 +404,8 @@ export const updateFullInward = (inwardId, headerData, lrItems, currentUser = 'O
 
   // Check duplicate LR in current submission or pending database (excluding items belonging to this inward)
   const seenLRs = new Set();
+  const currentTransporter = String(headerData.transporterName || '').trim();
+
   for (const item of lrItems) {
     const cleanLR = String(item.lrNo ?? '').trim();
     if (!cleanLR) {
@@ -367,16 +416,38 @@ export const updateFullInward = (inwardId, headerData, lrItems, currentUser = 'O
     }
     seenLRs.add(cleanLR.toLowerCase());
 
+    const itemTransporter = String(item.transporterName || currentTransporter).trim();
     const duplicateInOtherInward = inwardItems.some(
-      (existing) =>
-        existing.inwardId !== resolvedInwardId &&
-        !existingChildIds.has(existing.id) &&
-        existing.id !== item.id &&
-        existing.status === STATUS.PENDING &&
-        String(existing.lrNo ?? '').trim().toLowerCase() === cleanLR.toLowerCase()
+      (existing) => {
+        if (
+          existing.inwardId === resolvedInwardId ||
+          existingChildIds.has(existing.id) ||
+          existing.id === item.id
+        ) {
+          return false;
+        }
+        if (existing.status !== STATUS.PENDING) {
+          return false;
+        }
+        const existingLR = String(existing.lrNo ?? '').trim().toLowerCase();
+        if (existingLR !== cleanLR.toLowerCase()) {
+          return false;
+        }
+
+        // Transporter scope check: allow different transporters to have the same LR number
+        if (itemTransporter) {
+          const existingTransporter = resolveItemTransporter(existing, inwards).toLowerCase();
+          if (existingTransporter && existingTransporter !== itemTransporter.toLowerCase()) {
+            return false;
+          }
+        }
+
+        return true;
+      }
     );
     if (duplicateInOtherInward) {
-      throw new Error(`LR No. "${cleanLR}" is already present in Pending Stock.`);
+      const transMsg = itemTransporter ? ` for transporter "${itemTransporter}"` : '';
+      throw new Error(`LR No. "${cleanLR}"${transMsg} is already present in Pending Stock.`);
     }
   }
 

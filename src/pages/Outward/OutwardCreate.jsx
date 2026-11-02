@@ -78,6 +78,7 @@ export const OutwardCreate = () => {
     const term = searchTerm.toLowerCase().trim();
     return (
       (item.lrNo && String(item.lrNo).toLowerCase().includes(term)) ||
+      (item.transporterName && String(item.transporterName).toLowerCase().includes(term)) ||
       (item.memoNo && String(item.memoNo).toLowerCase().includes(term)) ||
       (item.inwardNo && String(item.inwardNo).toLowerCase().includes(term)) ||
       (item.consignorName && String(item.consignorName).toLowerCase().includes(term)) ||
@@ -773,6 +774,11 @@ export const OutwardCreate = () => {
                       <span className="font-extrabold text-[#1d4ed8] text-xs sm:text-sm tracking-tight">
                         {item.lrNo}
                       </span>
+                      {item.transporterName && item.transporterName !== '-' && (
+                        <span className="bg-blue-50 text-blue-700 border border-blue-200 font-extrabold text-[10px] px-2 py-0.5 rounded uppercase tracking-wider">
+                          {item.transporterName}
+                        </span>
+                      )}
                       <span className="bg-slate-100 text-slate-700 font-extrabold text-[10px] px-2 py-0.5 rounded uppercase tracking-wider">
                         {item.ctTo || item.destinationStation || 'SANGLI'}
                       </span>

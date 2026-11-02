@@ -37,6 +37,7 @@ export const PendingStock = () => {
       title: `Pending LR Details #${row.lrNo}`,
       fields: [
         { label: 'LR No.', value: row.lrNo },
+        { label: 'Transporter', value: row.transporterName || '-' },
         { label: 'Inward No.', value: row.inwardNo || '-' },
         { label: 'Inward Date', value: formatDate(row.inwardDate || row.date) },
         { label: 'Memo No.', value: row.memoNo || '-' },
@@ -91,11 +92,18 @@ export const PendingStock = () => {
     {
       label: 'LR No.',
       key: 'lrNo',
-      width: 'w-[76px]',
+      width: 'w-[84px]',
       render: (row) => (
-        <span className="font-extrabold text-sky-800 bg-sky-50 px-1 py-0.5 rounded border border-sky-200 text-[10px] block text-center truncate">
-          {row.lrNo}
-        </span>
+        <div>
+          <span className="font-extrabold text-sky-800 bg-sky-50 px-1 py-0.5 rounded border border-sky-200 text-[10px] block text-center truncate">
+            {row.lrNo}
+          </span>
+          {row.transporterName && row.transporterName !== '-' && (
+            <span className="text-[9px] text-slate-500 block text-center truncate font-medium mt-0.5" title={row.transporterName}>
+              {row.transporterName}
+            </span>
+          )}
+        </div>
       ),
     },
     { label: 'Date', key: 'inwardDate', type: 'date', width: 'w-[66px]' },
@@ -318,6 +326,12 @@ export const PendingStock = () => {
               <div>
                 <span className="text-slate-400 font-bold uppercase block text-[10px]">LR No.</span>
                 <span className="font-black text-sky-700 text-sm">{viewingRecord.lrNo}</span>
+              </div>
+              <div>
+                <span className="text-slate-400 font-bold uppercase block text-[10px]">Transporter</span>
+                <span className="font-bold text-slate-900 truncate block" title={viewingRecord.transporterName}>
+                  {viewingRecord.transporterName || '-'}
+                </span>
               </div>
               <div>
                 <span className="text-slate-400 font-bold uppercase block text-[10px]">Inward No.</span>

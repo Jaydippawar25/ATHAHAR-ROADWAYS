@@ -106,7 +106,12 @@ export const Reports = () => {
   const currentData = rawData.map((item) => {
     if (item.memoNo) return item;
     const parentInw = inwards?.find((inw) => inw.id === item.inwardId || inw.inwardNo === item.inwardNo);
-    const matchingInwItem = inwardItems?.find((inwItem) => inwItem.lrNo === item.lrNo);
+    const matchingInwItem = inwardItems?.find(
+      (inwItem) =>
+        inwItem.id === item.inwardItemId ||
+        (inwItem.lrNo === item.lrNo &&
+          (!item.transporterName || !inwItem.transporterName || inwItem.transporterName === item.transporterName))
+    );
     return {
       ...item,
       memoNo: item.memoNo || matchingInwItem?.memoNo || parentInw?.memoNo || '-',
