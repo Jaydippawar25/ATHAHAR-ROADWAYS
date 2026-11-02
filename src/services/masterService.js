@@ -8,7 +8,11 @@ export const getMasters = () => {
   if (!data || typeof data !== 'object' || Array.isArray(data)) {
     return { ...INITIAL_MASTERS };
   }
-  return { ...INITIAL_MASTERS, ...data };
+  const merged = { ...INITIAL_MASTERS, ...data };
+  if (!merged.expenseCategories || !Array.isArray(merged.expenseCategories) || merged.expenseCategories.length === 0) {
+    merged.expenseCategories = [...INITIAL_MASTERS.expenseCategories];
+  }
+  return merged;
 };
 
 export const addMasterItem = (category, item) => {
@@ -73,7 +77,7 @@ export const ensureMasterItem = (category, valOrObj) => {
   newItem = {
     ...newItem,
     id: `${category.slice(0, 2)}-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
-    name: upperVal,
+    name: category === 'expenseCategories' ? cleanName : upperVal,
     active: true,
   };
 

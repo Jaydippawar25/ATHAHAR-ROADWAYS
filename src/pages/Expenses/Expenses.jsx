@@ -43,6 +43,7 @@ export const Expenses = () => {
     handleUpdateExpense,
     handleDeleteExpense,
     handleClearAllExpenses,
+    handleEnsureMasterItem,
   } = useApp();
   const { user } = useAuth();
 
@@ -71,7 +72,7 @@ export const Expenses = () => {
   const initialFormState = {
     voucherNo: '',
     date: getTodayDateString(),
-    category: EXPENSE_CATEGORIES[0],
+    category: 'RTO and Insurance',
     amount: '',
     vehicleNo: '',
     payeeName: '',
@@ -151,6 +152,46 @@ export const Expenses = () => {
       cardBorder: 'border-l-4 border-l-slate-500',
     },
   };
+
+  // Dynamic fallback for any category config
+  const getCategoryConfig = useCallback(
+    (catName) => {
+      if (catName && categoryConfig[catName]) return categoryConfig[catName];
+      return {
+        icon: Receipt,
+        color: 'text-indigo-700 bg-indigo-50 border-indigo-200',
+        badge: 'bg-indigo-100 text-indigo-800 border-indigo-300',
+        cardBorder: 'border-l-4 border-l-indigo-500',
+      };
+    },
+    []
+  );
+
+  // Dynamic Category Options: includes defaults, masters.expenseCategories, and any existing expense records
+  const categoryOptions = useMemo(() => {
+    const defaultList = ['RTO and Insurance', 'Local', 'Salary'];
+    const set = new Set();
+    const result = [];
+
+    const addCat = (item) => {
+      const val = typeof item === 'string' ? item.trim() : item?.name?.trim();
+      if (!val) return;
+      const lower = val.toLowerCase();
+      if (!set.has(lower)) {
+        set.add(lower);
+        result.push({
+          id: item?.id || `ec-${lower.replace(/\s+/g, '-')}`,
+          name: val,
+        });
+      }
+    };
+
+    defaultList.forEach(addCat);
+    (masters.expenseCategories || []).forEach(addCat);
+    (expenses || []).forEach((e) => addCat(e.category));
+
+    return result;
+  }, [masters.expenseCategories, expenses]);
 
   // Helper for Date Filtering
   const isDateInFilter = useCallback(
@@ -266,7 +307,7 @@ export const Expenses = () => {
     setFormData({
       voucherNo: getNextExpenseVoucherNo(expenses),
       date: getTodayDateString(),
-      category: selectedCategory !== 'ALL' ? selectedCategory : EXPENSE_CATEGORIES[0],
+      category: selectedCategory !== 'ALL' ? selectedCategory : 'RTO and Insurance',
       amount: '',
       vehicleNo: '',
       payeeName: '',
@@ -285,7 +326,7 @@ export const Expenses = () => {
     setFormData({
       voucherNo: item.voucherNo || '',
       date: item.date || getTodayDateString(),
-      category: item.category || EXPENSE_CATEGORIES[0],
+      category: item.category || 'RTO and Insurance',
       amount: item.amount || '',
       vehicleNo: item.vehicleNo || '',
       payeeName: item.payeeName || '',
@@ -307,6 +348,18 @@ export const Expenses = () => {
     if (!formData.amount || Number(formData.amount) <= 0) {
       setFormError('Please enter a valid expense amount greater than 0.');
       return;
+    }
+
+    if (!formData.category || !String(formData.category).trim()) {
+      setFormError('Please select or enter an expense category.');
+      return;
+    }
+
+    const cleanCategory = String(formData.category).trim();
+
+    // Auto-save manual category into masters so it appears in the dropdown permanently
+    if (handleEnsureMasterItem) {
+      handleEnsureMasterItem('expenseCategories', cleanCategory);
     }
 
     try {
@@ -588,9 +641,9 @@ export const Expenses = () => {
               className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs font-bold text-slate-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-sky-500"
             >
               <option value="ALL">All Expense Categories</option>
-              {EXPENSE_CATEGORIES.map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat}
+              {categoryOptions.map((cat) => (
+                <option key={cat.id || cat.name} value={cat.name}>
+                  {cat.name}
                 </option>
               ))}
             </select>
@@ -687,7 +740,7 @@ export const Expenses = () => {
             </div>
           ) : (
             filteredExpenses.map((item) => {
-              const conf = categoryConfig[item.category] || categoryConfig['RTO and Insurance'];
+              const conf = getCategoryConfig(item.category);
               const Icon = conf.icon;
               return (
                 <div key={item.id} className="p-3.5 space-y-2 hover:bg-slate-50/60 transition-colors">
@@ -808,7 +861,7 @@ export const Expenses = () => {
                 </tr>
               ) : (
                 filteredExpenses.map((item) => {
-                  const conf = categoryConfig[item.category] || categoryConfig['RTO and Insurance'];
+                  const conf = getCategoryConfig(item.category);
                   const Icon = conf.icon;
                   return (
                     <tr key={item.id} className="hover:bg-sky-50/50 transition-colors">
@@ -966,23 +1019,22 @@ export const Expenses = () => {
               />
             </div>
 
-            {/* Category Dropdown (Requested 6 categories) */}
+            {/* Expense Category Combobox (Manual input + dropdown that saves custom categories) */}
             <div className="sm:col-span-2">
               <label className="block text-[11px] font-black text-slate-700 uppercase mb-1">
                 Expense Category *
               </label>
-              <select
+              <EditableCombobox
+                name="category"
                 value={formData.category}
-                onChange={(e) => setFormData((prev) => ({ ...prev, category: e.target.value }))}
+                onChange={(e, val) => setFormData((prev) => ({ ...prev, category: val }))}
+                options={categoryOptions}
+                masterCategory="expenseCategories"
+                placeholder="Select or type custom expense category..."
+                uppercase={false}
                 required
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs font-extrabold text-slate-900 bg-white focus:outline-none focus:ring-1 focus:ring-sky-500"
-              >
-                {EXPENSE_CATEGORIES.map((cat) => (
-                  <option key={cat} value={cat}>
-                    {cat}
-                  </option>
-                ))}
-              </select>
+              />
             </div>
 
             {/* Amount (₹) */}
