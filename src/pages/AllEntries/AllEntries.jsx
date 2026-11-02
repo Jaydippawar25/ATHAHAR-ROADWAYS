@@ -123,7 +123,7 @@ export const AllEntries = () => {
             ? [{ label: 'Vehicle Owner', value: row.ownerName }]
             : []),
           { label: 'From Station', value: row.from || '-' },
-          { label: 'Memo No.', value: row.memoNo || '-' },
+          ...(!isOutward ? [{ label: 'Memo No.', value: row.memoNo || '-' }] : []),
           { label: 'Total PKG', value: `${row.totalQty || 0} Pkgs` },
           { label: 'Total Freight', value: formatCurrency(totalFreight) },
         ],
@@ -1040,10 +1040,12 @@ export const AllEntries = () => {
                     <span className="text-slate-400 font-bold uppercase block text-[10px]">From Station</span>
                     <span className="font-bold text-slate-800">{viewingRecord.from || '-'}</span>
                   </div>
-                  <div>
-                    <span className="text-slate-400 font-bold uppercase block text-[10px]">Memo No.</span>
-                    <span className="font-bold text-slate-800">{viewingRecord.memoNo || '-'}</span>
-                  </div>
+                  {viewCategory !== 'outward_header' && (
+                    <div>
+                      <span className="text-slate-400 font-bold uppercase block text-[10px]">Memo No.</span>
+                      <span className="font-bold text-slate-800">{viewingRecord.memoNo || '-'}</span>
+                    </div>
+                  )}
                   <div>
                     <span className="text-slate-400 font-bold uppercase block text-[10px]">Total PKG</span>
                     <span className="font-black text-slate-900">{viewingRecord.totalQty || 0} Pkgs</span>
@@ -1296,15 +1298,17 @@ export const AllEntries = () => {
                     className="w-full p-2 border border-slate-300 rounded focus:ring-1 focus:ring-sky-500"
                   />
                 </div>
-                <div>
-                  <label className="block text-slate-600 mb-1 uppercase font-bold">Memo No.</label>
-                  <input
-                    type="text"
-                    value={editFormData.memoNo || ''}
-                    onChange={(e) => setEditFormData({ ...editFormData, memoNo: e.target.value })}
-                    className="w-full p-2 border border-slate-300 rounded focus:ring-1 focus:ring-sky-500 uppercase"
-                  />
-                </div>
+                {editCategory !== 'outward_header' && (
+                  <div>
+                    <label className="block text-slate-600 mb-1 uppercase font-bold">Memo No.</label>
+                    <input
+                      type="text"
+                      value={editFormData.memoNo || ''}
+                      onChange={(e) => setEditFormData({ ...editFormData, memoNo: e.target.value })}
+                      className="w-full p-2 border border-slate-300 rounded focus:ring-1 focus:ring-sky-500 uppercase"
+                    />
+                  </div>
+                )}
                 {editCategory === 'outward_header' && (
                   <div>
                     <label className="block text-slate-600 mb-1 uppercase font-bold">Driver Name</label>

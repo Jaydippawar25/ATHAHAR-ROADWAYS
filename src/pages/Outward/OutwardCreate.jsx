@@ -27,7 +27,7 @@ export const OutwardCreate = () => {
   const editOutwardData = location.state?.editOutward || null;
   const editingOutwardId = editOutwardData?.id || null;
 
-  // HEADER DETAILS (Outward Memo Header)
+  // HEADER DETAILS (Outward Header)
   const [headerData, setHeaderData] = useState({
     outwardNo: getNextOutwardNo(outwards),
     date: getTodayDateString(),
@@ -36,7 +36,6 @@ export const OutwardCreate = () => {
     vehicleNo: '',
     deliveryPersonName: '',
     driverName: '',
-    memoNo: '',
   });
 
   // ITEM ENTRY FORM (Matching LIMRA Outward LR detail fields)
@@ -129,7 +128,6 @@ export const OutwardCreate = () => {
         vehicleNo: edit.vehicleNo || masters.vehicles[0]?.vehicleNo || '',
         deliveryPersonName: edit.deliveryPersonName || masters.deliveryPersons?.[0]?.name || '',
         driverName: edit.driverName || masters.drivers[0]?.name || '',
-        memoNo: edit.memoNo || '',
       });
 
       const items = (edit.items || []).map((item, idx) => ({
@@ -421,7 +419,6 @@ export const OutwardCreate = () => {
           { label: 'Driver Name', value: submitHeader.driverName || '-' },
           { label: 'Delivery Person', value: submitHeader.deliveryPersonName || '-' },
           { label: 'Origin Station', value: submitHeader.fromStation || '-' },
-          { label: 'Memo No.', value: submitHeader.memoNo || '-' },
           {
             label: 'Total Freight',
             value: formatCurrency(totalToPay + totalTbb + totalPaid),
@@ -528,11 +525,11 @@ export const OutwardCreate = () => {
           <div className="flex items-center space-x-2">
             <span className="w-1.5 h-4 bg-[#1d4ed8] rounded-full" />
             <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-800">
-              Outward Dispatch Memo Header
+              Outward Dispatch Header
             </h3>
           </div>
           <span className="text-[11px] font-bold text-slate-400">
-            Outward Memo: <span className="font-mono text-[#1d4ed8] font-black">{headerData.outwardNo}</span>
+            Outward No.: <span className="font-mono text-[#1d4ed8] font-black">{headerData.outwardNo}</span>
           </span>
         </div>
 
@@ -686,20 +683,6 @@ export const OutwardCreate = () => {
                 +
               </button>
             </div>
-          </div>
-
-          <div>
-            <label className="block text-[10px] sm:text-[11px] font-extrabold text-slate-600 uppercase mb-1 truncate">
-              Memo No.
-            </label>
-            <input
-              type="text"
-              name="memoNo"
-              value={headerData.memoNo}
-              onChange={handleHeaderChange}
-              placeholder="e.g. OUT-MM-01"
-              className="w-full px-2.5 py-1.5 sm:px-3 sm:py-2 border border-slate-200 bg-white rounded-xl text-xs font-bold text-slate-800 uppercase focus:ring-2 focus:ring-[#1d4ed8] outline-none placeholder-slate-400"
-            />
           </div>
         </div>
       </div>
