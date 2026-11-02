@@ -3,13 +3,9 @@ import { db } from '../firebase/firebase';
 import { doc, deleteDoc, setDoc, collection, getDocs } from 'firebase/firestore';
 
 export const EXPENSE_CATEGORIES = [
-  'Diesel / Fuel Expense',
-  'Vehicle Maintenance',
-  'Toll and Road Charges',
-  'Driver and Helper Expenses',
-  'Loading Expense',
-  'Unloading Expense',
-  'Other Expenses',
+  'RTO and Insurance',
+  'Local',
+  'Salary',
 ];
 
 export const PAYMENT_MODES = ['CASH', 'UPI', 'BANK_TRANSFER', 'CHEQUE'];
