@@ -14,10 +14,5 @@ export const INITIAL_MASTERS = {
   stations: [],
   deliveryPersons: [],
   owners: [],
-  expenseCategories: [
-    { id: 'ec-1', name: 'RTO and Insurance', active: true },
-    { id: 'ec-2', name: 'Local', active: true },
-    { id: 'ec-3', name: 'Salary', active: true },
-  ],
 };
 

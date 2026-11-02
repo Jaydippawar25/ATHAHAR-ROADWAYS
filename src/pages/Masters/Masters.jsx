@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
-import { Plus, Truck, User, Building, MapPin, Pencil, Trash2, AlertTriangle, Search, CheckCircle2, Receipt } from 'lucide-react';
+import { Plus, Truck, User, Building, MapPin, Pencil, Trash2, AlertTriangle, Search, CheckCircle2 } from 'lucide-react';
 import { Modal } from '../../components/common/Modal';
 
 export const Masters = () => {
@@ -24,7 +24,6 @@ export const Masters = () => {
     { key: 'consignees', label: 'Consignees', icon: Building },
     { key: 'stations', label: 'Stations / CT To', icon: MapPin },
     { key: 'deliveryPersons', label: 'Delivery Persons', icon: User },
-    { key: 'expenseCategories', label: 'Expense Categories', icon: Receipt },
   ];
 
   const handleInputChange = (e) => {

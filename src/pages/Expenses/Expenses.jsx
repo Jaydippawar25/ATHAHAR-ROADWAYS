@@ -21,8 +21,6 @@ import {
   CheckCircle2,
   AlertCircle,
   DollarSign,
-  ShieldCheck,
-  MapPin,
 } from 'lucide-react';
 import { Modal } from '../../components/common/Modal';
 import { EditableCombobox } from '../../components/common/EditableCombobox';
@@ -43,7 +41,6 @@ export const Expenses = () => {
     handleUpdateExpense,
     handleDeleteExpense,
     handleClearAllExpenses,
-    handleEnsureMasterItem,
   } = useApp();
   const { user } = useAuth();
 
@@ -72,7 +69,7 @@ export const Expenses = () => {
   const initialFormState = {
     voucherNo: '',
     date: getTodayDateString(),
-    category: 'RTO and Insurance',
+    category: EXPENSE_CATEGORIES[0],
     amount: '',
     vehicleNo: '',
     payeeName: '',
@@ -85,24 +82,6 @@ export const Expenses = () => {
 
   // Category Configuration (Icon & Theme)
   const categoryConfig = {
-    'RTO and Insurance': {
-      icon: ShieldCheck,
-      color: 'text-purple-700 bg-purple-50 border-purple-200',
-      badge: 'bg-purple-100 text-purple-800 border-purple-300',
-      cardBorder: 'border-l-4 border-l-purple-500',
-    },
-    'Local': {
-      icon: MapPin,
-      color: 'text-amber-700 bg-amber-50 border-amber-200',
-      badge: 'bg-amber-100 text-amber-800 border-amber-300',
-      cardBorder: 'border-l-4 border-l-amber-500',
-    },
-    'Salary': {
-      icon: Users,
-      color: 'text-emerald-700 bg-emerald-50 border-emerald-200',
-      badge: 'bg-emerald-100 text-emerald-800 border-emerald-300',
-      cardBorder: 'border-l-4 border-l-emerald-500',
-    },
     'Diesel / Fuel Expense': {
       icon: Fuel,
       color: 'text-amber-700 bg-amber-50 border-amber-200',
@@ -152,46 +131,6 @@ export const Expenses = () => {
       cardBorder: 'border-l-4 border-l-slate-500',
     },
   };
-
-  // Dynamic fallback for any category config
-  const getCategoryConfig = useCallback(
-    (catName) => {
-      if (catName && categoryConfig[catName]) return categoryConfig[catName];
-      return {
-        icon: Receipt,
-        color: 'text-indigo-700 bg-indigo-50 border-indigo-200',
-        badge: 'bg-indigo-100 text-indigo-800 border-indigo-300',
-        cardBorder: 'border-l-4 border-l-indigo-500',
-      };
-    },
-    []
-  );
-
-  // Dynamic Category Options: includes defaults, masters.expenseCategories, and any existing expense records
-  const categoryOptions = useMemo(() => {
-    const defaultList = ['RTO and Insurance', 'Local', 'Salary'];
-    const set = new Set();
-    const result = [];
-
-    const addCat = (item) => {
-      const val = typeof item === 'string' ? item.trim() : item?.name?.trim();
-      if (!val) return;
-      const lower = val.toLowerCase();
-      if (!set.has(lower)) {
-        set.add(lower);
-        result.push({
-          id: item?.id || `ec-${lower.replace(/\s+/g, '-')}`,
-          name: val,
-        });
-      }
-    };
-
-    defaultList.forEach(addCat);
-    (masters.expenseCategories || []).forEach(addCat);
-    (expenses || []).forEach((e) => addCat(e.category));
-
-    return result;
-  }, [masters.expenseCategories, expenses]);
 
   // Helper for Date Filtering
   const isDateInFilter = useCallback(
@@ -273,9 +212,13 @@ export const Expenses = () => {
   const categoryTotals = useMemo(() => {
     const totals = {
       total: 0,
-      'RTO and Insurance': 0,
-      'Local': 0,
-      'Salary': 0,
+      'Diesel / Fuel Expense': 0,
+      'Vehicle Maintenance': 0,
+      'Toll and Road Charges': 0,
+      'Driver and Helper Expenses': 0,
+      'Loading Expense': 0,
+      'Unloading Expense': 0,
+      'Other Expenses': 0,
     };
 
     filteredExpenses.forEach((item) => {
@@ -283,6 +226,15 @@ export const Expenses = () => {
       totals.total += amt;
       if (totals[item.category] !== undefined) {
         totals[item.category] += amt;
+      } else if (item.category === 'Loading and Unloading') {
+        const isUnload = String(item.notes || '').toLowerCase().includes('unload');
+        if (isUnload) {
+          totals['Unloading Expense'] += amt;
+        } else {
+          totals['Loading Expense'] += amt;
+        }
+      } else {
+        totals['Other Expenses'] += amt;
       }
     });
 
@@ -307,7 +259,7 @@ export const Expenses = () => {
     setFormData({
       voucherNo: getNextExpenseVoucherNo(expenses),
       date: getTodayDateString(),
-      category: selectedCategory !== 'ALL' ? selectedCategory : 'RTO and Insurance',
+      category: selectedCategory !== 'ALL' ? selectedCategory : EXPENSE_CATEGORIES[0],
       amount: '',
       vehicleNo: '',
       payeeName: '',
@@ -326,7 +278,7 @@ export const Expenses = () => {
     setFormData({
       voucherNo: item.voucherNo || '',
       date: item.date || getTodayDateString(),
-      category: item.category || 'RTO and Insurance',
+      category: item.category || EXPENSE_CATEGORIES[0],
       amount: item.amount || '',
       vehicleNo: item.vehicleNo || '',
       payeeName: item.payeeName || '',
@@ -348,18 +300,6 @@ export const Expenses = () => {
     if (!formData.amount || Number(formData.amount) <= 0) {
       setFormError('Please enter a valid expense amount greater than 0.');
       return;
-    }
-
-    if (!formData.category || !String(formData.category).trim()) {
-      setFormError('Please select or enter an expense category.');
-      return;
-    }
-
-    const cleanCategory = String(formData.category).trim();
-
-    // Auto-save manual category into masters so it appears in the dropdown permanently
-    if (handleEnsureMasterItem) {
-      handleEnsureMasterItem('expenseCategories', cleanCategory);
     }
 
     try {
@@ -454,9 +394,14 @@ export const Expenses = () => {
 
   // Helper for compact short labels in table
   const getCategoryShortLabel = (cat) => {
-    if (cat === 'RTO and Insurance') return 'RTO & Insurance';
-    if (cat === 'Local') return 'Local';
-    if (cat === 'Salary') return 'Salary';
+    if (cat === 'Diesel / Fuel Expense') return 'Diesel / Fuel';
+    if (cat === 'Vehicle Maintenance') return 'Maintenance';
+    if (cat === 'Toll and Road Charges') return 'Toll & Road';
+    if (cat === 'Driver and Helper Expenses') return 'Driver / Helper';
+    if (cat === 'Loading Expense') return 'Loading';
+    if (cat === 'Unloading Expense') return 'Unloading';
+    if (cat === 'Loading and Unloading') return 'Loading / Unload';
+    if (cat === 'Other Expenses') return 'Other';
     return cat;
   };
 
@@ -529,9 +474,9 @@ export const Expenses = () => {
       </div>
 
       {/* TOP KPI CARDS FOR CATEGORIES */}
-      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2.5">
         {/* Total Overall Expenses */}
-        <div className="bg-gradient-to-br from-[#072440] to-[#0c3761] text-white p-3 rounded-xl shadow-md border border-sky-950 flex flex-col justify-between">
+        <div className="col-span-2 sm:col-span-4 lg:col-span-1 bg-gradient-to-br from-[#072440] to-[#0c3761] text-white p-3 rounded-xl shadow-md border border-sky-950 flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-black uppercase tracking-wider text-sky-300">
               Total Expenses
@@ -548,71 +493,163 @@ export const Expenses = () => {
           </div>
         </div>
 
-        {/* 1. RTO and Insurance */}
+        {/* 1. Diesel / Fuel Expense */}
         <div
-          onClick={() => setSelectedCategory(selectedCategory === 'RTO and Insurance' ? 'ALL' : 'RTO and Insurance')}
+          onClick={() => setSelectedCategory(selectedCategory === 'Diesel / Fuel Expense' ? 'ALL' : 'Diesel / Fuel Expense')}
           className={`bg-white p-3 rounded-xl border transition-all cursor-pointer shadow-2xs hover:shadow-md ${
-            selectedCategory === 'RTO and Insurance' ? 'ring-2 ring-purple-500 border-purple-500' : 'border-slate-200'
-          } ${categoryConfig['RTO and Insurance'].cardBorder}`}
+            selectedCategory === 'Diesel / Fuel Expense' ? 'ring-2 ring-amber-500 border-amber-500' : 'border-slate-200'
+          } ${categoryConfig['Diesel / Fuel Expense'].cardBorder}`}
         >
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold uppercase text-slate-500 truncate">RTO & Insurance</span>
-            <div className="p-1 rounded-md bg-purple-50 text-purple-600">
-              <ShieldCheck className="w-3.5 h-3.5" />
-            </div>
-          </div>
-          <div className="mt-2">
-            <div className="text-base font-black text-slate-900">
-              {formatCurrency(categoryTotals['RTO and Insurance'] || 0)}
-            </div>
-            <div className="text-[10px] font-bold text-purple-600 mt-0.5 truncate">
-              Tax, Permit & Policy
-            </div>
-          </div>
-        </div>
-
-        {/* 2. Local */}
-        <div
-          onClick={() => setSelectedCategory(selectedCategory === 'Local' ? 'ALL' : 'Local')}
-          className={`bg-white p-3 rounded-xl border transition-all cursor-pointer shadow-2xs hover:shadow-md ${
-            selectedCategory === 'Local' ? 'ring-2 ring-amber-500 border-amber-500' : 'border-slate-200'
-          } ${categoryConfig['Local'].cardBorder}`}
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold uppercase text-slate-500 truncate">Local</span>
+            <span className="text-[10px] font-bold uppercase text-slate-500 truncate">Diesel / Fuel</span>
             <div className="p-1 rounded-md bg-amber-50 text-amber-600">
-              <MapPin className="w-3.5 h-3.5" />
+              <Fuel className="w-3.5 h-3.5" />
             </div>
           </div>
           <div className="mt-2">
             <div className="text-base font-black text-slate-900">
-              {formatCurrency(categoryTotals['Local'] || 0)}
+              {formatCurrency(categoryTotals['Diesel / Fuel Expense'])}
             </div>
             <div className="text-[10px] font-bold text-amber-600 mt-0.5 truncate">
-              Local Expenses
+              Fuel & Diesel
             </div>
           </div>
         </div>
 
-        {/* 3. Salary */}
+        {/* 2. Vehicle Maintenance */}
         <div
-          onClick={() => setSelectedCategory(selectedCategory === 'Salary' ? 'ALL' : 'Salary')}
+          onClick={() => setSelectedCategory(selectedCategory === 'Vehicle Maintenance' ? 'ALL' : 'Vehicle Maintenance')}
           className={`bg-white p-3 rounded-xl border transition-all cursor-pointer shadow-2xs hover:shadow-md ${
-            selectedCategory === 'Salary' ? 'ring-2 ring-emerald-500 border-emerald-500' : 'border-slate-200'
-          } ${categoryConfig['Salary'].cardBorder}`}
+            selectedCategory === 'Vehicle Maintenance' ? 'ring-2 ring-rose-500 border-rose-500' : 'border-slate-200'
+          } ${categoryConfig['Vehicle Maintenance'].cardBorder}`}
         >
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold uppercase text-slate-500 truncate">Salary</span>
-            <div className="p-1 rounded-md bg-emerald-50 text-emerald-600">
+            <span className="text-[10px] font-bold uppercase text-slate-500 truncate">Maintenance</span>
+            <div className="p-1 rounded-md bg-rose-50 text-rose-600">
+              <Wrench className="w-3.5 h-3.5" />
+            </div>
+          </div>
+          <div className="mt-2">
+            <div className="text-base font-black text-slate-900">
+              {formatCurrency(categoryTotals['Vehicle Maintenance'])}
+            </div>
+            <div className="text-[10px] font-bold text-rose-600 mt-0.5 truncate">
+              Repairs & Garage
+            </div>
+          </div>
+        </div>
+
+        {/* 3. Toll and Road Charges */}
+        <div
+          onClick={() => setSelectedCategory(selectedCategory === 'Toll and Road Charges' ? 'ALL' : 'Toll and Road Charges')}
+          className={`bg-white p-3 rounded-xl border transition-all cursor-pointer shadow-2xs hover:shadow-md ${
+            selectedCategory === 'Toll and Road Charges' ? 'ring-2 ring-purple-500 border-purple-500' : 'border-slate-200'
+          } ${categoryConfig['Toll and Road Charges'].cardBorder}`}
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-bold uppercase text-slate-500 truncate">Toll & Road</span>
+            <div className="p-1 rounded-md bg-purple-50 text-purple-600">
+              <Navigation className="w-3.5 h-3.5" />
+            </div>
+          </div>
+          <div className="mt-2">
+            <div className="text-base font-black text-slate-900">
+              {formatCurrency(categoryTotals['Toll and Road Charges'])}
+            </div>
+            <div className="text-[10px] font-bold text-purple-600 mt-0.5 truncate">
+              Fastag & RTO
+            </div>
+          </div>
+        </div>
+
+        {/* 4. Driver and Helper Expenses */}
+        <div
+          onClick={() => setSelectedCategory(selectedCategory === 'Driver and Helper Expenses' ? 'ALL' : 'Driver and Helper Expenses')}
+          className={`bg-white p-3 rounded-xl border transition-all cursor-pointer shadow-2xs hover:shadow-md ${
+            selectedCategory === 'Driver and Helper Expenses' ? 'ring-2 ring-sky-500 border-sky-500' : 'border-slate-200'
+          } ${categoryConfig['Driver and Helper Expenses'].cardBorder}`}
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-bold uppercase text-slate-500 truncate">Driver/Helper</span>
+            <div className="p-1 rounded-md bg-sky-50 text-sky-600">
               <Users className="w-3.5 h-3.5" />
             </div>
           </div>
           <div className="mt-2">
             <div className="text-base font-black text-slate-900">
-              {formatCurrency(categoryTotals['Salary'] || 0)}
+              {formatCurrency(categoryTotals['Driver and Helper Expenses'])}
+            </div>
+            <div className="text-[10px] font-bold text-sky-600 mt-0.5 truncate">
+              Bhatta & Advances
+            </div>
+          </div>
+        </div>
+
+        {/* 5. Loading Expense */}
+        <div
+          onClick={() => setSelectedCategory(selectedCategory === 'Loading Expense' ? 'ALL' : 'Loading Expense')}
+          className={`bg-white p-3 rounded-xl border transition-all cursor-pointer shadow-2xs hover:shadow-md ${
+            selectedCategory === 'Loading Expense' ? 'ring-2 ring-emerald-500 border-emerald-500' : 'border-slate-200'
+          } ${categoryConfig['Loading Expense'].cardBorder}`}
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-bold uppercase text-slate-500 truncate">Loading</span>
+            <div className="p-1 rounded-md bg-emerald-50 text-emerald-600">
+              <ArrowUpFromLine className="w-3.5 h-3.5" />
+            </div>
+          </div>
+          <div className="mt-2">
+            <div className="text-base font-black text-slate-900">
+              {formatCurrency(categoryTotals['Loading Expense'])}
             </div>
             <div className="text-[10px] font-bold text-emerald-600 mt-0.5 truncate">
-              Staff & Driver Wages
+              Loading Hamali
+            </div>
+          </div>
+        </div>
+
+        {/* 6. Unloading Expense */}
+        <div
+          onClick={() => setSelectedCategory(selectedCategory === 'Unloading Expense' ? 'ALL' : 'Unloading Expense')}
+          className={`bg-white p-3 rounded-xl border transition-all cursor-pointer shadow-2xs hover:shadow-md ${
+            selectedCategory === 'Unloading Expense' ? 'ring-2 ring-teal-500 border-teal-500' : 'border-slate-200'
+          } ${categoryConfig['Unloading Expense'].cardBorder}`}
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-bold uppercase text-slate-500 truncate">Unloading</span>
+            <div className="p-1 rounded-md bg-teal-50 text-teal-600">
+              <ArrowDownToLine className="w-3.5 h-3.5" />
+            </div>
+          </div>
+          <div className="mt-2">
+            <div className="text-base font-black text-slate-900">
+              {formatCurrency(categoryTotals['Unloading Expense'])}
+            </div>
+            <div className="text-[10px] font-bold text-teal-600 mt-0.5 truncate">
+              Unloading Hamali
+            </div>
+          </div>
+        </div>
+
+        {/* 7. Other Expenses */}
+        <div
+          onClick={() => setSelectedCategory(selectedCategory === 'Other Expenses' ? 'ALL' : 'Other Expenses')}
+          className={`bg-white p-3 rounded-xl border transition-all cursor-pointer shadow-2xs hover:shadow-md ${
+            selectedCategory === 'Other Expenses' ? 'ring-2 ring-slate-500 border-slate-500' : 'border-slate-200'
+          } ${categoryConfig['Other Expenses'].cardBorder}`}
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-bold uppercase text-slate-500 truncate">Other Expenses</span>
+            <div className="p-1 rounded-md bg-slate-100 text-slate-600">
+              <MoreHorizontal className="w-3.5 h-3.5" />
+            </div>
+          </div>
+          <div className="mt-2">
+            <div className="text-base font-black text-slate-900">
+              {formatCurrency(categoryTotals['Other Expenses'])}
+            </div>
+            <div className="text-[10px] font-bold text-slate-600 mt-0.5 truncate">
+              Misc & Godown
             </div>
           </div>
         </div>
@@ -641,9 +678,9 @@ export const Expenses = () => {
               className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs font-bold text-slate-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-sky-500"
             >
               <option value="ALL">All Expense Categories</option>
-              {categoryOptions.map((cat) => (
-                <option key={cat.id || cat.name} value={cat.name}>
-                  {cat.name}
+              {EXPENSE_CATEGORIES.map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat}
                 </option>
               ))}
             </select>
@@ -740,7 +777,7 @@ export const Expenses = () => {
             </div>
           ) : (
             filteredExpenses.map((item) => {
-              const conf = getCategoryConfig(item.category);
+              const conf = categoryConfig[item.category] || categoryConfig['Other Expenses'];
               const Icon = conf.icon;
               return (
                 <div key={item.id} className="p-3.5 space-y-2 hover:bg-slate-50/60 transition-colors">
@@ -861,7 +898,7 @@ export const Expenses = () => {
                 </tr>
               ) : (
                 filteredExpenses.map((item) => {
-                  const conf = getCategoryConfig(item.category);
+                  const conf = categoryConfig[item.category] || categoryConfig['Other Expenses'];
                   const Icon = conf.icon;
                   return (
                     <tr key={item.id} className="hover:bg-sky-50/50 transition-colors">
@@ -1019,22 +1056,23 @@ export const Expenses = () => {
               />
             </div>
 
-            {/* Expense Category Combobox (Manual input + dropdown that saves custom categories) */}
+            {/* Category Dropdown (Requested 6 categories) */}
             <div className="sm:col-span-2">
               <label className="block text-[11px] font-black text-slate-700 uppercase mb-1">
                 Expense Category *
               </label>
-              <EditableCombobox
-                name="category"
+              <select
                 value={formData.category}
-                onChange={(e, val) => setFormData((prev) => ({ ...prev, category: val }))}
-                options={categoryOptions}
-                masterCategory="expenseCategories"
-                placeholder="Select or type custom expense category..."
-                uppercase={false}
+                onChange={(e) => setFormData((prev) => ({ ...prev, category: e.target.value }))}
                 required
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs font-extrabold text-slate-900 bg-white focus:outline-none focus:ring-1 focus:ring-sky-500"
-              />
+              >
+                {EXPENSE_CATEGORIES.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat}
+                  </option>
+                ))}
+              </select>
             </div>
 
             {/* Amount (₹) */}

@@ -24,8 +24,6 @@ const FIELD_TO_MASTER_CATEGORY = {
   consignee: 'consignees',
   deliveryPersonName: 'deliveryPersons',
   deliveryPerson: 'deliveryPersons',
-  category: 'expenseCategories',
-  expenseCategory: 'expenseCategories',
 };
 
 /**

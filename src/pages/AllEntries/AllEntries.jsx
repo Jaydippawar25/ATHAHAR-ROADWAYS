@@ -435,6 +435,24 @@ export const AllEntries = () => {
       ),
     },
     {
+      label: 'CONSIGNER',
+      key: 'consignorName',
+      render: (row) => (
+        <span className="font-semibold text-slate-800 max-w-[65px] truncate block" title={row.consignorName}>
+          {row.consignorName || '-'}
+        </span>
+      ),
+    },
+    {
+      label: 'CONSIGNEE',
+      key: 'consigneeName',
+      render: (row) => (
+        <span className="font-semibold text-slate-800 max-w-[65px] truncate block" title={row.consigneeName}>
+          {row.consigneeName || '-'}
+        </span>
+      ),
+    },
+    {
       label: 'CT To',
       key: 'ctTo',
       render: (row) => (

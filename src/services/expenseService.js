@@ -1,12 +1,15 @@
 import { getStoredItem, setStoredItem, STORAGE_KEYS } from './mockStorage';
-import { ensureMasterItem } from './masterService';
 import { db } from '../firebase/firebase';
 import { doc, deleteDoc, setDoc, collection, getDocs } from 'firebase/firestore';
 
 export const EXPENSE_CATEGORIES = [
-  'RTO and Insurance',
-  'Local',
-  'Salary',
+  'Diesel / Fuel Expense',
+  'Vehicle Maintenance',
+  'Toll and Road Charges',
+  'Driver and Helper Expenses',
+  'Loading Expense',
+  'Unloading Expense',
+  'Other Expenses',
 ];
 
 export const PAYMENT_MODES = ['CASH', 'UPI', 'BANK_TRANSFER', 'CHEQUE'];
@@ -51,20 +54,12 @@ export const createExpense = (expenseData, currentUser = 'Operator') => {
 
   const expenses = getAllExpenses();
   const voucherNo = expenseData.voucherNo?.trim() || getNextExpenseVoucherNo(expenses);
-  const cleanCat = String(expenseData.category || '').trim() || EXPENSE_CATEGORIES[0];
-
-  // Auto-persist manual category into Masters so it saves in dropdown permanently
-  try {
-    ensureMasterItem('expenseCategories', cleanCat);
-  } catch (e) {
-    // Ignore error
-  }
 
   const newExpense = {
     id: `exp-${Date.now()}`,
     voucherNo,
     date: expenseData.date || new Date().toISOString().split('T')[0],
-    category: cleanCat,
+    category: expenseData.category || EXPENSE_CATEGORIES[0],
     amount: Number(expenseData.amount),
     vehicleNo: (expenseData.vehicleNo || '').trim().toUpperCase(),
     payeeName: (expenseData.payeeName || '').trim(),
@@ -85,14 +80,6 @@ export const updateExpense = (id, fields, currentUser = 'Operator') => {
   const index = expenses.findIndex((e) => String(e.id) === String(id) || String(e.voucherNo) === String(id));
   if (index === -1) {
     throw new Error(`Expense record not found: ${id}`);
-  }
-
-  if (fields.category) {
-    try {
-      ensureMasterItem('expenseCategories', String(fields.category).trim());
-    } catch (e) {
-      // Ignore error
-    }
   }
 
   const updatedItem = {
