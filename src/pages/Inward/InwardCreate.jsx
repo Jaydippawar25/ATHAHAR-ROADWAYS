@@ -876,22 +876,23 @@ export const InwardCreate = () => {
           </span>
         </div>
 
-        {/* Row 1: SRNO, LR NO, DATE, INVOICE NO */}
+        {/* Row 1: INWARD NO., LR NO., DATE, PKG */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-3.5 items-end">
           <div>
-            <label className="block text-[10px] sm:text-[11px] font-extrabold text-slate-600 uppercase mb-1 truncate">SR NO.</label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-[10px] sm:text-[11px] font-extrabold text-slate-600 uppercase truncate">
+                INWARD NO.
+              </label>
+              <span className="text-[10px] text-slate-400 font-bold">
+                SR #{editingIndex !== null ? editingIndex + 1 : stagedItems.length + 1}
+              </span>
+            </div>
             <input
               type="text"
               readOnly
               tabIndex={-1}
-              value={
-                editingIndex !== null && stagedItems[editingIndex]
-                  ? stagedItems[editingIndex].srNo
-                  : editingIndex !== null
-                  ? editingIndex + 1
-                  : stagedItems.length + 1
-              }
-              className="w-full px-2.5 py-1.5 sm:px-3 sm:py-2 bg-slate-100 border border-slate-200 rounded-xl text-xs font-black text-center text-slate-500 outline-none"
+              value={headerData.inwardNo || '-'}
+              className="w-full px-2.5 py-1.5 sm:px-3 sm:py-2 bg-slate-100 border border-slate-200 rounded-xl text-xs font-black text-center text-slate-600 outline-none font-mono"
             />
           </div>
 
@@ -946,60 +947,34 @@ export const InwardCreate = () => {
           </div>
 
           <div>
-            <label className="block text-[10px] sm:text-[11px] font-extrabold text-slate-600 uppercase mb-1 truncate">INVOICE NO.</label>
+            <label className="block text-[10px] sm:text-[11px] font-extrabold text-slate-900 uppercase mb-1 truncate">PACKAGES (PKG) *</label>
             <input
               ref={(el) => (fieldRefs.current[2] = el)}
               onKeyDown={(e) => handleKeyDown(e, 2)}
               type="text"
-              name="invoiceNo"
+              inputMode="numeric"
+              name="pkg"
               autoComplete="off"
               autoCorrect="off"
               spellCheck={false}
               data-lpignore="true"
-              value={itemForm.invoiceNo}
+              value={itemForm.pkg}
               onChange={handleItemChange}
-              placeholder="e.g. INV-902"
-              className="w-full px-2.5 py-1.5 sm:px-3 sm:py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 uppercase focus:ring-2 focus:ring-[#1d4ed8] outline-none placeholder-slate-400"
+              placeholder="1"
+              className="w-full px-2.5 py-1.5 sm:px-3 sm:py-2 bg-white border border-slate-200 rounded-xl text-xs font-black text-slate-900 focus:ring-2 focus:ring-[#1d4ed8] outline-none"
             />
           </div>
         </div>
 
-        {/* Row 2: CT TO, CONSIGNOR, CONSIGNEE, PKG */}
+        {/* Row 2: CONSIGNOR, CONSIGNEE, STATION, INV NO. */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-3.5 items-end">
           <div>
-            <label className="block text-[10px] sm:text-[11px] font-extrabold text-slate-600 uppercase mb-1 truncate">DESTINATION / CT TO</label>
+            <label className="block text-[10px] sm:text-[11px] font-extrabold text-slate-600 uppercase mb-1 truncate">CONSIGNOR (SENDER)</label>
             <div className="flex items-center space-x-1 min-w-0">
               <EditableCombobox
                 ref={(el) => (fieldRefs.current[3] = el)}
                 inputRef={(el) => (fieldRefs.current[3] = el)}
                 onKeyDown={(e) => handleKeyDown(e, 3)}
-                name="ctTo"
-                value={itemForm.ctTo}
-                onChange={handleItemChange}
-                options={masters.stations}
-                masterCategory="stations"
-                placeholder=""
-                className="px-2.5 py-1.5 sm:px-3 sm:py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-[#1d4ed8]"
-              />
-              <button
-                type="button"
-                tabIndex={-1}
-                onClick={() => handleOpenQuickAdd('stations', 'Station', 'ctTo', false)}
-                className="px-2 py-1.5 sm:px-2.5 sm:py-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl font-black text-xs text-slate-700 transition-colors shadow-2xs flex-shrink-0 cursor-pointer"
-                title="Quick Add Station"
-              >
-                +
-              </button>
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-[10px] sm:text-[11px] font-extrabold text-slate-600 uppercase mb-1 truncate">CONSIGNOR (SENDER)</label>
-            <div className="flex items-center space-x-1 min-w-0">
-              <EditableCombobox
-                ref={(el) => (fieldRefs.current[4] = el)}
-                inputRef={(el) => (fieldRefs.current[4] = el)}
-                onKeyDown={(e) => handleKeyDown(e, 4)}
                 name="consignorName"
                 value={itemForm.consignorName}
                 onChange={handleItemChange}
@@ -1024,9 +999,9 @@ export const InwardCreate = () => {
             <label className="block text-[10px] sm:text-[11px] font-extrabold text-slate-600 uppercase mb-1 truncate">CONSIGNEE (RECEIVER)</label>
             <div className="flex items-center space-x-1 min-w-0">
               <EditableCombobox
-                ref={(el) => (fieldRefs.current[5] = el)}
-                inputRef={(el) => (fieldRefs.current[5] = el)}
-                onKeyDown={(e) => handleKeyDown(e, 5)}
+                ref={(el) => (fieldRefs.current[4] = el)}
+                inputRef={(el) => (fieldRefs.current[4] = el)}
+                onKeyDown={(e) => handleKeyDown(e, 4)}
                 name="consigneeName"
                 value={itemForm.consigneeName}
                 onChange={handleItemChange}
@@ -1048,21 +1023,47 @@ export const InwardCreate = () => {
           </div>
 
           <div>
-            <label className="block text-[10px] sm:text-[11px] font-extrabold text-slate-900 uppercase mb-1 truncate">PACKAGES (PKG) *</label>
+            <label className="block text-[10px] sm:text-[11px] font-extrabold text-slate-600 uppercase mb-1 truncate">STATION (CT TO)</label>
+            <div className="flex items-center space-x-1 min-w-0">
+              <EditableCombobox
+                ref={(el) => (fieldRefs.current[5] = el)}
+                inputRef={(el) => (fieldRefs.current[5] = el)}
+                onKeyDown={(e) => handleKeyDown(e, 5)}
+                name="ctTo"
+                value={itemForm.ctTo}
+                onChange={handleItemChange}
+                options={masters.stations}
+                masterCategory="stations"
+                placeholder=""
+                className="px-2.5 py-1.5 sm:px-3 sm:py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-[#1d4ed8]"
+              />
+              <button
+                type="button"
+                tabIndex={-1}
+                onClick={() => handleOpenQuickAdd('stations', 'Station', 'ctTo', false)}
+                className="px-2 py-1.5 sm:px-2.5 sm:py-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl font-black text-xs text-slate-700 transition-colors shadow-2xs flex-shrink-0 cursor-pointer"
+                title="Quick Add Station"
+              >
+                +
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-[10px] sm:text-[11px] font-extrabold text-slate-600 uppercase mb-1 truncate">INV NO.</label>
             <input
               ref={(el) => (fieldRefs.current[6] = el)}
               onKeyDown={(e) => handleKeyDown(e, 6)}
               type="text"
-              inputMode="numeric"
-              name="pkg"
+              name="invoiceNo"
               autoComplete="off"
               autoCorrect="off"
               spellCheck={false}
               data-lpignore="true"
-              value={itemForm.pkg}
+              value={itemForm.invoiceNo}
               onChange={handleItemChange}
-              placeholder="1"
-              className="w-full px-2.5 py-1.5 sm:px-3 sm:py-2 bg-white border border-slate-200 rounded-xl text-xs font-black text-slate-900 focus:ring-2 focus:ring-[#1d4ed8] outline-none"
+              placeholder="e.g. INV-902"
+              className="w-full px-2.5 py-1.5 sm:px-3 sm:py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 uppercase focus:ring-2 focus:ring-[#1d4ed8] outline-none placeholder-slate-400"
             />
           </div>
         </div>
@@ -1260,14 +1261,14 @@ export const InwardCreate = () => {
           <table className="w-full text-left border-collapse">
             <thead className="bg-[#0b2545] text-white sticky top-0 z-10 border-b-2 border-orange-500">
               <tr className="text-[10px] font-extrabold uppercase tracking-wider">
-                <th className="py-2.5 px-3 border-r border-blue-900/60 w-12 text-center">SR</th>
+                <th className="py-2.5 px-3 border-r border-blue-900/60 text-center">INWARD NO.</th>
                 <th className="py-2.5 px-3 border-r border-blue-900/60">LR NO.</th>
                 <th className="py-2.5 px-3 border-r border-blue-900/60">DATE</th>
                 <th className="py-2.5 px-3 border-r border-blue-900/60 text-right">PKG</th>
-                <th className="py-2.5 px-3 border-r border-blue-900/60">INV NO.</th>
-                <th className="py-2.5 px-3 border-r border-blue-900/60">DESTINATION</th>
                 <th className="py-2.5 px-3 border-r border-blue-900/60">CONSIGNOR</th>
                 <th className="py-2.5 px-3 border-r border-blue-900/60">CONSIGNEE</th>
+                <th className="py-2.5 px-3 border-r border-blue-900/60">STATION</th>
+                <th className="py-2.5 px-3 border-r border-blue-900/60">INV NO.</th>
                 <th className="py-2.5 px-3 border-r border-blue-900/60 text-right">TO PAY</th>
                 <th className="py-2.5 px-3 border-r border-blue-900/60 text-right">T.B.B.</th>
                 <th className="py-2.5 px-3 border-r border-blue-900/60 text-right">PAID</th>
@@ -1293,8 +1294,11 @@ export const InwardCreate = () => {
                         : 'hover:bg-slate-50'
                     }`}
                   >
-                    <td className="py-2 px-3 border-r border-slate-100 text-center font-bold text-slate-600">
-                      {item.srNo}
+                    <td className="py-2 px-3 border-r border-slate-100 text-center font-mono font-bold text-slate-700">
+                      <div className="flex flex-col items-center leading-tight">
+                        <span className="text-[11px] font-black">{headerData.inwardNo || '-'}</span>
+                        <span className="text-[9px] text-slate-400">SR #{item.srNo}</span>
+                      </div>
                     </td>
                     <td className="py-2 px-3 border-r border-slate-100 font-extrabold text-[#1d4ed8]">
                       <div className="flex items-center gap-1.5">
@@ -1312,17 +1316,17 @@ export const InwardCreate = () => {
                     <td className="py-2 px-3 border-r border-slate-100 text-right font-black text-slate-900">
                       {item.pkg}
                     </td>
-                    <td className="py-2 px-3 border-r border-slate-100 text-slate-600">
-                      {item.invoiceNo || '-'}
-                    </td>
-                    <td className="py-2 px-3 border-r border-slate-100 font-semibold text-slate-800">
-                      {item.ctTo || '-'}
-                    </td>
                     <td className="py-2 px-3 border-r border-slate-100 text-slate-600 truncate max-w-[140px]">
                       {item.consignorName || '-'}
                     </td>
                     <td className="py-2 px-3 border-r border-slate-100 text-slate-600 truncate max-w-[140px]">
                       {item.consigneeName || '-'}
+                    </td>
+                    <td className="py-2 px-3 border-r border-slate-100 font-semibold text-slate-800">
+                      {item.ctTo || '-'}
+                    </td>
+                    <td className="py-2 px-3 border-r border-slate-100 text-slate-600">
+                      {item.invoiceNo || '-'}
                     </td>
                     <td className="py-2 px-3 border-r border-slate-100 text-right font-extrabold text-amber-700">
                       {Number(item.toPayAmount || 0) > 0 ? Number(item.toPayAmount).toFixed(2) : '-'}
