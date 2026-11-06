@@ -4,11 +4,11 @@ import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 import { Modal } from '../../components/common/Modal';
 import { EditableCombobox } from '../../components/common/EditableCombobox';
-import { Save, Printer, AlertCircle, Trash2, Edit2, Layers, CheckCircle } from 'lucide-react';
+import { Save, Printer, AlertCircle, AlertTriangle, Trash2, Edit2, Layers, CheckCircle } from 'lucide-react';
 import { getTodayDateString, formatDate } from '../../utils/dateUtils';
 import { formatCurrency } from '../../utils/numberUtils';
 import { printRecordDetails } from '../../services/exportService';
-import { getNextInwardNo } from '../../services/inwardService';
+import { getNextInwardNo, getDuplicatePendingLRDetails, findDuplicatePendingLRs } from '../../services/inwardService';
 
 export const InwardCreate = () => {
   const navigate = useNavigate();
@@ -195,6 +195,13 @@ export const InwardCreate = () => {
     isHeader: true,
   });
   const [quickAddValue, setQuickAddValue] = useState('');
+
+  // Confirmation Modal for duplicate LRs already in Pending Stock (Option 1)
+  const [duplicateConfirmModal, setDuplicateConfirmModal] = useState({
+    isOpen: false,
+    duplicates: [],
+    shouldPrint: false,
+  });
 
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -384,6 +391,17 @@ export const InwardCreate = () => {
     focusLRNoInput();
   };
 
+  // Check if current LR being typed already exists in Godown Pending Stock for this transporter
+  const currentPendingDuplicate = React.useMemo(() => {
+    const clean = String(itemForm?.lrNo ?? '').trim();
+    if (!clean) return null;
+    return getDuplicatePendingLRDetails(
+      clean,
+      headerData.transporterName,
+      editingInwardId || editInwardData?.id || editInwardData?.inwardNo
+    );
+  }, [itemForm?.lrNo, headerData.transporterName, editingInwardId, editInwardData]);
+
   // Aggregate Totals across staged items (plus active form if filled)
   const currentLrNo = String(itemForm?.lrNo ?? '').trim();
   const hasFormDraft = Boolean(
@@ -473,8 +491,8 @@ export const InwardCreate = () => {
   const totalTbb = allLRs.reduce((sum, item) => sum + (Number(item.tbbAmount) || 0), 0);
   const totalPaid = allLRs.reduce((sum, item) => sum + (Number(item.paidAmount) || 0), 0);
 
-  // Final Submit handler
-  const handleFinalSubmit = (shouldPrint = false) => {
+  // Execute Save transaction with duplicate check / confirmation support
+  const executeSave = (shouldPrint = false, allowPendingDuplicates = false) => {
     setError('');
     setSuccess('');
 
@@ -491,6 +509,23 @@ export const InwardCreate = () => {
       return;
     }
 
+    // Unless operator confirmed proceeding with duplicate, check for pending duplicate LRs
+    if (!allowPendingDuplicates) {
+      const duplicates = findDuplicatePendingLRs(
+        finalItems,
+        headerData.transporterName,
+        editingInwardId || editInwardData?.id || editInwardData?.inwardNo
+      );
+      if (duplicates.length > 0) {
+        setDuplicateConfirmModal({
+          isOpen: true,
+          duplicates,
+          shouldPrint,
+        });
+        return;
+      }
+    }
+
     if (shouldPrint) {
       if (editingInwardId || editInwardData) {
         try {
@@ -498,7 +533,8 @@ export const InwardCreate = () => {
             editingInwardId || editInwardData?.inwardNo,
             headerData,
             finalItems,
-            user?.displayName || 'Operator'
+            user?.displayName || 'Operator',
+            allowPendingDuplicates
           );
         } catch (err) {
           // Proceed with printing current form data
@@ -534,11 +570,17 @@ export const InwardCreate = () => {
           editingInwardId || editInwardData?.inwardNo,
           headerData,
           finalItems,
-          user?.displayName || 'Operator'
+          user?.displayName || 'Operator',
+          allowPendingDuplicates
         );
         setSuccess(`Inward Receipt #${headerData.inwardNo} updated successfully!`);
       } else {
-        handleCreateInward(headerData, finalItems, user?.displayName || 'Operator');
+        handleCreateInward(
+          headerData,
+          finalItems,
+          user?.displayName || 'Operator',
+          allowPendingDuplicates
+        );
         setSuccess(`Inward Receipt #${headerData.inwardNo} saved successfully!`);
       }
 
@@ -552,6 +594,11 @@ export const InwardCreate = () => {
     } catch (err) {
       setError(err.message || 'Failed to save Inward transaction.');
     }
+  };
+
+  // Final Submit handler
+  const handleFinalSubmit = (shouldPrint = false) => {
+    executeSave(shouldPrint, false);
   };
 
   return (
@@ -849,7 +896,15 @@ export const InwardCreate = () => {
           </div>
 
           <div>
-            <label className="block text-[10px] sm:text-[11px] font-extrabold text-[#1d4ed8] uppercase mb-1 truncate">LR NO. *</label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-[10px] sm:text-[11px] font-extrabold text-[#1d4ed8] uppercase truncate">LR NO. *</label>
+              {currentPendingDuplicate && (
+                <span className="text-[9px] text-amber-700 bg-amber-100 font-extrabold px-1.5 py-0.5 rounded flex items-center space-x-1" title="Already in Godown Pending Stock">
+                  <AlertTriangle className="w-2.5 h-2.5 text-amber-600 shrink-0" />
+                  <span>In Pending</span>
+                </span>
+              )}
+            </div>
             <input
               ref={(el) => (fieldRefs.current[0] = el)}
               onKeyDown={(e) => handleKeyDown(e, 0)}
@@ -863,8 +918,17 @@ export const InwardCreate = () => {
               onChange={handleItemChange}
               placeholder="e.g. 13941"
               autoFocus
-              className="w-full px-2.5 py-1.5 sm:px-3 sm:py-2 bg-sky-50/70 border border-blue-200 rounded-xl text-xs font-black text-[#1d4ed8] uppercase focus:ring-2 focus:ring-[#1d4ed8] outline-none placeholder-slate-400"
+              className={`w-full px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl text-xs font-black uppercase focus:ring-2 focus:ring-[#1d4ed8] outline-none placeholder-slate-400 ${
+                currentPendingDuplicate
+                  ? 'bg-amber-50/90 border border-amber-300 text-amber-900'
+                  : 'bg-sky-50/70 border border-blue-200 text-[#1d4ed8]'
+              }`}
             />
+            {currentPendingDuplicate && (
+              <p className="text-[10px] text-amber-700 font-bold mt-1 truncate">
+                ⚠️ In Godown: Inw #{currentPendingDuplicate.inwardNo} ({currentPendingDuplicate.pkg} Pkg)
+              </p>
+            )}
           </div>
 
           <div>
@@ -1347,6 +1411,93 @@ export const InwardCreate = () => {
           </div>
         </div>
       </div>
+
+      {/* PENDING STOCK DUPLICATE LR CONFIRMATION MODAL (OPTION 1) */}
+      <Modal
+        isOpen={duplicateConfirmModal.isOpen}
+        onClose={() => setDuplicateConfirmModal({ isOpen: false, duplicates: [], shouldPrint: false })}
+        title="⚠️ Pending Stock Duplicate LR Confirmation"
+        maxWidth="max-w-xl"
+      >
+        <div className="space-y-4">
+          <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-2xl flex items-start space-x-3 text-amber-900">
+            <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+            <div className="text-xs leading-relaxed">
+              <p className="font-bold text-sm text-amber-950">
+                LR Number already exists in Godown Pending Stock!
+              </p>
+              <p className="mt-1 text-amber-800">
+                The consignment(s) below are currently still stored in the godown awaiting outward dispatch. 
+                If this entry is a <strong>separate consignment, new bilty book, or part shipment</strong>, click <strong>Save as New Entry</strong> to proceed.
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-2.5 max-h-60 overflow-y-auto pr-1">
+            {duplicateConfirmModal.duplicates.map((dup, idx) => (
+              <div key={idx} className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-700">
+                <div className="flex items-center justify-between font-bold text-slate-900 pb-2 border-b border-slate-200/80 mb-2">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-orange-600 font-black font-mono text-sm">LR #{dup.existing.lrNo}</span>
+                    <span className="text-slate-400">•</span>
+                    <span className="text-slate-700 font-bold">{dup.existing.transporterName || headerData.transporterName || '-'}</span>
+                  </div>
+                  <span className="px-2 py-0.5 bg-amber-100 text-amber-800 rounded font-black text-[10px] uppercase tracking-wider">
+                    Pending in Stock
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px]">
+                  <div>
+                    <span className="text-slate-400 block font-bold text-[10px]">NEW ENTRY INW</span>
+                    <span className="font-bold text-slate-800 font-mono">{headerData.inwardNo}</span>
+                    <span className="text-slate-500 block text-[10px]">{formatDate(headerData.date)}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 block font-bold text-[10px]">EXISTING INW</span>
+                    <span className="font-bold text-slate-800 font-mono">{dup.existing.inwardNo}</span>
+                    <span className="text-slate-500 block text-[10px]">{formatDate(dup.existing.date)}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 block font-bold text-[10px]">EXISTING PKGS</span>
+                    <span className="font-black text-slate-800">{dup.existing.pkg} Pkgs</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 block font-bold text-[10px]">CONSIGNEE</span>
+                    <span className="font-semibold text-slate-800 truncate block">{dup.existing.consigneeName || '-'}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="pt-3 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <span className="text-[11px] text-slate-500 text-center sm:text-left">
+              Existing stock records will remain completely unchanged.
+            </span>
+            <div className="flex items-center space-x-2 w-full sm:w-auto justify-end">
+              <button
+                type="button"
+                onClick={() => setDuplicateConfirmModal({ isOpen: false, duplicates: [], shouldPrint: false })}
+                className="px-4 py-2 border border-slate-300 hover:bg-slate-100 text-slate-700 font-bold rounded-xl text-xs cursor-pointer transition-colors"
+              >
+                Cancel &amp; Review
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const shouldPrint = duplicateConfirmModal.shouldPrint;
+                  setDuplicateConfirmModal({ isOpen: false, duplicates: [], shouldPrint: false });
+                  executeSave(shouldPrint, true);
+                }}
+                className="px-4 py-2 bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-400 text-white font-black rounded-xl text-xs shadow-md shadow-orange-500/20 cursor-pointer transition-all active:scale-95"
+              >
+                Yes, Save as New Entry
+              </button>
+            </div>
+          </div>
+        </div>
+      </Modal>
 
       {/* QUICK ADD MODAL FOR [...] BUTTONS */}
       <Modal

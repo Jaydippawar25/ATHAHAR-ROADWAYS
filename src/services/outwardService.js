@@ -197,8 +197,10 @@ export const createOutward = (headerData, selectedPendingItems, currentUser = 'O
     const updatedInwardItems = inwardItems.map((item) => {
       const lrKey = String(item.lrNo ?? '').trim().toLowerCase();
       const matchedPending = selectedPendingItems.find((p) => {
-        if (p.id && p.id === item.id) return true;
-        if (p.inwardItemId && p.inwardItemId === item.id) return true;
+        // Precise ID match when IDs exist so duplicate LR numbers from the same transporter never cross-match
+        if (item.id && (p.id || p.inwardItemId)) {
+          return p.id === item.id || p.inwardItemId === item.id;
+        }
 
         const pLR = String(p.lrNo ?? '').trim().toLowerCase();
         if (pLR !== lrKey) return false;

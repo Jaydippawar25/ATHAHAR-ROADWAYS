@@ -329,14 +329,14 @@ export const AppProvider = ({ children }) => {
     return { success: true };
   };
 
-  const handleCreateInward = (headerData, lrItems, username) => {
-    const res = createInward(headerData, lrItems, username);
+  const handleCreateInward = (headerData, lrItems, username, allowPendingDuplicates = false) => {
+    const res = createInward(headerData, lrItems, username, allowPendingDuplicates);
     invalidateInwardData();
     return res;
   };
 
-  const handleUpdateFullInward = (id, headerData, lrItems, username) => {
-    const res = updateFullInward(id, headerData, lrItems, username);
+  const handleUpdateFullInward = (id, headerData, lrItems, username, allowPendingDuplicates = false) => {
+    const res = updateFullInward(id, headerData, lrItems, username, allowPendingDuplicates);
     invalidateInwardData();
     return res;
   };
