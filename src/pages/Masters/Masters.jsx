@@ -90,14 +90,14 @@ export const Masters = () => {
   return (
     <div className="space-y-6">
       {/* ROYAL NAVY & ORANGE HERO BANNER */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#07182e] via-[#0b2545] to-[#133e87] p-6 text-white shadow-xl border border-blue-900/40">
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#061944] via-[#102256] to-[#2D3661] p-6 text-white shadow-xl border border-blue-900/40">
         <div className="h-1 highway-accent-line absolute top-0 left-0 right-0" />
-        <div className="absolute -top-16 -right-16 w-56 h-56 bg-orange-500/15 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-16 -left-16 w-56 h-56 bg-sky-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -top-16 -right-16 w-56 h-56 bg-[#3956D4]/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-16 -left-16 w-56 h-56 bg-[#2D3661]/40 rounded-full blur-3xl pointer-events-none" />
 
         <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <div className="flex items-center space-x-2 text-[10px] font-extrabold tracking-widest uppercase text-orange-400">
+            <div className="flex items-center space-x-2 text-[10px] font-extrabold tracking-widest uppercase text-[#3956D4]">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
               <span>CENTRAL MASTER DIRECTORY</span>
               <span className="text-blue-200/50">•</span>
@@ -117,7 +117,7 @@ export const Masters = () => {
                 setFormData({});
                 setIsModalOpen(true);
               }}
-              className="px-5 py-2.5 bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-400 text-white rounded-xl text-xs font-black shadow-lg shadow-orange-500/25 transition-all flex items-center space-x-1.5 cursor-pointer active:scale-95"
+              className="px-5 py-2.5 bg-[#3956D4] hover:bg-[#2D3661] text-white rounded-xl text-xs font-black shadow-lg shadow-[#3956D4]/25 transition-all flex items-center space-x-1.5 cursor-pointer active:scale-95"
             >
               <Plus className="w-4 h-4 text-white" />
               <span>Add New {activeCategoryObj.label.replace(/s$/, '')}</span>
@@ -141,20 +141,20 @@ export const Masters = () => {
               }}
               className={`p-4 rounded-2xl border text-left flex items-center space-x-3.5 transition-all cursor-pointer ${
                 isActive
-                  ? 'bg-[#0b2545] border-[#0b2545] text-white shadow-lg border-b-4 border-b-orange-500'
-                  : 'bg-white border-slate-200 text-slate-700 hover:border-orange-300 hover:bg-orange-50/30 shadow-2xs'
+                  ? 'bg-[#061944] border-[#061944] text-white shadow-lg border-b-4 border-b-[#3956D4]'
+                  : 'bg-white border-[#E1E5EE] text-slate-700 hover:border-[#3956D4]/40 hover:bg-[#3956D4]/5 shadow-2xs'
               }`}
             >
               <div
                 className={`p-2.5 rounded-xl flex items-center justify-center ${
-                  isActive ? 'bg-orange-500 text-white shadow-xs' : 'bg-slate-100 text-slate-600'
+                  isActive ? 'bg-[#3956D4] text-white shadow-xs' : 'bg-slate-100 text-slate-600'
                 }`}
               >
                 <Icon className="w-5 h-5" />
               </div>
               <div className="min-w-0">
                 <div className="text-xs font-black tracking-tight truncate">{type.label}</div>
-                <div className={`text-[11px] font-bold ${isActive ? 'text-orange-200' : 'text-slate-400'}`}>
+                <div className={`text-[11px] font-bold ${isActive ? 'text-blue-200' : 'text-slate-400'}`}>
                   {count} Records
                 </div>
               </div>
@@ -164,11 +164,11 @@ export const Masters = () => {
       </div>
 
       {/* MASTER DATA RECORDS TABLE */}
-      <div className="bg-white rounded-2xl shadow-2xs border border-slate-200 overflow-hidden space-y-3">
+      <div className="bg-white rounded-2xl shadow-2xs border border-[#E1E5EE] overflow-hidden space-y-3">
         {/* Header toolbar with search */}
-        <div className="p-4 bg-slate-50 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="p-4 bg-slate-50 border-b border-[#E1E5EE] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center space-x-2">
-            <span className="w-1.5 h-4 bg-orange-500 rounded-full" />
+            <span className="w-1.5 h-4 bg-[#3956D4] rounded-full" />
             <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-800">
               {activeCategoryObj.label} Directory ({filteredList.length} Entries)
             </h3>
@@ -242,7 +242,7 @@ export const Masters = () => {
         {/* DESKTOP TABLE VIEW (hidden sm:block) */}
         <div className="hidden sm:block overflow-x-auto px-4 pb-4">
           <table className="w-full text-left text-xs text-slate-700 border-collapse">
-            <thead className="bg-[#0b2545] text-white">
+            <thead className="bg-[#061944] text-white">
               <tr className="text-[10px] uppercase font-extrabold tracking-wider">
                 <th className="py-2.5 px-3 w-12 text-center rounded-l-xl">#</th>
                 <th className="py-2.5 px-3">Name / Identifier</th>

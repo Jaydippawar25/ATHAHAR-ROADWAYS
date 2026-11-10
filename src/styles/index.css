@@ -2,9 +2,24 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --color-primary-navy: #061944;
+  --color-accent-blue: #3956D4;
+  --color-slate-navy: #2D3661;
+  --color-border: #E1E5EE;
+  --color-bg: #F6F7F9;
+  --color-white: #FFFFFF;
+  --color-red: #CF1113;
+  --color-amber: #7A4F05;
+}
+
 @layer base {
   html, body, #root {
-    @apply bg-slate-50 text-slate-900 font-sans antialiased;
+    background-color: #F6F7F9;
+    color: #061944;
+    font-family: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
     overflow-x: hidden;
     max-width: 100vw;
     width: 100%;
@@ -18,10 +33,10 @@
   }
 }
 
-/* Custom scrollbar matching media_1791364425157.png (clean light blue-slate track, inset rounded pill thumb, no arrows) */
+/* Custom scrollbar matching new color theme */
 ::-webkit-scrollbar {
-  width: 12px;
-  height: 12px;
+  width: 10px;
+  height: 10px;
 }
 
 ::-webkit-scrollbar-button {
@@ -31,17 +46,17 @@
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f5f9;
+  background: #F6F7F9;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: #E1E5EE;
   border-radius: 9999px;
-  border: 3px solid #f1f5f9;
+  border: 2px solid #F6F7F9;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: #2D3661;
 }
 
 ::-webkit-scrollbar-corner {
@@ -51,7 +66,7 @@
 /* Firefox support */
 * {
   scrollbar-width: thin;
-  scrollbar-color: #cbd5e1 #f1f5f9;
+  scrollbar-color: #E1E5EE #F6F7F9;
 }
 
 /* Utility to hide scrollbars completely across browsers */
@@ -72,7 +87,7 @@ input, textarea, select, [contenteditable="true"] {
   caret-color: auto !important;
 }
 
-/* Hide number input spin buttons (up/down arrows) completely across Chrome, Safari, Edge, Opera, Firefox */
+/* Hide number input spin buttons (up/down arrows) completely across browsers */
 input[type="number"]::-webkit-outer-spin-button,
 input[type="number"]::-webkit-inner-spin-button {
   -webkit-appearance: none !important;
@@ -87,35 +102,40 @@ input[type="number"] {
 
 /* ATHAHAR ROADWAYS Theme Utilities */
 .bg-brand-navy-gradient {
-  background: linear-gradient(135deg, #07182e 0%, #0b2545 55%, #133e87 100%);
+  background: linear-gradient(135deg, #061944 0%, #152250 50%, #2D3661 100%);
+}
+
+.bg-brand-blue-gradient {
+  background: linear-gradient(135deg, #3956D4 0%, #2D3661 100%);
 }
 
 .bg-brand-orange-gradient {
-  background: linear-gradient(135deg, #ea580c 0%, #f97316 100%);
+  background: linear-gradient(135deg, #3956D4 0%, #2D3661 100%);
 }
 
 .bg-brand-orange-gradient-hover {
-  background: linear-gradient(135deg, #c2410c 0%, #ea580c 100%);
+  background: linear-gradient(135deg, #2D3661 0%, #061944 100%);
 }
 
 .highway-accent-line {
-  background: linear-gradient(90deg, #ea580c 0%, #f97316 40%, #fbbf24 70%, transparent 100%);
+  background: linear-gradient(90deg, #3956D4 0%, #2D3661 50%, #3956D4 100%);
 }
 
-.glow-orange {
-  box-shadow: 0 4px 18px -2px rgba(234, 88, 12, 0.35);
+.glow-blue {
+  box-shadow: 0 4px 18px -2px rgba(57, 86, 212, 0.35);
 }
 
 .glow-navy {
-  box-shadow: 0 10px 25px -4px rgba(11, 37, 69, 0.3);
+  box-shadow: 0 10px 25px -4px rgba(6, 25, 68, 0.35);
+}
+
+.glow-orange {
+  box-shadow: 0 4px 18px -2px rgba(57, 86, 212, 0.35);
 }
 
 .glass-pill {
   background: rgba(255, 255, 255, 0.12);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(225, 229, 238, 0.25);
 }
-
-
-

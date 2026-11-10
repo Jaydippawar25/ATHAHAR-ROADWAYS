@@ -126,15 +126,15 @@ export const Reports = () => {
 
   return (
     <div className="space-y-6">
-      {/* ROYAL NAVY & ORANGE HERO BANNER */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#07182e] via-[#0b2545] to-[#133e87] p-6 text-white shadow-xl border border-blue-900/40">
+      {/* ROYAL NAVY & BLUE HERO BANNER */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#061944] via-[#102256] to-[#2D3661] p-6 text-white shadow-xl border border-blue-900/40">
         <div className="h-1 highway-accent-line absolute top-0 left-0 right-0" />
-        <div className="absolute -top-16 -right-16 w-56 h-56 bg-orange-500/15 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-16 -left-16 w-56 h-56 bg-sky-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -top-16 -right-16 w-56 h-56 bg-[#3956D4]/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-16 -left-16 w-56 h-56 bg-[#2D3661]/40 rounded-full blur-3xl pointer-events-none" />
 
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <div className="flex items-center space-x-2 text-[10px] font-extrabold tracking-widest uppercase text-orange-400">
+            <div className="flex items-center space-x-2 text-[10px] font-extrabold tracking-widest uppercase text-[#3956D4]">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
               <span>ANALYTICS & AUDIT HUB</span>
               <span className="text-blue-200/50">•</span>
@@ -154,7 +154,7 @@ export const Reports = () => {
               onClick={() => setReportType('inward')}
               className={`px-3 sm:px-3.5 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap flex-1 md:flex-none text-center ${
                 reportType === 'inward'
-                  ? 'bg-white text-[#0b2545] shadow-md font-black'
+                  ? 'bg-white text-[#061944] shadow-md font-black'
                   : 'text-white/80 hover:text-white hover:bg-white/10'
               }`}
             >
@@ -164,7 +164,7 @@ export const Reports = () => {
               onClick={() => setReportType('pending')}
               className={`px-3 sm:px-3.5 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap flex-1 md:flex-none text-center ${
                 reportType === 'pending'
-                  ? 'bg-gradient-to-r from-orange-600 to-orange-500 text-white shadow-md font-black'
+                  ? 'bg-[#7A4F05] text-white shadow-md font-black'
                   : 'text-white/80 hover:text-white hover:bg-white/10'
               }`}
             >
@@ -174,7 +174,7 @@ export const Reports = () => {
               onClick={() => setReportType('delivered')}
               className={`px-3 sm:px-3.5 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap flex-1 md:flex-none text-center ${
                 reportType === 'delivered'
-                  ? 'bg-emerald-500 text-white shadow-md font-black'
+                  ? 'bg-[#3956D4] text-white shadow-md font-black'
                   : 'text-white/80 hover:text-white hover:bg-white/10'
               }`}
             >

@@ -447,12 +447,12 @@ export const Expenses = () => {
   return (
     <div className="space-y-5 text-slate-800 max-w-full">
       {/* PAGE HEADER */}
-      <div className="bg-gradient-to-r from-[#07182e] via-[#0b2545] to-[#133e87] rounded-3xl p-6 text-white shadow-xl border border-blue-900/40 flex flex-col md:flex-row md:items-center justify-between gap-4 relative overflow-hidden">
+      <div className="bg-gradient-to-r from-[#061944] via-[#102256] to-[#2D3661] rounded-3xl p-6 text-white shadow-xl border border-blue-900/40 flex flex-col md:flex-row md:items-center justify-between gap-4 relative overflow-hidden">
         <div className="h-1 highway-accent-line absolute top-0 left-0 right-0" />
-        <div className="absolute right-0 top-0 w-80 h-80 bg-orange-500/15 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute right-0 top-0 w-80 h-80 bg-[#3956D4]/20 rounded-full blur-3xl pointer-events-none" />
 
         <div className="space-y-1.5 z-10">
-          <div className="flex items-center space-x-2 text-[10px] font-black tracking-widest uppercase text-orange-400">
+          <div className="flex items-center space-x-2 text-[10px] font-black tracking-widest uppercase text-[#3956D4]">
             <span className="bg-white/10 px-2.5 py-0.5 rounded-full border border-white/20 flex items-center">
               OPERATIONAL EXPENSES
             </span>
@@ -460,7 +460,7 @@ export const Expenses = () => {
           </div>
 
           <h2 className="text-2xl sm:text-3xl font-black tracking-tight flex items-center space-x-2.5 text-white">
-            <Receipt className="w-7 h-7 text-orange-400" />
+            <Receipt className="w-7 h-7 text-[#3956D4]" />
             <span>Operating Expense Management</span>
           </h2>
 

@@ -25,6 +25,16 @@ import {
   AlertCircle,
   Calendar,
   Send,
+  Phone,
+  MessageSquare,
+  Scale,
+  Gauge,
+  Compass,
+  ChevronRight,
+  MoreVertical,
+  ChevronDown,
+  ChevronUp,
+  Navigation,
 } from 'lucide-react';
 import { formatDate } from '../utils/dateUtils';
 import { formatCurrency } from '../utils/numberUtils';
@@ -53,6 +63,15 @@ export const Dashboard = () => {
   const [selectedStockIds, setSelectedStockIds] = useState([]);
   const [viewingItem, setViewingItem] = useState(null);
   const searchInputRef = useRef(null);
+
+
+  const handleResetFilters = () => {
+    setSearchTerm('');
+    setSelectedStation('ALL');
+    setSelectedTransporter('ALL');
+    setSelectedDateFilter('all');
+    setSelectedStatusFilter('all');
+  };
 
   // Keyboard shortcuts (Alt+N, Alt+O, Ctrl+K / Cmd+K)
   useEffect(() => {
@@ -339,9 +358,12 @@ export const Dashboard = () => {
   }, [pendingStock, selectedStockIds]);
 
   const handleDispatchSelected = () => {
-    if (selectedStockIds.length === 0) return;
-    const selectedItems = pendingStock.filter((i) => selectedStockIds.includes(i.id));
-    navigate('/outward/new', { state: { prefillItems: selectedItems } });
+    if (selectedStockIds.length > 0) {
+      const selectedItems = pendingStock.filter((i) => selectedStockIds.includes(i.id));
+      navigate('/outward/new', { state: { prefillItems: selectedItems } });
+    } else {
+      navigate('/outward/new');
+    }
   };
 
   const handlePrintLR = (item) => {
@@ -420,33 +442,33 @@ export const Dashboard = () => {
   return (
     <div className="space-y-4 sm:space-y-5 max-w-full">
       {/* Hero Operational Hub Banner */}
-      <div className="bg-gradient-to-r from-[#07182e] via-[#0b2545] to-[#133e87] rounded-2xl sm:rounded-3xl p-4 sm:p-6 text-white shadow-xl border border-blue-900/40 flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-5 relative overflow-hidden">
+      <div className="bg-gradient-to-r from-[#061944] via-[#102256] to-[#2D3661] rounded-2xl sm:rounded-3xl p-4 sm:p-6 text-white shadow-xl border border-blue-900/40 flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-5 relative overflow-hidden">
         {/* Top Brand Highway Accent Line */}
         <div className="h-1 highway-accent-line absolute top-0 left-0 right-0" />
-        {/* Subtle background glow effect matching logo orange highway arch */}
-        <div className="absolute right-0 top-0 w-96 h-96 bg-orange-500/15 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute left-1/3 bottom-0 w-64 h-64 bg-sky-500/10 rounded-full blur-2xl pointer-events-none" />
+        {/* Subtle background glow effect matching logo highway arch */}
+        <div className="absolute right-0 top-0 w-96 h-96 bg-[#3956D4]/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute left-1/3 bottom-0 w-64 h-64 bg-[#2D3661]/40 rounded-full blur-2xl pointer-events-none" />
 
         <div className="space-y-2 sm:space-y-2.5 z-10">
           <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-            <span className="bg-white/10 text-orange-200 text-[9px] sm:text-[10px] font-black px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full uppercase tracking-wider sm:tracking-widest border border-orange-400/20 backdrop-blur-xs flex items-center space-x-1.5">
+            <span className="bg-white/10 text-blue-200 text-[9px] sm:text-[10px] font-black px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full uppercase tracking-wider sm:tracking-widest border border-[#3956D4]/30 backdrop-blur-xs flex items-center space-x-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
               <span>TERMINAL HUB &bull; SANGLI</span>
             </span>
-            <span className="bg-orange-950/80 text-orange-300 border border-orange-500/30 text-[9px] sm:text-[10px] font-mono font-black px-2 py-0.5 rounded tracking-wider">
+            <span className="bg-[#3a200a]/80 text-[#f59e0b] border border-[#f59e0b]/40 text-[9px] sm:text-[10px] font-mono font-black px-2 py-0.5 rounded tracking-wider">
               GATE-01 ACTIVE
             </span>
           </div>
 
           <div className="flex items-center space-x-3 sm:space-x-4 pt-0.5 sm:pt-1">
-            <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl bg-white p-1 sm:p-1.5 flex items-center justify-center shadow-2xl border-2 border-white/60 flex-shrink-0 ring-2 sm:ring-4 ring-orange-500/20">
+            <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl bg-white p-1 sm:p-1.5 flex items-center justify-center shadow-2xl border-2 border-white/60 flex-shrink-0 ring-2 sm:ring-4 ring-[#3956D4]/20">
               <img src="/logo.png" alt="ATHAHAR ROADWAYS" className="w-full h-full object-contain" />
             </div>
             <div className="min-w-0">
               <h2 className="text-xl sm:text-3xl font-black tracking-tight text-white uppercase truncate">
                 ATHAHAR ROADWAYS
               </h2>
-              <p className="text-orange-400 text-[10px] sm:text-[11px] font-black tracking-wider sm:tracking-widest uppercase mt-0.5">
+              <p className="text-[#FF8A00] text-[10px] sm:text-[11px] font-black tracking-wider sm:tracking-widest uppercase mt-0.5">
                 SAFE &bull; ON TIME &bull; ALWAYS
               </p>
               <p className="text-blue-100/80 text-[10px] sm:text-xs font-mono tracking-tight mt-0.5 sm:mt-1 truncate sm:whitespace-normal">
@@ -459,11 +481,11 @@ export const Dashboard = () => {
         <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center sm:space-x-3 w-full sm:w-auto flex-shrink-0 z-10 pt-1 sm:pt-0">
           <Link
             to="/inward/new"
-            className="flex items-center justify-center space-x-1.5 sm:space-x-2 bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-400 text-white font-black px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs shadow-lg shadow-orange-500/25 transition-all active:scale-[0.98] text-center"
+            className="flex items-center justify-center space-x-1.5 sm:space-x-2 bg-gradient-to-r from-[#FF7A00] to-[#EA580C] hover:from-[#FF8A00] hover:to-[#C2410C] text-white font-black px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs shadow-lg shadow-orange-500/25 transition-all active:scale-[0.98] text-center"
           >
             <PlusCircle className="w-4 h-4 text-white flex-shrink-0" />
             <span>New Inward</span>
-            <span className="hidden sm:inline bg-orange-700/80 text-white text-[10px] font-mono font-bold px-1.5 py-0.5 rounded">
+            <span className="hidden sm:inline bg-[#9A3412]/60 text-white text-[10px] font-mono font-bold px-1.5 py-0.5 rounded">
               Alt+N
             </span>
           </Link>
@@ -471,7 +493,7 @@ export const Dashboard = () => {
             to="/outward/new"
             className="flex items-center justify-center space-x-1.5 sm:space-x-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white font-bold px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs shadow-md transition-all active:scale-[0.98] text-center"
           >
-            <ArrowUpRight className="w-4 h-4 text-orange-400 flex-shrink-0" />
+            <ArrowUpRight className="w-4 h-4 text-[#3956D4] flex-shrink-0" />
             <span>Outward</span>
             <span className="hidden sm:inline bg-white/15 text-white text-[10px] font-mono font-bold px-1.5 py-0.5 rounded">
               Alt+O
@@ -575,9 +597,9 @@ export const Dashboard = () => {
 
       {/* Universal LR Consignment Search Results (Active when searching any LR No., Vehicle, Consignee, etc.) */}
       {query && (
-        <div className="bg-white rounded-2xl border-2 border-blue-500/40 shadow-lg overflow-hidden transition-all animate-fadeIn">
+        <div className="bg-white rounded-2xl border-2 border-[#3956D4]/40 shadow-lg overflow-hidden transition-all animate-fadeIn">
           {/* Header */}
-          <div className="bg-gradient-to-r from-[#0b2545] to-[#153e75] text-white p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="bg-gradient-to-r from-[#061944] to-[#2D3661] text-white p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center space-x-3">
               <div className="p-2 sm:p-2.5 bg-blue-500/20 rounded-xl border border-blue-400/30 flex-shrink-0">
                 <Search className="w-4 h-4 sm:w-5 sm:h-5 text-blue-300" />
@@ -699,7 +721,7 @@ export const Dashboard = () => {
                               From: {item.consignorName || '-'}
                             </div>
                             {item.ctTo && (
-                              <span className="inline-block mt-1 text-[9px] font-bold text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded border border-orange-100">
+                              <span className="inline-block mt-1 text-[9px] font-bold text-[#3956D4] bg-[#3956D4]/10 px-1.5 py-0.5 rounded border border-[#3956D4]/20">
                                 TO: {item.ctTo}
                               </span>
                             )}
@@ -826,7 +848,7 @@ export const Dashboard = () => {
                         <div className="font-bold text-slate-900">{item.consigneeName || 'Consignee'}</div>
                         <div className="text-[11px] text-slate-400">From: {item.consignorName || '-'}</div>
                         {item.ctTo && (
-                          <div className="text-[10px] font-bold text-orange-600 mt-0.5">
+                          <div className="text-[10px] font-bold text-[#3956D4] mt-0.5">
                             TO: {item.ctTo}
                           </div>
                         )}
@@ -881,59 +903,59 @@ export const Dashboard = () => {
       {/* 4 Primary Metric Stat Cards with Brand Theme Accents */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
         {/* Card 1: Total Inward LRs */}
-        <div className="bg-white p-3.5 sm:p-5 rounded-xl sm:rounded-2xl border border-slate-200/90 border-t-4 border-t-[#0b2545] shadow-xs hover:shadow-md transition-all flex flex-col justify-between">
+        <div className="bg-white p-3.5 sm:p-5 rounded-xl sm:rounded-2xl border border-[#E1E5EE] border-t-4 border-t-[#061944] shadow-xs hover:shadow-md transition-all flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-2 sm:mb-3">
               <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-slate-500 truncate">
                 Total Inward
               </span>
-              <div className="p-1.5 sm:p-2 bg-slate-100 text-[#0b2545] rounded-lg sm:rounded-xl font-bold flex-shrink-0">
+              <div className="p-1.5 sm:p-2 bg-sky-50 text-sky-600 rounded-lg sm:rounded-xl font-bold flex-shrink-0">
                 <ArrowDownLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </div>
             </div>
             <div className="flex items-baseline space-x-1 sm:space-x-2">
-              <span className="text-xl sm:text-3xl font-black text-slate-900 tracking-tight">
+              <span className="text-xl sm:text-3xl font-black text-[#061944] tracking-tight">
                 {totalInwardCount}
               </span>
               <span className="text-[10px] sm:text-xs font-bold text-slate-500">LRs</span>
             </div>
           </div>
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 mt-2.5 pt-2 sm:mt-3 sm:pt-3 border-t border-slate-100 text-[10px] sm:text-xs">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 mt-2.5 pt-2 sm:mt-3 sm:pt-3 border-t border-[#E1E5EE] text-[10px] sm:text-xs">
             <span className="font-semibold text-slate-500 truncate">{totalInwardPackages.toLocaleString()} Pkg</span>
-            <span className="text-[#0b2545] font-black bg-blue-50 px-1.5 sm:px-2 py-0.5 rounded text-[9px] sm:text-[11px] border border-blue-100 w-fit">
+            <span className="text-sky-700 font-black bg-sky-50 border border-sky-200/60 px-2 py-0.5 rounded-md text-[9px] sm:text-[11px] w-fit">
               Inward
             </span>
           </div>
         </div>
 
         {/* Card 2: Pending Stock (Godown) */}
-        <div className="bg-white p-3.5 sm:p-5 rounded-xl sm:rounded-2xl border border-slate-200/90 border-t-4 border-t-orange-500 shadow-xs hover:shadow-md transition-all flex flex-col justify-between">
+        <div className="bg-white p-3.5 sm:p-5 rounded-xl sm:rounded-2xl border border-[#E1E5EE] border-t-4 border-t-[#FF6A00] shadow-xs hover:shadow-md transition-all flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-2 sm:mb-3">
               <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-slate-500 truncate">
                 Pending Stock
               </span>
-              <div className="p-1.5 sm:p-2 bg-orange-500 text-white rounded-lg sm:rounded-xl shadow-xs flex-shrink-0">
+              <div className="p-1.5 sm:p-2 bg-[#FF6A00] text-white rounded-lg sm:rounded-xl shadow-xs flex-shrink-0">
                 <PackageCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </div>
             </div>
             <div className="flex items-baseline space-x-1 sm:space-x-2">
-              <span className="text-xl sm:text-3xl font-black text-orange-600 tracking-tight">
+              <span className="text-xl sm:text-3xl font-black text-[#FF6A00] tracking-tight">
                 {totalPendingCount}
               </span>
               <span className="text-[10px] sm:text-xs font-bold text-slate-500">LRs</span>
             </div>
           </div>
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 mt-2.5 pt-2 sm:mt-3 sm:pt-3 border-t border-slate-100 text-[10px] sm:text-xs">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 mt-2.5 pt-2 sm:mt-3 sm:pt-3 border-t border-[#E1E5EE] text-[10px] sm:text-xs">
             <span className="font-semibold text-slate-500 truncate">{totalPendingPackages.toLocaleString()} Pkg</span>
-            <span className="text-orange-700 font-black bg-orange-50 border border-orange-200/80 px-1.5 sm:px-2 py-0.5 rounded text-[9px] sm:text-[11px] w-fit">
+            <span className="text-[#EA580C] font-black bg-orange-50 border border-orange-200 px-2 py-0.5 rounded-md text-[9px] sm:text-[11px] w-fit">
               Ready
             </span>
           </div>
         </div>
 
         {/* Card 3: Dispatched Today */}
-        <div className="bg-white p-3.5 sm:p-5 rounded-xl sm:rounded-2xl border border-slate-200/90 border-t-4 border-t-emerald-500 shadow-xs hover:shadow-md transition-all flex flex-col justify-between">
+        <div className="bg-white p-3.5 sm:p-5 rounded-xl sm:rounded-2xl border border-[#E1E5EE] border-t-4 border-t-emerald-500 shadow-xs hover:shadow-md transition-all flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-2 sm:mb-3">
               <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-slate-500 truncate">
@@ -950,16 +972,16 @@ export const Dashboard = () => {
               <span className="text-[10px] sm:text-xs font-bold text-slate-500">LRs</span>
             </div>
           </div>
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 mt-2.5 pt-2 sm:mt-3 sm:pt-3 border-t border-slate-100 text-[10px] sm:text-xs">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 mt-2.5 pt-2 sm:mt-3 sm:pt-3 border-t border-[#E1E5EE] text-[10px] sm:text-xs">
             <span className="font-semibold text-slate-500 truncate">{totalDispatchedPackages.toLocaleString()} Pkg</span>
-            <span className="text-emerald-700 font-bold bg-emerald-50 px-1.5 sm:px-2 py-0.5 rounded text-[9px] sm:text-[11px] w-fit">
+            <span className="text-emerald-700 font-bold bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md text-[9px] sm:text-[11px] w-fit">
               {dispatchRate}% Rate
             </span>
           </div>
         </div>
 
         {/* Card 4: Pending Freight (To Pay) */}
-        <div className="bg-white p-3.5 sm:p-5 rounded-xl sm:rounded-2xl border border-slate-200/90 border-t-4 border-t-amber-500 shadow-xs hover:shadow-md transition-all flex flex-col justify-between">
+        <div className="bg-white p-3.5 sm:p-5 rounded-xl sm:rounded-2xl border border-[#E1E5EE] border-t-4 border-t-[#2D3661] shadow-xs hover:shadow-md transition-all flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-2 sm:mb-3">
               <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-slate-500 truncate">
@@ -970,14 +992,14 @@ export const Dashboard = () => {
               </div>
             </div>
             <div className="flex items-baseline space-x-1">
-              <span className="text-lg sm:text-2xl font-black text-slate-900 tracking-tight truncate">
+              <span className="text-lg sm:text-2xl font-black text-[#061944] tracking-tight truncate">
                 {formatCurrency(totalToPayPending)}
               </span>
             </div>
           </div>
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 mt-2.5 pt-2 sm:mt-3 sm:pt-3 border-t border-slate-100 text-[10px] sm:text-xs">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 mt-2.5 pt-2 sm:mt-3 sm:pt-3 border-t border-[#E1E5EE] text-[10px] sm:text-xs">
             <span className="font-semibold text-slate-500 truncate">{pendingStockToPayCount} Vouchers</span>
-            <span className="text-amber-800 font-bold bg-amber-50 border border-amber-200 px-1.5 sm:px-2 py-0.5 rounded text-[9px] sm:text-[11px] w-fit">
+            <span className="text-amber-700 font-bold bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md text-[9px] sm:text-[11px] w-fit">
               Collect
             </span>
           </div>
@@ -1006,13 +1028,13 @@ export const Dashboard = () => {
               </div>
 
               {/* Segmented Filter Pills */}
-              <div className="flex items-center space-x-1 bg-slate-100/90 p-1 rounded-xl text-xs font-bold text-slate-600 overflow-x-auto no-scrollbar w-full sm:w-auto">
+              <div className="flex items-center space-x-1 bg-[#F6F7F9] p-1 rounded-xl text-xs font-bold text-[#2D3661] border border-[#E1E5EE] overflow-x-auto no-scrollbar w-full sm:w-auto">
                 <button
                   onClick={() => setStockTab('all')}
                   className={`flex-1 sm:flex-none text-center whitespace-nowrap px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg transition-all text-[11px] sm:text-xs ${
                     stockTab === 'all'
-                      ? 'bg-[#0b2545] text-white shadow-xs font-black'
-                      : 'hover:text-slate-900'
+                      ? 'bg-[#061944] text-white shadow-xs font-black'
+                      : 'hover:text-[#061944]'
                   }`}
                 >
                   All ({pendingStock.length})
@@ -1021,8 +1043,8 @@ export const Dashboard = () => {
                   onClick={() => setStockTab('priority')}
                   className={`flex-1 sm:flex-none text-center whitespace-nowrap px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg transition-all text-[11px] sm:text-xs ${
                     stockTab === 'priority'
-                      ? 'bg-[#0b2545] text-white shadow-xs font-black'
-                      : 'hover:text-slate-900'
+                      ? 'bg-[#061944] text-white shadow-xs font-black'
+                      : 'hover:text-[#061944]'
                   }`}
                 >
                   Priority ({pendingStock.filter((i) => Number(i.toPayAmount || 0) > 2000).length})
@@ -1031,8 +1053,8 @@ export const Dashboard = () => {
                   onClick={() => setStockTab('heavy')}
                   className={`flex-1 sm:flex-none text-center whitespace-nowrap px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg transition-all text-[11px] sm:text-xs ${
                     stockTab === 'heavy'
-                      ? 'bg-[#0b2545] text-white shadow-xs font-black'
-                      : 'hover:text-slate-900'
+                      ? 'bg-[#061944] text-white shadow-xs font-black'
+                      : 'hover:text-[#061944]'
                   }`}
                 >
                   Heavy ({pendingStock.filter((i) => Number(i.pkg || 0) >= 20).length})
@@ -1093,7 +1115,7 @@ export const Dashboard = () => {
                       <div className="text-xs text-slate-700">
                         <div className="font-bold truncate">
                           {item.consigneeName || 'Consignee'}
-                          {item.ctTo ? <span className="text-orange-600 font-semibold ml-1">({item.ctTo})</span> : ''}
+                          {item.ctTo ? <span className="text-[#3956D4] font-semibold ml-1">({item.ctTo})</span> : ''}
                         </div>
                         {item.consignorName && (
                           <div className="text-[11px] text-slate-400 truncate">
@@ -1260,7 +1282,7 @@ export const Dashboard = () => {
                 {Math.min(5, filteredPending.length)} of {filteredPending.length}
               </span>{' '}
               displayed &bull;{' '}
-              <span className="font-bold text-blue-700">
+              <span className="font-bold text-[#EA580C]">
                 {selectedPackagesCount} Pkg Selected
               </span>
             </div>
@@ -1268,16 +1290,20 @@ export const Dashboard = () => {
             <div className="flex items-center justify-between sm:justify-end space-x-3 w-full sm:w-auto">
               <Link
                 to="/pending"
-                className="text-orange-600 hover:text-orange-700 hover:underline font-bold text-xs"
+                className="text-[#EA580C] hover:text-[#C2410C] hover:underline font-bold text-xs"
               >
                 View All Stock
               </Link>
               <button
                 onClick={handleDispatchSelected}
-                disabled={selectedStockIds.length === 0}
-                className="bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-400 disabled:opacity-40 text-white font-bold px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-xl text-xs shadow-xs transition-all active:scale-[0.98]"
+                className="bg-gradient-to-r from-[#FF7A00] to-[#EA580C] hover:from-[#FF8A00] hover:to-[#C2410C] text-white font-black px-4 py-2 rounded-xl text-xs shadow-md shadow-orange-500/25 transition-all active:scale-[0.98] flex items-center space-x-1.5"
               >
-                Dispatch Selected
+                <span>Dispatch Selected</span>
+                {selectedStockIds.length > 0 && (
+                  <span className="bg-[#9A3412]/60 text-white font-mono text-[10px] px-1.5 py-0.5 rounded-full">
+                    {selectedStockIds.length}
+                  </span>
+                )}
               </button>
             </div>
           </div>
@@ -1383,7 +1409,6 @@ export const Dashboard = () => {
           </div>
         </div>
       </div>
-
       {/* Bottom 3 Facility & Logistics Operations Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 sm:gap-4">
         {/* Card 1: Godown Capacity */}
@@ -1460,7 +1485,7 @@ export const Dashboard = () => {
           return (
             <div className="space-y-4 text-xs text-slate-700">
               {/* Hero Banner */}
-              <div className="bg-gradient-to-r from-[#0b2545] to-[#1a406c] p-4 sm:p-5 rounded-2xl text-white shadow-xs">
+              <div className="bg-gradient-to-r from-[#061944] to-[#2D3661] p-4 sm:p-5 rounded-2xl text-white shadow-xs">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
                     <span className="text-[10px] font-black uppercase tracking-wider text-blue-200">
@@ -1521,7 +1546,7 @@ export const Dashboard = () => {
                     </div>
                     <div>
                       <span className="text-[10px] text-slate-400 font-bold block uppercase">Destination (CT TO)</span>
-                      <span className="font-bold text-orange-600 truncate block">{item.ctTo || '-'}</span>
+                      <span className="font-bold text-[#3956D4] truncate block">{item.ctTo || '-'}</span>
                     </div>
                     <div>
                       <span className="text-[10px] text-slate-400 font-bold block uppercase">Origin Station</span>

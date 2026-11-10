@@ -17,7 +17,7 @@ const MainLayout = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col lg:flex-row overflow-x-hidden w-full max-w-full">
+    <div className="min-h-screen bg-[#F6F7F9] text-[#061944] flex flex-col lg:flex-row overflow-x-hidden w-full max-w-full">
       <Sidebar />
       <div className="flex-1 flex flex-col min-w-0 w-full max-w-full lg:pl-64 overflow-x-hidden">
         <TopHeader />

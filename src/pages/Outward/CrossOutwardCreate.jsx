@@ -511,14 +511,14 @@ export const CrossOutwardCreate = () => {
   return (
     <div className="space-y-5 text-slate-800 max-w-full">
       {/* ROYAL NAVY & ORANGE HERO BANNER */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#07182e] via-[#0b2545] to-[#133e87] p-5 sm:p-6 text-white shadow-xl border border-blue-900/40">
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#061944] via-[#102256] to-[#2D3661] p-5 sm:p-6 text-white shadow-xl border border-blue-900/40">
         <div className="h-1 highway-accent-line absolute top-0 left-0 right-0" />
-        <div className="absolute -top-16 -right-16 w-56 h-56 bg-orange-500/15 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-16 -left-16 w-56 h-56 bg-sky-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -top-16 -right-16 w-56 h-56 bg-[#3956D4]/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-16 -left-16 w-56 h-56 bg-[#2D3661]/40 rounded-full blur-3xl pointer-events-none" />
 
         <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <div className="flex items-center space-x-2 text-[10px] font-extrabold tracking-widest uppercase text-orange-400">
+            <div className="flex items-center space-x-2 text-[10px] font-extrabold tracking-widest uppercase text-[#3956D4]">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
               <span>DIRECT CROSS-DOCK DISPATCH (MANUAL DISPATCH)</span>
               <span className="text-blue-200/50">•</span>
@@ -538,7 +538,7 @@ export const CrossOutwardCreate = () => {
               onClick={() => navigate('/all-entries', { state: { tab: 'cross_outward_headers' } })}
               className="px-4 py-2.5 bg-white/10 hover:bg-white/20 active:bg-white/30 text-white rounded-xl text-xs font-bold transition-all border border-white/20 flex items-center space-x-2 shadow-xs cursor-pointer"
             >
-              <Layers className="w-4 h-4 text-orange-400" />
+              <Layers className="w-4 h-4 text-[#3956D4]" />
               <span>Show All Cross Stock-Out</span>
             </button>
           </div>
@@ -1240,7 +1240,7 @@ export const CrossOutwardCreate = () => {
           <button
             type="button"
             onClick={handleSaveCrossOutward}
-            className="w-full lg:w-auto justify-center px-5 py-2.5 bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-400 text-white font-black text-xs rounded-xl shadow-lg shadow-orange-500/25 flex items-center space-x-1.5 cursor-pointer transition-all active:scale-[0.98]"
+            className="w-full lg:w-auto justify-center px-5 py-2.5 bg-[#3956D4] hover:bg-[#2D3661] text-white font-black text-xs rounded-xl shadow-lg shadow-[#3956D4]/25 flex items-center space-x-1.5 cursor-pointer transition-all active:scale-[0.98]"
           >
             <Save className="w-4 h-4 shrink-0" />
             <span>{editingOutwardId ? 'Update Stock-Out' : 'Save Stock-Out'}</span>

@@ -1,0 +1,455 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.auth-page {
+  min-height: 100vh;
+  background: #F3F4F7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* MAIN LOGIN CARD */
+
+.auth-card {
+  width: 100%;
+  max-width: 1050px;
+  min-height: 600px;
+  display: flex;
+  position: relative;
+  overflow: hidden;
+  border-radius: 26px;
+  background: white;
+  box-shadow: 0 20px 55px rgba(0, 0, 0, 0.12);
+}
+
+/* LEFT FORM */
+
+.auth-form-panel {
+  width: 56%;
+  background: #FFFFFF;
+  padding: 48px 55px 35px;
+  position: relative;
+  z-index: 3;
+}
+
+/* BRAND */
+
+.auth-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 32px;
+}
+
+.small-logo {
+  width: 57px;
+  height: 57px;
+  border: 3px solid #E2E7F8;
+  border-radius: 18px;
+  padding: 5px;
+  background: white;
+}
+
+.small-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.portal-text {
+  font-size: 10px;
+  font-weight: 900;
+  color: #3956D4;
+  letter-spacing: 1px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.green-dot {
+  height: 9px;
+  width: 9px;
+  border-radius: 50%;
+  background: #22C58B;
+}
+
+.brand-details h3 {
+  color: #071A44;
+  font-size: 14px;
+  font-weight: 900;
+  margin-top: 4px;
+}
+
+/* HEADING */
+
+.form-heading {
+  margin-bottom: 25px;
+}
+
+.form-heading h1 {
+  font-size: 31px;
+  color: #061944;
+  font-weight: 900;
+  margin-bottom: 7px;
+}
+
+.form-heading p {
+  font-size: 13px;
+  color: #64748B;
+}
+
+/* ALERT NOTIFICATIONS */
+
+.auth-alert-error {
+  background: #FEF2F2;
+  border: 1px solid rgba(207, 17, 19, 0.3);
+  color: #CF1113;
+  border-radius: 12px;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 14px;
+}
+
+.auth-alert-info {
+  background: #ECFDF5;
+  border: 1px solid #A7F3D0;
+  color: #065F46;
+  border-radius: 12px;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 14px;
+}
+
+/* INPUT FIELDS */
+
+.auth-field {
+  margin-bottom: 19px;
+}
+
+.auth-field label {
+  display: block;
+  color: #152C55;
+  font-size: 12px;
+  font-weight: 900;
+  margin-bottom: 8px;
+}
+
+.auth-input {
+  height: 44px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 12px;
+  border: 1px solid #DCE3EF;
+  background: #F5F7FB;
+  border-radius: 14px;
+}
+
+.auth-input:focus-within {
+  border: 2px solid #526CE0;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(57, 86, 212, 0.10);
+}
+
+.auth-input > span {
+  color: #8195B4;
+  font-size: 18px;
+}
+
+.auth-input input {
+  flex: 1;
+  width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: #111827;
+  font-size: 13px;
+}
+
+.password-toggle {
+  border: none;
+  background: transparent;
+  color: #8294B1;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+/* ORANGE LOGIN BUTTON */
+
+.auth-login-btn {
+  width: 100%;
+  height: 46px;
+  margin-top: 3px;
+  border: none;
+  border-radius: 13px;
+  background: linear-gradient(
+    100deg,
+    #FF9C13,
+    #FF6A00
+  );
+  color: white;
+  font-size: 14px;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: 0 7px 15px rgba(255, 106, 0, 0.22);
+  transition: 0.25s;
+}
+
+.auth-login-btn:hover {
+  background: linear-gradient(
+    100deg,
+    #F68B00,
+    #EA5700
+  );
+}
+
+.auth-login-btn span {
+  margin-right: 7px;
+}
+
+/* REMEMBER + FORGOT */
+
+.auth-options {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.auth-options label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #142B54;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.auth-options input {
+  accent-color: #FF7500;
+  width: 15px;
+  height: 15px;
+}
+
+.forgot-link {
+  background: transparent;
+  border: none;
+  color: #E96900;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+/* FOOTER */
+
+.auth-copyright {
+  margin-top: 52px;
+  color: #92A0B9;
+  font-size: 11px;
+}
+
+/* RIGHT PANEL */
+
+.auth-brand-panel {
+  width: 44%;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(
+    145deg,
+    #071943,
+    #142858,
+    #293867
+  );
+  display: flex;
+  justify-content: center;
+  text-align: center;
+}
+
+/* ORANGE CURVED DIVIDER */
+
+.orange-curve {
+  position: absolute;
+  z-index: 2;
+  left: -72px;
+  top: -15%;
+  width: 145px;
+  height: 130%;
+  border-radius: 50%;
+  background: linear-gradient(
+    180deg,
+    #FF9B15,
+    #FF6500,
+    #FF8C13
+  );
+}
+
+/* RIGHT PANEL CONTENT */
+
+.brand-panel-content {
+  position: relative;
+  z-index: 3;
+  width: 100%;
+  padding: 115px 25px 160px;
+}
+
+/* BIG LOGO */
+
+.big-logo {
+  width: 120px;
+  height: 120px;
+  margin: 0 auto 20px;
+  padding: 9px;
+  border: 5px solid #253B83;
+  border-radius: 32px;
+  background: #FFFFFF;
+}
+
+.big-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.brand-panel-content h2 {
+  color: white;
+  font-size: 22px;
+  font-weight: 900;
+  margin-bottom: 10px;
+}
+
+.brand-panel-content h4 {
+  color: #526EE2;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 1.5px;
+  margin-bottom: 10px;
+}
+
+/* SYSTEM BADGE */
+
+.system-label {
+  display: inline-block;
+  color: white;
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.15);
+  padding: 7px 15px;
+  font-size: 11px;
+  font-weight: 800;
+  border-radius: 25px;
+}
+
+/* HUB DETAILS */
+
+.hub-details {
+  max-width: 330px;
+  margin: 22px auto 0;
+  padding: 18px 12px;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.13);
+  border-radius: 20px;
+}
+
+.hub-details h3 {
+  font-size: 13px;
+  color: white;
+  margin-bottom: 10px;
+}
+
+.hub-details p {
+  font-size: 11px;
+  color: #C5D0E8;
+  line-height: 1.7;
+}
+
+.hub-details h5 {
+  font-size: 11px;
+  color: #C5D0E8;
+  margin-top: 12px;
+}
+
+/* TRUCK IMAGE AT BOTTOM */
+
+.truck-background {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 145px;
+  z-index: 1;
+
+  background:
+    linear-gradient(
+      to bottom,
+      #172A59 0%,
+      rgba(15, 35, 76, 0.15) 65%
+    ),
+    url("/assets/truck-road.jpg") center center / cover no-repeat;
+}
+
+/* TABLET */
+
+@media (max-width: 850px) {
+  .auth-card {
+    max-width: 560px;
+    flex-direction: column;
+  }
+
+  .auth-form-panel,
+  .auth-brand-panel {
+    width: 100%;
+  }
+
+  .auth-form-panel {
+    padding: 35px;
+  }
+
+  .orange-curve {
+    display: none;
+  }
+
+  .brand-panel-content {
+    padding: 50px 20px 160px;
+  }
+}
+
+/* MOBILE */
+
+@media (max-width: 480px) {
+  .auth-page {
+    padding: 10px;
+  }
+
+  .auth-form-panel {
+    padding: 25px 20px;
+  }
+
+  .form-heading h1 {
+    font-size: 26px;
+  }
+
+  .form-heading p {
+    font-size: 11px;
+  }
+
+  .auth-options {
+    flex-wrap: wrap;
+  }
+
+  .auth-copyright {
+    margin-top: 35px;
+  }
+
+  .brand-panel-content h2 {
+    font-size: 19px;
+  }
+}

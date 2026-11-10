@@ -401,14 +401,14 @@ export const Accounting = () => {
   return (
     <div className="space-y-6 text-slate-800 max-w-full">
       {/* Top Header Banner */}
-      <div className="bg-gradient-to-r from-[#07182e] via-[#0b2545] to-[#133e87] rounded-3xl p-6 text-white shadow-xl border border-blue-900/40 flex flex-col md:flex-row md:items-center justify-between gap-4 relative overflow-hidden">
+      <div className="bg-gradient-to-r from-[#061944] via-[#102256] to-[#2D3661] rounded-3xl p-6 text-white shadow-xl border border-blue-900/40 flex flex-col md:flex-row md:items-center justify-between gap-4 relative overflow-hidden">
         <div className="h-1 highway-accent-line absolute top-0 left-0 right-0" />
-        <div className="absolute right-0 top-0 w-80 h-80 bg-orange-500/15 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute right-0 top-0 w-80 h-80 bg-[#3956D4]/20 rounded-full blur-3xl pointer-events-none" />
 
         <div className="space-y-1.5 z-10">
-          <div className="flex items-center space-x-2 text-[10px] font-black tracking-widest uppercase text-orange-400">
+          <div className="flex items-center space-x-2 text-[10px] font-black tracking-widest uppercase text-[#3956D4]">
             <span className="bg-white/10 px-2.5 py-0.5 rounded-full border border-white/20 flex items-center">
-              <Calculator className="w-3.5 h-3.5 mr-1 text-orange-400" />
+              <Calculator className="w-3.5 h-3.5 mr-1 text-[#3956D4]" />
               TRANSPORT FREIGHT ACCOUNTING
             </span>
             <span>&bull; ATHAHAR ROADWAYS SANGLI</span>
@@ -425,7 +425,7 @@ export const Accounting = () => {
 
         {/* Commission Rate Configurator Pill */}
         <div className="bg-white/10 border border-white/20 px-4 py-2.5 rounded-xl flex items-center space-x-3 self-start md:self-auto shadow-sm backdrop-blur-xs z-10">
-          <div className="p-2 bg-gradient-to-r from-orange-600 to-orange-500 text-white rounded-lg font-black shadow-xs">
+          <div className="p-2 bg-[#3956D4] text-white rounded-lg font-black shadow-xs">
             <Percent className="w-4 h-4" />
           </div>
           <div>
@@ -439,7 +439,7 @@ export const Accounting = () => {
                 max="100"
                 value={commissionRate}
                 onChange={(e) => setCommissionRate(Number(e.target.value) || 0)}
-                className="w-16 px-2 py-0.5 bg-white text-slate-900 font-black text-sm rounded border border-slate-300 text-center focus:ring-2 focus:ring-amber-500 focus:outline-hidden"
+                className="w-16 px-2 py-0.5 bg-white text-slate-900 font-black text-sm rounded border border-slate-300 text-center focus:ring-2 focus:ring-[#3956D4] focus:outline-hidden"
               />
               <span className="font-extrabold text-sm text-white">%</span>
             </div>
@@ -466,7 +466,7 @@ export const Accounting = () => {
           </div>
           <div className="mt-2 pt-2 sm:mt-2.5 sm:pt-2 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between text-[10px] sm:text-[11px] font-bold text-slate-500 gap-0.5">
             <span className="truncate">Gross: {formatCurrency(accountingSummary.inwardGrossFreight)}</span>
-            <span className="truncate text-orange-600">Comm: -{formatCurrency(accountingSummary.inwardCommission)}</span>
+            <span className="truncate text-[#7A4F05]">Comm: -{formatCurrency(accountingSummary.inwardCommission)}</span>
           </div>
         </div>
 

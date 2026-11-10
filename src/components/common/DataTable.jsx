@@ -208,9 +208,9 @@ export const DataTable = ({
   };
 
   return (
-    <div className={`bg-white rounded-2xl shadow-2xs border border-slate-200/90 overflow-hidden ${className}`}>
+    <div className={`bg-white rounded-2xl shadow-2xs border border-[#E1E5EE] overflow-hidden ${className}`}>
       {/* Table Filter Controls Header Bar */}
-      <div className="px-4 py-3 bg-slate-50/80 border-b border-slate-200 flex flex-wrap items-center gap-3 text-xs font-bold text-slate-700">
+      <div className="px-4 py-3 bg-[#F6F7F9] border-b border-[#E1E5EE] flex flex-wrap items-center gap-3 text-xs font-bold text-[#2D3661]">
         {/* Date Filter */}
         <div className="flex flex-wrap items-center gap-1.5">
           <Calendar className="w-3.5 h-3.5 text-slate-400" />
@@ -218,7 +218,7 @@ export const DataTable = ({
           <select
             value={dateFilter}
             onChange={(e) => setDateFilter(e.target.value)}
-            className="px-2.5 py-1 bg-white border border-slate-200 rounded-lg font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-600 shadow-2xs text-xs"
+            className="px-2.5 py-1 bg-white border border-[#E1E5EE] rounded-lg font-bold text-[#061944] focus:outline-none focus:ring-2 focus:ring-[#3956D4] shadow-2xs text-xs"
           >
             <option value="ALL">All Dates</option>
             <option value="TODAY">Today</option>
@@ -228,20 +228,20 @@ export const DataTable = ({
           </select>
 
           {dateFilter === 'CUSTOM' && (
-            <div className="flex items-center space-x-1.5 bg-white px-2 py-1 border border-slate-200 rounded-lg shadow-2xs">
+            <div className="flex items-center space-x-1.5 bg-white px-2 py-1 border border-[#E1E5EE] rounded-lg shadow-2xs">
               <span className="text-slate-400 text-[10px]">From</span>
               <input
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                className="px-1 py-0.5 border border-slate-200 rounded text-xs font-semibold text-slate-800"
+                className="px-1 py-0.5 border border-[#E1E5EE] rounded text-xs font-semibold text-[#061944]"
               />
               <span className="text-slate-400 text-[10px]">To</span>
               <input
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
-                className="px-1 py-0.5 border border-slate-200 rounded text-xs font-semibold text-slate-800"
+                className="px-1 py-0.5 border border-[#E1E5EE] rounded text-xs font-semibold text-[#061944]"
               />
             </div>
           )}
@@ -255,7 +255,7 @@ export const DataTable = ({
             <select
               value={transporterFilter}
               onChange={(e) => setTransporterFilter(e.target.value)}
-              className="px-2.5 py-1 bg-white border border-slate-200 rounded-lg font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-600 shadow-2xs text-xs max-w-[170px] truncate cursor-pointer"
+              className="px-2.5 py-1 bg-white border border-[#E1E5EE] rounded-lg font-bold text-[#061944] focus:outline-none focus:ring-2 focus:ring-[#3956D4] shadow-2xs text-xs max-w-[170px] truncate cursor-pointer"
             >
               <option value="ALL">All Transporters</option>
               {transporterOptions.map((tr) => (
@@ -274,7 +274,7 @@ export const DataTable = ({
           <select
             value={stationFilter}
             onChange={(e) => setStationFilter(e.target.value)}
-            className="px-2.5 py-1 bg-white border border-slate-200 rounded-lg font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-600 shadow-2xs text-xs"
+            className="px-2.5 py-1 bg-white border border-[#E1E5EE] rounded-lg font-bold text-[#061944] focus:outline-none focus:ring-2 focus:ring-[#3956D4] shadow-2xs text-xs"
           >
             <option value="ALL">All Stations</option>
             {stationOptions.map((st) => (
@@ -292,7 +292,7 @@ export const DataTable = ({
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-2.5 py-1 bg-white border border-slate-200 rounded-lg font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-600 shadow-2xs text-xs"
+            className="px-2.5 py-1 bg-white border border-[#E1E5EE] rounded-lg font-bold text-[#061944] focus:outline-none focus:ring-2 focus:ring-[#3956D4] shadow-2xs text-xs"
           >
             <option value="ALL">All Status</option>
             <option value="PENDING">PENDING</option>
@@ -308,7 +308,7 @@ export const DataTable = ({
             <select
               value={consignerFilter}
               onChange={(e) => setConsignerFilter(e.target.value)}
-              className="px-2.5 py-1 bg-white border border-slate-200 rounded-lg font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-600 shadow-2xs text-xs max-w-[150px] truncate"
+              className="px-2.5 py-1 bg-white border border-[#E1E5EE] rounded-lg font-bold text-[#061944] focus:outline-none focus:ring-2 focus:ring-[#3956D4] shadow-2xs text-xs max-w-[150px] truncate"
             >
               <option value="ALL">All Consigners</option>
               {consignerOptions.map((c) => (
@@ -327,7 +327,7 @@ export const DataTable = ({
             <select
               value={consigneeFilter}
               onChange={(e) => setConsigneeFilter(e.target.value)}
-              className="px-2.5 py-1 bg-white border border-slate-200 rounded-lg font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-600 shadow-2xs text-xs max-w-[150px] truncate"
+              className="px-2.5 py-1 bg-white border border-[#E1E5EE] rounded-lg font-bold text-[#061944] focus:outline-none focus:ring-2 focus:ring-[#3956D4] shadow-2xs text-xs max-w-[150px] truncate"
             >
               <option value="ALL">All Consignees</option>
               {consigneeOptions.map((c) => (
@@ -356,7 +356,7 @@ export const DataTable = ({
               setStartDate('');
               setEndDate('');
             }}
-            className="text-[11px] text-blue-600 hover:text-blue-800 underline font-bold cursor-pointer ml-auto"
+            className="text-[11px] text-[#3956D4] hover:text-[#2D3661] underline font-bold cursor-pointer ml-auto"
             title="Reset all active filters"
           >
             Reset Filters
@@ -365,7 +365,7 @@ export const DataTable = ({
       </div>
 
       {/* Table Toolbar */}
-      <div className="p-3.5 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white">
+      <div className="p-3.5 border-b border-[#E1E5EE] flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white">
         {searchable && (
           <div className="relative flex-1 max-w-md">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -374,7 +374,7 @@ export const DataTable = ({
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder={searchPlaceholder}
-              className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all shadow-inner"
+              className="w-full pl-9 pr-4 py-2 bg-[#F6F7F9] border border-[#E1E5EE] rounded-xl text-xs font-semibold text-[#061944] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#3956D4] focus:border-[#3956D4] transition-all shadow-inner"
             />
           </div>
         )}
@@ -395,7 +395,7 @@ export const DataTable = ({
               onClick={() => onExportPDF(filteredData)}
               className="inline-flex items-center space-x-1.5 px-3 py-1.5 border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-800 rounded-xl text-xs font-bold transition-all shadow-2xs"
             >
-              <FileText className="w-3.5 h-3.5 text-rose-600" />
+              <FileText className="w-3.5 h-3.5 text-[#CF1113]" />
               <span>Export PDF</span>
             </button>
           )}
@@ -423,7 +423,7 @@ export const DataTable = ({
               <div
                 key={row.id || rowIdx}
                 className={`p-3.5 space-y-2 transition-colors ${
-                  isRowSelected ? 'bg-orange-50/70' : rowIdx % 2 === 1 ? 'bg-slate-50/30' : 'bg-white'
+                  isRowSelected ? 'bg-[#3956D4]/10' : rowIdx % 2 === 1 ? 'bg-[#F6F7F9]/70' : 'bg-white'
                 }`}
               >
                 <div className="flex items-center justify-between">
@@ -433,11 +433,11 @@ export const DataTable = ({
                         type="checkbox"
                         checked={isRowSelected}
                         onChange={() => onSelectRow && onSelectRow(row)}
-                        className="rounded border-slate-300 text-orange-600 focus:ring-orange-500 cursor-pointer flex-shrink-0"
+                        className="rounded border-[#E1E5EE] text-[#3956D4] focus:ring-[#3956D4] cursor-pointer flex-shrink-0"
                       />
                     )}
                     {primaryCol && (
-                      <div className="font-black text-xs text-[#0b2545] truncate">
+                      <div className="font-black text-xs text-[#061944] truncate">
                         {renderCell(row, primaryCol)}
                       </div>
                     )}
@@ -450,7 +450,7 @@ export const DataTable = ({
                 </div>
 
                 {/* 2-column key-value grid for secondary details */}
-                <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs text-slate-700 pt-1">
+                <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs text-[#2D3661] pt-1">
                   {secondaryCols
                     .filter((c) => c.type !== 'status')
                     .map((col, cIdx) => (
@@ -458,7 +458,7 @@ export const DataTable = ({
                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight block truncate">
                           {col.label}
                         </span>
-                        <div className="text-xs font-semibold text-slate-800 truncate">
+                        <div className="text-xs font-semibold text-[#061944] truncate">
                           {renderCell(row, col)}
                         </div>
                       </div>
@@ -467,7 +467,7 @@ export const DataTable = ({
 
                 {/* Actions row */}
                 {actionCol && (
-                  <div className="flex items-center justify-end pt-1.5 border-t border-slate-100">
+                  <div className="flex items-center justify-end pt-1.5 border-t border-[#E1E5EE]">
                     {renderCell(row, actionCol)}
                   </div>
                 )}
@@ -478,9 +478,9 @@ export const DataTable = ({
       </div>
 
       {/* Desktop Table Container (hidden on mobile) */}
-      <div className="hidden sm:block w-full overflow-x-auto scrollbar-thin scrollbar-thumb-slate-300 scrollbar-track-transparent">
-        <table className={`w-full text-slate-800 border-collapse table-${tableLayout}`}>
-          <thead className="bg-slate-100/90 text-[#0b2545] uppercase font-black text-[10px] tracking-wider border-b-2 border-slate-200">
+      <div className="hidden sm:block w-full overflow-x-auto scrollbar-thin scrollbar-thumb-[#E1E5EE] scrollbar-track-transparent">
+        <table className={`w-full text-[#061944] border-collapse table-${tableLayout}`}>
+          <thead className="bg-[#061944] text-white uppercase font-black text-[10px] tracking-wider border-b-2 border-[#3956D4]">
             <tr>
               {selectable && (
                 <th className={`${isCompact ? 'px-1.5 py-2 w-7' : 'p-3 w-8'} text-center`}>
@@ -491,7 +491,7 @@ export const DataTable = ({
                       if (input) input.indeterminate = isSomeSelected;
                     }}
                     onChange={handleSelectAllChange}
-                    className="rounded border-slate-300 text-orange-600 focus:ring-orange-500 cursor-pointer"
+                    className="rounded border-[#E1E5EE] text-[#3956D4] focus:ring-[#3956D4] cursor-pointer"
                   />
                 </th>
               )}
@@ -523,7 +523,7 @@ export const DataTable = ({
             </tr>
           </thead>
 
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-[#E1E5EE]">
             {filteredData.length === 0 ? (
               <tr>
                 <td
@@ -539,8 +539,8 @@ export const DataTable = ({
                 return (
                   <tr
                     key={row.id || rowIdx}
-                    className={`hover:bg-orange-50/40 transition-colors ${
-                      isRowSelected ? 'bg-orange-50/70' : rowIdx % 2 === 1 ? 'bg-slate-50/30' : 'bg-white'
+                    className={`hover:bg-[#E1E5EE]/40 transition-colors ${
+                      isRowSelected ? 'bg-[#3956D4]/10' : rowIdx % 2 === 1 ? 'bg-[#F6F7F9]/50' : 'bg-white'
                     }`}
                   >
                     {selectable && (
@@ -549,7 +549,7 @@ export const DataTable = ({
                           type="checkbox"
                           checked={isRowSelected}
                           onChange={() => onSelectRow && onSelectRow(row)}
-                          className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                          className="rounded border-[#E1E5EE] text-[#3956D4] focus:ring-[#3956D4] cursor-pointer"
                         />
                       </td>
                     )}
@@ -657,7 +657,7 @@ export const DataTable = ({
             const fTextCls = isCompact ? 'text-[10.5px]' : 'text-xs';
 
             return (
-              <tfoot className={`bg-blue-50/80 border-t-2 border-slate-300 font-black text-slate-900 ${fTextCls}`}>
+              <tfoot className={`bg-[#F6F7F9] border-t-2 border-[#E1E5EE] font-black text-[#061944] ${fTextCls}`}>
                 <tr>
                   {selectable && <td className={`${isCompact ? 'px-1.5 py-1.5 w-7' : 'p-3 w-8'}`}></td>}
                   {columns.map((col, colIdx) => {
@@ -667,7 +667,7 @@ export const DataTable = ({
                       return (
                         <td
                           key={colIdx}
-                          className={`${padCls} text-right font-black tracking-wider uppercase text-slate-900 whitespace-nowrap`}
+                          className={`${padCls} text-right font-black tracking-wider uppercase text-[#061944] whitespace-nowrap`}
                         >
                           TOTAL:
                         </td>
@@ -685,7 +685,7 @@ export const DataTable = ({
                         return (
                           <td
                             key={colIdx}
-                            className={`${padCls} font-black text-slate-900 text-center whitespace-nowrap`}
+                            className={`${padCls} font-black text-[#061944] text-center whitespace-nowrap`}
                           >
                             {sum} Pkgs
                           </td>
@@ -695,7 +695,7 @@ export const DataTable = ({
                       return (
                         <td
                           key={colIdx}
-                          className={`${padCls} font-black text-[#1d4ed8] text-right whitespace-nowrap`}
+                          className={`${padCls} font-black text-[#3956D4] text-right whitespace-nowrap`}
                         >
                           {formatCurrency(sum)}
                         </td>
@@ -709,7 +709,7 @@ export const DataTable = ({
                           className={`${isCompact ? 'px-1 py-1.5' : 'px-2 py-2'} text-center whitespace-nowrap`}
                         >
                           <span
-                            className="inline-flex items-center px-2 py-0.5 text-[10px] font-black text-emerald-950 bg-emerald-100 rounded border border-emerald-300 shadow-2xs"
+                            className="inline-flex items-center px-2 py-0.5 text-[10px] font-black text-[#3956D4] bg-[#3956D4]/10 rounded border border-[#3956D4]/30 shadow-2xs"
                             title="Total Freight (To Pay + TBB + Paid)"
                           >
                             Total: {formatCurrency(grandTotalSum)}

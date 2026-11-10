@@ -745,12 +745,12 @@ export const AllEntries = () => {
   return (
     <div className="space-y-5 text-slate-800 max-w-full">
       {/* Top Banner with Logistics Registry details */}
-      <div className="bg-gradient-to-r from-[#07182e] via-[#0b2545] to-[#133e87] rounded-3xl p-6 text-white shadow-xl border border-blue-900/40 flex flex-col md:flex-row md:items-center justify-between gap-4 relative overflow-hidden">
+      <div className="bg-gradient-to-r from-[#061944] via-[#102256] to-[#2D3661] rounded-3xl p-6 text-white shadow-xl border border-blue-900/40 flex flex-col md:flex-row md:items-center justify-between gap-4 relative overflow-hidden">
         <div className="h-1 highway-accent-line absolute top-0 left-0 right-0" />
-        <div className="absolute right-0 top-0 w-80 h-80 bg-orange-500/15 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute right-0 top-0 w-80 h-80 bg-[#3956D4]/20 rounded-full blur-3xl pointer-events-none" />
 
         <div className="space-y-1.5 z-10">
-          <div className="flex items-center space-x-2 text-[10px] font-black tracking-widest uppercase text-orange-400">
+          <div className="flex items-center space-x-2 text-[10px] font-black tracking-widest uppercase text-[#3956D4]">
             <span className="bg-white/10 px-2.5 py-0.5 rounded-full border border-white/20">
               CENTRAL LOGISTICS REGISTRY
             </span>
@@ -758,7 +758,7 @@ export const AllEntries = () => {
           </div>
 
           <h2 className="text-2xl sm:text-3xl font-black tracking-tight flex items-center space-x-2.5 text-white">
-            <ArrowLeftRight className="w-7 h-7 text-orange-400" />
+            <ArrowLeftRight className="w-7 h-7 text-[#3956D4]" />
             <span>All Inward &amp; Outward Entries</span>
           </h2>
 
@@ -770,7 +770,7 @@ export const AllEntries = () => {
         <div className="flex items-center space-x-2.5 flex-shrink-0 z-10">
           <button
             onClick={() => navigate('/inward/new')}
-            className="inline-flex items-center space-x-1.5 bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-400 text-white font-black px-4 py-2.5 rounded-xl text-xs shadow-lg shadow-orange-500/25 transition-all active:scale-[0.98] cursor-pointer"
+            className="inline-flex items-center space-x-1.5 bg-[#3956D4] hover:bg-[#2D3661] text-white font-black px-4 py-2.5 rounded-xl text-xs shadow-lg shadow-[#3956D4]/25 transition-all active:scale-[0.98] cursor-pointer"
           >
             <span>+ New Inward</span>
           </button>
@@ -834,13 +834,13 @@ export const AllEntries = () => {
       {/* Main Tab Controls & Data Table */}
       <div className="space-y-4">
         {/* Tab Selection Buttons */}
-        <div className="flex flex-wrap items-center gap-2.5 border-b border-slate-200 pb-3">
+        <div className="flex flex-wrap items-center gap-2.5 border-b border-[#E1E5EE] pb-3">
           <button
             onClick={() => setActiveTab('all_lrs')}
             className={`px-5 py-2.5 rounded-xl font-black text-xs transition-all flex items-center space-x-2 cursor-pointer shadow-2xs ${
               activeTab === 'all_lrs'
-                ? 'bg-[#1d4ed8] text-white shadow-sm'
-                : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'
+                ? 'bg-[#061944] text-white shadow-sm border border-[#061944]'
+                : 'bg-white text-[#2D3661] hover:bg-[#F6F7F9] border border-[#E1E5EE]'
             }`}
           >
             <Layers className="w-4 h-4" />
@@ -851,8 +851,8 @@ export const AllEntries = () => {
             onClick={() => setActiveTab('inward_headers')}
             className={`px-5 py-2.5 rounded-xl font-black text-xs transition-all flex items-center space-x-2 cursor-pointer shadow-2xs ${
               activeTab === 'inward_headers'
-                ? 'bg-sky-600 text-white shadow-sm'
-                : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'
+                ? 'bg-[#3956D4] text-white shadow-sm border border-[#3956D4]'
+                : 'bg-white text-[#2D3661] hover:bg-[#F6F7F9] border border-[#E1E5EE]'
             }`}
           >
             <ArrowDownLeft className="w-4 h-4" />
@@ -863,8 +863,8 @@ export const AllEntries = () => {
             onClick={() => setActiveTab('outward_headers')}
             className={`px-5 py-2.5 rounded-xl font-black text-xs transition-all flex items-center space-x-2 cursor-pointer shadow-2xs ${
               activeTab === 'outward_headers'
-                ? 'bg-emerald-600 text-white shadow-sm'
-                : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'
+                ? 'bg-[#2D3661] text-white shadow-sm border border-[#2D3661]'
+                : 'bg-white text-[#2D3661] hover:bg-[#F6F7F9] border border-[#E1E5EE]'
             }`}
           >
             <ArrowUpRight className="w-4 h-4" />
@@ -875,8 +875,8 @@ export const AllEntries = () => {
             onClick={() => setActiveTab('stock_out_headers')}
             className={`px-5 py-2.5 rounded-xl font-black text-xs transition-all flex items-center space-x-2 cursor-pointer shadow-2xs ${
               activeTab === 'stock_out_headers'
-                ? 'bg-indigo-600 text-white shadow-sm'
-                : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'
+                ? 'bg-[#7A4F05] text-white shadow-sm border border-[#7A4F05]'
+                : 'bg-white text-[#2D3661] hover:bg-[#F6F7F9] border border-[#E1E5EE]'
             }`}
           >
             <Shuffle className="w-4 h-4" />

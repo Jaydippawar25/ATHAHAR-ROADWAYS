@@ -6,8 +6,8 @@ export const StatusBadge = ({ status }) => {
 
   if (norm === STATUS.PENDING || norm === 'PENDING') {
     return (
-      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black tracking-wider uppercase bg-orange-50 text-orange-700 border border-orange-200/90 whitespace-nowrap shadow-2xs">
-        <span className="w-1.5 h-1.5 rounded-full bg-orange-500 mr-1.5 animate-pulse"></span>
+      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black tracking-wider uppercase bg-[#7A4F05]/10 text-[#7A4F05] border border-[#7A4F05]/30 whitespace-nowrap shadow-2xs">
+        <span className="w-1.5 h-1.5 rounded-full bg-[#7A4F05] mr-1.5 animate-pulse"></span>
         PENDING
       </span>
     );
@@ -22,14 +22,22 @@ export const StatusBadge = ({ status }) => {
   }
   if (norm === STATUS.DISPATCHED || norm === 'DISPATCHED') {
     return (
-      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black tracking-wider uppercase bg-slate-100 text-[#0b2545] border border-slate-300 whitespace-nowrap shadow-2xs">
-        <span className="w-1.5 h-1.5 rounded-full bg-[#0b2545] mr-1.5"></span>
+      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black tracking-wider uppercase bg-[#3956D4]/10 text-[#3956D4] border border-[#3956D4]/30 whitespace-nowrap shadow-2xs">
+        <span className="w-1.5 h-1.5 rounded-full bg-[#3956D4] mr-1.5"></span>
         DISPATCHED
       </span>
     );
   }
+  if (norm === 'CANCELLED' || norm === 'UNPAID') {
+    return (
+      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black tracking-wider uppercase bg-[#CF1113]/10 text-[#CF1113] border border-[#CF1113]/30 whitespace-nowrap shadow-2xs">
+        <span className="w-1.5 h-1.5 rounded-full bg-[#CF1113] mr-1.5"></span>
+        {norm}
+      </span>
+    );
+  }
   return (
-    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-slate-100 text-slate-700 border border-slate-200 whitespace-nowrap">
+    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-[#E1E5EE]/60 text-[#2D3661] border border-[#E1E5EE] whitespace-nowrap">
       {status || '-'}
     </span>
   );
