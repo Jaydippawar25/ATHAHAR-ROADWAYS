@@ -141,6 +141,19 @@ export const InwardCreate = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- Intentionally synchronize only on route state changes
   }, [location.state]);
 
+  // Keep inwardNo in sync with next available serial number when creating new inward
+  useEffect(() => {
+    if (!editingInwardId && !editInwardData) {
+      const nextNo = getNextInwardNo(inwards);
+      setHeaderData((prev) => {
+        if (!prev.inwardNo || prev.inwardNo.startsWith('INW-')) {
+          return { ...prev, inwardNo: nextNo };
+        }
+        return prev;
+      });
+    }
+  }, [inwards, editingInwardId, editInwardData]);
+
   const handleKeyDown = (e, index) => {
     if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
       return;
@@ -655,15 +668,22 @@ export const InwardCreate = () => {
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-4 items-end">
           <div>
-            <label className="block text-[10px] sm:text-[11px] font-extrabold text-slate-600 uppercase mb-1 truncate">
-              Inward No.
-            </label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-[10px] sm:text-[11px] font-extrabold text-slate-600 uppercase truncate">
+                Inward No.
+              </label>
+              <span className="text-[9px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200 uppercase tracking-wider">
+                Auto
+              </span>
+            </div>
             <input
               type="text"
               name="inwardNo"
+              readOnly
+              tabIndex={-1}
               value={headerData.inwardNo}
-              onChange={handleHeaderChange}
-              className="w-full px-2.5 py-1.5 sm:px-3 sm:py-2 border border-slate-200 bg-slate-50/70 rounded-xl text-xs font-black text-[#1d4ed8] font-mono focus:ring-2 focus:ring-[#1d4ed8] outline-none"
+              className="w-full px-2.5 py-1.5 sm:px-3 sm:py-2 border border-slate-200 bg-slate-100 rounded-xl text-xs font-black text-[#1d4ed8] font-mono outline-none cursor-not-allowed select-none"
+              title="Inward No. is auto-incremented and locked"
             />
           </div>
 

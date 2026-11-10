@@ -575,14 +575,21 @@ export const CrossOutwardCreate = () => {
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-4 items-end">
           <div>
-            <label className="block text-[10px] sm:text-[11px] font-extrabold text-slate-600 uppercase mb-1 truncate">
-              NO. (STOCK OUT)
-            </label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-[10px] sm:text-[11px] font-extrabold text-slate-600 uppercase truncate">
+                NO. (STOCK OUT)
+              </label>
+              <span className="text-[9px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200 uppercase tracking-wider">
+                Auto
+              </span>
+            </div>
             <input
               type="text"
+              readOnly
+              tabIndex={-1}
               value={headerData.outwardNo}
-              onChange={(e) => handleHeaderChange('outwardNo', e.target.value)}
-              className="w-full px-2.5 py-1.5 sm:px-3 sm:py-2 border border-slate-200 bg-slate-50/70 rounded-xl text-xs font-black text-[#1d4ed8] font-mono focus:ring-2 focus:ring-[#1d4ed8] outline-none"
+              className="w-full px-2.5 py-1.5 sm:px-3 sm:py-2 border border-slate-200 bg-slate-100 rounded-xl text-xs font-black text-[#1d4ed8] font-mono outline-none cursor-not-allowed select-none"
+              title="Stock-Out No. is auto-incremented and locked"
             />
           </div>
 

@@ -126,12 +126,23 @@ export const getNextOutwardNo = (outwardsList) => {
 };
 
 export const getNextCrossOutwardNo = (outwardsList) => {
-  const list = (outwardsList || getAllOutwards()).filter((item) => item.isCrossOutward);
-  const serialNums = list
+  const list = (outwardsList || getAllOutwards()).filter((item) => item.isCrossOutward || String(item.outwardNo || '').toUpperCase().startsWith('STOCK-OUT'));
+  const outwardItems = getStoredItem(STORAGE_KEYS.OUTWARD_ITEMS, []);
+
+  const fromOutwards = list
     .map((item) => {
       const match = String(item.outwardNo ?? '').match(/(\d+)$/);
       return match ? parseInt(match[1], 10) : NaN;
-    })
+    });
+
+  const fromOutwardItems = (outwardItems || [])
+    .map((item) => {
+      if (!String(item.outwardNo || '').toUpperCase().startsWith('STOCK-OUT')) return NaN;
+      const match = String(item.outwardNo).match(/(\d+)$/);
+      return match ? parseInt(match[1], 10) : NaN;
+    });
+
+  const serialNums = [...fromOutwards, ...fromOutwardItems]
     .filter((num) => !isNaN(num) && num > 0 && num < 1000);
   const nextNum = serialNums.length > 0 ? Math.max(...serialNums) + 1 : 1;
   return `STOCK-OUT-${String(nextNum).padStart(2, '0')}`;

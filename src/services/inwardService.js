@@ -9,11 +9,21 @@ export const getAllInwards = () => {
 
 export const getNextInwardNo = (inwardsList) => {
   const list = inwardsList || getAllInwards();
-  const serialNums = list
+  const inwardItems = getStoredItem(STORAGE_KEYS.INWARD_ITEMS, []);
+
+  const fromInwards = (list || [])
     .map((item) => {
       const match = String(item.inwardNo ?? '').match(/(\d+)$/);
       return match ? parseInt(match[1], 10) : NaN;
-    })
+    });
+
+  const fromItems = (inwardItems || [])
+    .map((item) => {
+      const match = String(item.inwardNo ?? '').match(/(\d+)$/);
+      return match ? parseInt(match[1], 10) : NaN;
+    });
+
+  const serialNums = [...fromInwards, ...fromItems]
     .filter((num) => !isNaN(num) && num > 0 && num < 1000);
   const nextNum = serialNums.length > 0 ? Math.max(...serialNums) + 1 : 1;
   return `INW-${String(nextNum).padStart(2, '0')}`;
