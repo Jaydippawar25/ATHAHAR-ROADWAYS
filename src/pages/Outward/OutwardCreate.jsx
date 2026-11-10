@@ -151,6 +151,19 @@ export const OutwardCreate = () => {
     }
   }, [location.state, masters]);
 
+  // Keep outwardNo in sync with next available serial number when creating new outward
+  useEffect(() => {
+    if (!editingOutwardId && !editOutwardData) {
+      const nextNo = getNextOutwardNo(outwards);
+      setHeaderData((prev) => {
+        if (!prev.outwardNo || prev.outwardNo.startsWith('OUT-')) {
+          return { ...prev, outwardNo: nextNo };
+        }
+        return prev;
+      });
+    }
+  }, [outwards, editingOutwardId, editOutwardData]);
+
   const handleHeaderChange = (e) => {
     const { name, value } = e.target;
     setHeaderData((prev) => ({ ...prev, [name]: value }));

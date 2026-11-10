@@ -29,6 +29,64 @@ export const getAllOutwards = () => {
     }
   }
 
+  // Self-healing: Check inwardItems for any delivered items whose outward header is missing from outwards
+  const inwardItems = getStoredItem(STORAGE_KEYS.INWARD_ITEMS, []);
+  if (Array.isArray(inwardItems)) {
+    const missingByNo = new Map();
+    for (const inwItem of inwardItems) {
+      const outNo = String(inwItem.outwardNo || '').trim();
+      if (!outNo || outNo === '-' || outNo.toUpperCase().startsWith('STOCK-OUT')) continue;
+      const key = outNo.toLowerCase();
+      if (!seenMap.has(key)) {
+        if (!missingByNo.has(key)) missingByNo.set(key, []);
+        missingByNo.get(key).push(inwItem);
+      }
+    }
+
+    if (missingByNo.size > 0) {
+      for (const [key, group] of missingByNo.entries()) {
+        const first = group[0];
+        const outNo = first.outwardNo;
+        const totalQty = group.reduce((s, i) => s + (Number(i.pkg) || 0), 0);
+        const totalToPay = group.reduce((s, i) => s + (Number(i.toPayAmount) || 0), 0);
+        const totalTbb = group.reduce((s, i) => s + (Number(i.tbbAmount) || 0), 0);
+        const totalPaid = group.reduce((s, i) => s + (Number(i.paidAmount) || 0), 0);
+        const consignorName = Array.from(new Set(group.map((i) => i.consignorName).filter(Boolean))).join(', ');
+        const consigneeName = Array.from(new Set(group.map((i) => i.consigneeName).filter(Boolean))).join(', ');
+        const vehicleNo = Array.from(new Set(group.map((i) => i.vehicleNo).filter(Boolean)))[0] || '';
+        const driverName = Array.from(new Set(group.map((i) => i.driverName).filter(Boolean)))[0] || '';
+        const deliveryPersonName = Array.from(new Set(group.map((i) => i.deliveryPersonName).filter(Boolean))).join(', ') || '';
+        const transporterName = Array.from(new Set(group.map((i) => i.transporterName).filter(Boolean)))[0] || '';
+        const date = first.outwardDate || first.date || new Date().toISOString().slice(0, 10);
+        const outwardId = first.outwardId || `out-${Date.now()}`;
+
+        const reconstructedHeader = {
+          id: outwardId,
+          outwardNo: outNo,
+          date,
+          transporterName,
+          vehicleNo,
+          driverName,
+          ownerName: first.ownerName || '',
+          deliveryPersonName,
+          from: first.from || 'SANGLI',
+          memoNo: first.memoNo || '',
+          consignorName,
+          consigneeName,
+          isCrossOutward: false,
+          totalQty,
+          totalToPay,
+          totalTbb,
+          totalPaid,
+          createdAt: first.deliveredAt || new Date().toISOString(),
+          createdBy: first.deliveredBy || 'ATHARVA',
+        };
+        seenMap.set(key, reconstructedHeader);
+        hasDuplicates = true;
+      }
+    }
+  }
+
   const deduplicated = Array.from(seenMap.values());
   if (hasDuplicates && deduplicated.length !== rawList.length) {
     setStoredItem(STORAGE_KEYS.OUTWARDS, deduplicated);
@@ -38,11 +96,30 @@ export const getAllOutwards = () => {
 
 export const getNextOutwardNo = (outwardsList) => {
   const list = (outwardsList || getAllOutwards()).filter((item) => !item.isCrossOutward);
-  const serialNums = list
+  const inwardItems = getStoredItem(STORAGE_KEYS.INWARD_ITEMS, []);
+  const outwardItems = getStoredItem(STORAGE_KEYS.OUTWARD_ITEMS, []);
+
+  const fromOutwards = list
     .map((item) => {
       const match = String(item.outwardNo ?? '').match(/(\d+)$/);
       return match ? parseInt(match[1], 10) : NaN;
-    })
+    });
+
+  const fromInwardItems = (inwardItems || [])
+    .map((item) => {
+      if (!item.outwardNo || String(item.outwardNo).toUpperCase().startsWith('STOCK-OUT')) return NaN;
+      const match = String(item.outwardNo).match(/(\d+)$/);
+      return match ? parseInt(match[1], 10) : NaN;
+    });
+
+  const fromOutwardItems = (outwardItems || [])
+    .map((item) => {
+      if (!item.outwardNo || String(item.outwardNo).toUpperCase().startsWith('STOCK-OUT')) return NaN;
+      const match = String(item.outwardNo).match(/(\d+)$/);
+      return match ? parseInt(match[1], 10) : NaN;
+    });
+
+  const serialNums = [...fromOutwards, ...fromInwardItems, ...fromOutwardItems]
     .filter((num) => !isNaN(num) && num > 0 && num < 1000);
   const nextNum = serialNums.length > 0 ? Math.max(...serialNums) + 1 : 1;
   return `OUT-${String(nextNum).padStart(2, '0')}`;
@@ -84,6 +161,63 @@ export const getAllOutwardItems = () => {
       const currTotal = (Number(item.toPayAmount) || 0) + (Number(item.tbbAmount) || 0) + (Number(item.paidAmount) || 0);
       if (currTotal >= existingTotal) {
         seenMap.set(uniqueKey, { ...existing, ...item });
+      }
+    }
+  }
+
+  // Self-healing: Check inwardItems for any delivered items whose outwardItem entry is missing
+  const inwardItems = getStoredItem(STORAGE_KEYS.INWARD_ITEMS, []);
+  if (Array.isArray(inwardItems)) {
+    for (const inwItem of inwardItems) {
+      const outNo = String(inwItem.outwardNo || '').trim();
+      if (!outNo || outNo === '-' || outNo.toUpperCase().startsWith('STOCK-OUT')) continue;
+      const lrKey = String(inwItem.lrNo || '').trim().toLowerCase();
+      const transKey = String(inwItem.transporterName || '').trim().toLowerCase();
+      const uniqueKey = inwItem.id ? `out-item-${inwItem.id}` : `${outNo.toLowerCase()}__${transKey}__${lrKey}`;
+
+      let alreadyExists = seenMap.has(uniqueKey);
+      if (!alreadyExists) {
+        for (const existing of seenMap.values()) {
+          if (
+            String(existing.outwardNo || '').trim().toLowerCase() === outNo.toLowerCase() &&
+            String(existing.lrNo || '').trim().toLowerCase() === lrKey
+          ) {
+            alreadyExists = true;
+            break;
+          }
+        }
+      }
+
+      if (!alreadyExists) {
+        const reconstructedItem = {
+          id: `out-item-${inwItem.id || Date.now()}`,
+          outwardId: inwItem.outwardId || `out-${outNo}`,
+          outwardNo: outNo,
+          outwardDate: inwItem.outwardDate || inwItem.date || '2026-11-06',
+          vehicleNo: inwItem.vehicleNo || '',
+          driverName: inwItem.driverName || '',
+          ownerName: inwItem.ownerName || '',
+          from: inwItem.from || 'SANGLI',
+          memoNo: inwItem.memoNo || '',
+          isCrossOutward: false,
+          inwardItemId: inwItem.id,
+          lrNo: String(inwItem.lrNo ?? '').trim(),
+          inwardDate: inwItem.inwardDate || inwItem.date,
+          pkg: Number(inwItem.pkg) || 0,
+          invoiceNo: inwItem.invoiceNo || '',
+          ctTo: inwItem.ctTo || '',
+          deliveryPersonName: inwItem.deliveryPersonName || '-',
+          consignorName: inwItem.consignorName || '',
+          consigneeName: inwItem.consigneeName || '',
+          toPayAmount: Number(inwItem.toPayAmount) || 0,
+          tbbAmount: Number(inwItem.tbbAmount) || 0,
+          paidAmount: Number(inwItem.paidAmount) || 0,
+          status: STATUS.DELIVERED,
+          deliveredAt: inwItem.deliveredAt || new Date().toISOString(),
+          deliveredBy: inwItem.deliveredBy || 'ATHARVA',
+        };
+        seenMap.set(uniqueKey, reconstructedItem);
+        hasDuplicates = true;
       }
     }
   }

@@ -169,6 +169,19 @@ export const CrossOutwardCreate = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- Synchronize only when navigation route state changes
   }, [location.state]);
 
+  // Keep outwardNo in sync with next available serial number when creating new cross outward
+  useEffect(() => {
+    if (!editingOutwardId && !editOutwardData) {
+      const nextNo = getNextCrossOutwardNo(outwards);
+      setHeaderData((prev) => {
+        if (!prev.outwardNo || prev.outwardNo.startsWith('STOCK-OUT-')) {
+          return { ...prev, outwardNo: nextNo };
+        }
+        return prev;
+      });
+    }
+  }, [outwards, editingOutwardId, editOutwardData]);
+
   // List of added LR rows
   const [lrItems, setLrItems] = useState([]);
   const [editingIndex, setEditingIndex] = useState(null);
