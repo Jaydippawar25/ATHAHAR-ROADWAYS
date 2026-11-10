@@ -526,41 +526,6 @@ export const InwardCreate = () => {
       }
     }
 
-    if (shouldPrint) {
-      if (editingInwardId || editInwardData) {
-        try {
-          handleUpdateFullInward(
-            editingInwardId || editInwardData?.inwardNo,
-            headerData,
-            finalItems,
-            user?.displayName || 'Operator',
-            allowPendingDuplicates
-          );
-        } catch (err) {
-          // Proceed with printing current form data
-        }
-      }
-
-      printRecordDetails({
-        title: `Inward Receipt Details #${headerData.inwardNo}`,
-        fields: [
-          { label: 'Inward No.', value: headerData.inwardNo },
-          { label: 'Date', value: formatDate(headerData.date) },
-          { label: 'Vehicle No.', value: headerData.vehicleNo || '-' },
-          { label: 'Vehicle Owner', value: headerData.ownerName || '-' },
-          { label: 'Driver Name', value: headerData.driverName || '-' },
-          { label: 'From Station', value: headerData.fromStation || '-' },
-          { label: 'Memo No.', value: headerData.memoNo || '-' },
-          {
-            label: 'Total Freight',
-            value: formatCurrency(totalToPay + totalTbb + totalPaid),
-          },
-        ],
-        items: finalItems,
-      });
-      return;
-    }
-
     try {
       // Automatically register any new manual inputs into Central Masters
       autoRegisterInwardMasters(headerData, finalItems);
@@ -584,13 +549,33 @@ export const InwardCreate = () => {
         setSuccess(`Inward Receipt #${headerData.inwardNo} saved successfully!`);
       }
 
+      if (shouldPrint) {
+        printRecordDetails({
+          title: `Inward Receipt Details #${headerData.inwardNo}`,
+          fields: [
+            { label: 'Inward No.', value: headerData.inwardNo },
+            { label: 'Date', value: formatDate(headerData.date) },
+            { label: 'Vehicle No.', value: headerData.vehicleNo || '-' },
+            { label: 'Vehicle Owner', value: headerData.ownerName || '-' },
+            { label: 'Driver Name', value: headerData.driverName || '-' },
+            { label: 'From Station', value: headerData.fromStation || '-' },
+            { label: 'Memo No.', value: headerData.memoNo || '-' },
+            {
+              label: 'Total Freight',
+              value: formatCurrency(totalToPay + totalTbb + totalPaid),
+            },
+          ],
+          items: finalItems,
+        });
+      }
+
       setTimeout(() => {
         if (location.state?.returnPath) {
           navigate(location.state.returnPath);
         } else {
           navigate('/all-entries', { state: { tab: location.state?.returnTab || 'inward_headers' } });
         }
-      }, 300);
+      }, 500);
     } catch (err) {
       setError(err.message || 'Failed to save Inward transaction.');
     }

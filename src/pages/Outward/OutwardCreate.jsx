@@ -387,48 +387,6 @@ export const OutwardCreate = () => {
       itemsCount: finalItems.length,
     };
 
-    if (shouldPrint) {
-      const targetOutwardNo = String(submitHeader.outwardNo || '').trim().toLowerCase();
-      const existingOutward = outwards.find(
-        (out) =>
-          (editingOutwardId && out.id === editingOutwardId) ||
-          (targetOutwardNo && String(out.outwardNo || '').trim().toLowerCase() === targetOutwardNo)
-      );
-      const resolvedId = editingOutwardId || editOutwardData?.id || existingOutward?.id;
-
-      if (resolvedId) {
-        try {
-          handleUpdateFullOutward(
-            resolvedId,
-            submitHeader,
-            finalItems,
-            user?.displayName || 'Operator'
-          );
-        } catch (err) {
-          // Proceed with printing current form data
-        }
-      }
-
-      printRecordDetails({
-        title: `Outward Dispatch Memo #${submitHeader.outwardNo}`,
-        fields: [
-          { label: 'Outward No.', value: submitHeader.outwardNo },
-          { label: 'Date', value: formatDate(submitHeader.date) },
-          { label: 'Vehicle No.', value: submitHeader.vehicleNo || '-' },
-          { label: 'Transporter', value: submitHeader.transporterName || '-' },
-          { label: 'Driver Name', value: submitHeader.driverName || '-' },
-          { label: 'Delivery Person', value: submitHeader.deliveryPersonName || '-' },
-          { label: 'Origin Station', value: submitHeader.fromStation || '-' },
-          {
-            label: 'Total Freight',
-            value: formatCurrency(totalToPay + totalTbb + totalPaid),
-          },
-        ],
-        items: finalItems,
-      });
-      return;
-    }
-
     try {
       // Auto-register any new manual inputs into Central Masters
       autoRegisterOutwardMasters(submitHeader, finalItems);
@@ -454,13 +412,33 @@ export const OutwardCreate = () => {
         setSuccess(`Outward Receipt #${submitHeader.outwardNo} saved successfully! Status updated to DELIVERED.`);
       }
 
+      if (shouldPrint) {
+        printRecordDetails({
+          title: `Outward Dispatch Memo #${submitHeader.outwardNo}`,
+          fields: [
+            { label: 'Outward No.', value: submitHeader.outwardNo },
+            { label: 'Date', value: formatDate(submitHeader.date) },
+            { label: 'Vehicle No.', value: submitHeader.vehicleNo || '-' },
+            { label: 'Transporter', value: submitHeader.transporterName || '-' },
+            { label: 'Driver Name', value: submitHeader.driverName || '-' },
+            { label: 'Delivery Person', value: submitHeader.deliveryPersonName || '-' },
+            { label: 'Origin Station', value: submitHeader.fromStation || '-' },
+            {
+              label: 'Total Freight',
+              value: formatCurrency(totalToPay + totalTbb + totalPaid),
+            },
+          ],
+          items: finalItems,
+        });
+      }
+
       setTimeout(() => {
         if (location.state?.returnPath) {
           navigate(location.state.returnPath);
         } else {
           navigate('/all-entries', { state: { tab: location.state?.returnTab || 'outward_headers' } });
         }
-      }, 300);
+      }, 500);
     } catch (err) {
       setError(err.message || 'Failed to save Outward transaction.');
     }
