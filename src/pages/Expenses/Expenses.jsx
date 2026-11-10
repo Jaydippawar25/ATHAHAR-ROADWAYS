@@ -209,7 +209,7 @@ export const Expenses = () => {
         const term = searchTerm.toLowerCase().trim();
         const vNo = String(item.voucherNo || '').toLowerCase();
         const cat = String(item.category || '').toLowerCase();
-        const payee = String(item.payeeName || '').toLowerCase();
+        const payee = String(item.payeeName || item.partyName || '').toLowerCase();
         const veh = String(item.vehicleNo || '').toLowerCase();
         const ref = String(item.referenceNo || '').toLowerCase();
         const notes = String(item.notes || '').toLowerCase();
@@ -388,7 +388,7 @@ export const Expenses = () => {
       'Expense Category': e.category,
       'Amount (₹)': Number(e.amount) || 0,
       'Vehicle No': e.vehicleNo || '-',
-      'Paid To / Payee': e.payeeName || '-',
+      'Paid To / Payee': e.payeeName || e.partyName || '-',
       'Payment Mode': e.paymentMode || 'CASH',
       'Ref / Bill No': e.referenceNo || '-',
       'Remarks / Notes': e.notes || '-',
@@ -415,7 +415,7 @@ export const Expenses = () => {
       voucherNo: e.voucherNo,
       category: e.category,
       vehicleNo: e.vehicleNo || '-',
-      payeeName: e.payeeName || '-',
+      payeeName: e.payeeName || e.partyName || '-',
       paymentMode: e.paymentMode,
       amount: formatCurrency(e.amount),
       notes: e.notes || '-',
@@ -889,7 +889,7 @@ export const Expenses = () => {
                     <div>
                       <span className="text-[10px] uppercase font-bold text-slate-400 block">Payee</span>
                       <span className="font-bold text-slate-800 truncate block">
-                        {item.payeeName || '-'}
+                        {item.payeeName || item.partyName || '-'}
                       </span>
                     </div>
                     <div>
@@ -1011,7 +1011,7 @@ export const Expenses = () => {
                         className="py-2 px-2 truncate font-bold text-slate-900 text-[11px]"
                         title={item.payeeName}
                       >
-                        {item.payeeName || <span className="text-slate-400 font-normal">-</span>}
+                        {(item.payeeName || item.partyName) ? (item.payeeName || item.partyName) : <span className="text-slate-400 font-normal">-</span>}
                       </td>
                       <td className="py-2 px-2 whitespace-nowrap text-center">
                         <span
@@ -1330,7 +1330,7 @@ export const Expenses = () => {
               </div>
               <div>
                 <span className="text-[10px] font-bold text-slate-400 uppercase block">Paid To / Payee</span>
-                <span className="font-extrabold text-slate-900">{viewingExpense.payeeName || '-'}</span>
+                <span className="font-extrabold text-slate-900">{viewingExpense.payeeName || viewingExpense.partyName || '-'}</span>
               </div>
               <div>
                 <span className="text-[10px] font-bold text-slate-400 uppercase block">Bill / Ref No.</span>
