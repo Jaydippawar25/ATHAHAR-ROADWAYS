@@ -1,0 +1,141 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-primary-navy: #061944;
+  --color-accent-blue: #3956D4;
+  --color-slate-navy: #2D3661;
+  --color-border: #E1E5EE;
+  --color-bg: #F6F7F9;
+  --color-white: #FFFFFF;
+  --color-red: #CF1113;
+  --color-amber: #7A4F05;
+}
+
+@layer base {
+  html, body, #root {
+    background-color: #F6F7F9;
+    color: #061944;
+    font-family: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+    max-width: 100vw;
+    width: 100%;
+  }
+}
+
+/* Custom print styling */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+}
+
+/* Custom scrollbar matching new color theme */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-button {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+::-webkit-scrollbar-track {
+  background: #F6F7F9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #E1E5EE;
+  border-radius: 9999px;
+  border: 2px solid #F6F7F9;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #2D3661;
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Firefox support */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #E1E5EE #F6F7F9;
+}
+
+/* Utility to hide scrollbars completely across browsers */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Hide blinking text cursor caret line on non-editable elements */
+:root, body, body * {
+  caret-color: transparent;
+}
+
+input, textarea, select, [contenteditable="true"] {
+  caret-color: auto !important;
+}
+
+/* Hide number input spin buttons (up/down arrows) completely across browsers */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none !important;
+  margin: 0 !important;
+  display: none !important;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield !important;
+  appearance: textfield !important;
+}
+
+/* ATHAHAR ROADWAYS Theme Utilities */
+.bg-brand-navy-gradient {
+  background: linear-gradient(135deg, #061944 0%, #152250 50%, #2D3661 100%);
+}
+
+.bg-brand-blue-gradient {
+  background: linear-gradient(135deg, #3956D4 0%, #2D3661 100%);
+}
+
+.bg-brand-orange-gradient {
+  background: linear-gradient(135deg, #3956D4 0%, #2D3661 100%);
+}
+
+.bg-brand-orange-gradient-hover {
+  background: linear-gradient(135deg, #2D3661 0%, #061944 100%);
+}
+
+.highway-accent-line {
+  background: linear-gradient(90deg, #3956D4 0%, #2D3661 50%, #3956D4 100%);
+}
+
+.glow-blue {
+  box-shadow: 0 4px 18px -2px rgba(57, 86, 212, 0.35);
+}
+
+.glow-navy {
+  box-shadow: 0 10px 25px -4px rgba(6, 25, 68, 0.35);
+}
+
+.glow-orange {
+  box-shadow: 0 4px 18px -2px rgba(57, 86, 212, 0.35);
+}
+
+.glass-pill {
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(225, 229, 238, 0.25);
+}

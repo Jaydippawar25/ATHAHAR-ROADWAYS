@@ -1,0 +1,739 @@
+import React, { useState } from 'react';
+import { Search, FileSpreadsheet, FileText, Calendar, MapPin, Tag, Truck } from 'lucide-react';
+import { StatusBadge } from './StatusBadge';
+import { formatDate } from '../../utils/dateUtils';
+import { formatCurrency } from '../../utils/numberUtils';
+
+export const DataTable = ({
+  columns,
+  data = [],
+  searchable = true,
+  searchPlaceholder = 'Search records...',
+  onExportExcel,
+  onExportPDF,
+  actionButtons,
+  selectable = false,
+  selectedIds = [],
+  onSelectRow,
+  onSelectAll,
+  showTotal = true,
+  compact = false,
+  tableLayout = 'auto',
+  className = '',
+}) => {
+  const isCompact = compact || (columns && columns.length >= 10);
+
+  const [searchTerm, setSearchTerm] = useState('');
+  const [dateFilter, setDateFilter] = useState('ALL');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [transporterFilter, setTransporterFilter] = useState('ALL');
+  const [stationFilter, setStationFilter] = useState('ALL');
+  const [statusFilter, setStatusFilter] = useState('ALL');
+  const [consignerFilter, setConsignerFilter] = useState('ALL');
+  const [consigneeFilter, setConsigneeFilter] = useState('ALL');
+
+  // Extract transporter options dynamically from data rows
+  const transporterOptions = Array.from(
+    new Set(
+      data
+        .flatMap((row) => [row.transporterName, row.transporter, row.transporters])
+        .filter(Boolean)
+        .map((s) => (typeof s === 'string' ? s.trim() : ''))
+        .filter((s) => s && s !== '-')
+    )
+  ).sort((a, b) => a.localeCompare(b));
+
+  // Extract station options dynamically from data rows
+  const stationOptions = Array.from(
+    new Set(
+      data
+        .flatMap((row) => [row.from, row.ctTo, row.toStation, row.station, row.fromStation])
+        .filter(Boolean)
+    )
+  );
+
+  // Extract consigner & consignee options dynamically from data rows
+  const consignerOptions = Array.from(
+    new Set(
+      data
+        .flatMap((row) => {
+          const val = row.consignorName || row.consignor || row.consigners;
+          if (typeof val === 'string') return val.split(', ');
+          return [];
+        })
+        .map((s) => s.trim())
+        .filter(Boolean)
+    )
+  );
+
+  const consigneeOptions = Array.from(
+    new Set(
+      data
+        .flatMap((row) => {
+          const val = row.consigneeName || row.consignee || row.consignees;
+          if (typeof val === 'string') return val.split(', ');
+          return [];
+        })
+        .map((s) => s.trim())
+        .filter(Boolean)
+    )
+  );
+
+  const filteredData = data.filter((row) => {
+    // 1. Search term filter
+    if (searchTerm.trim()) {
+      const term = searchTerm.toLowerCase();
+      const matchesSearch = Object.values(row).some((val) =>
+        String(val || '').toLowerCase().includes(term)
+      );
+      if (!matchesSearch) return false;
+    }
+
+    // 2. Date Filter
+    if (dateFilter !== 'ALL') {
+      const rowDateStr = row.date || row.inwardDate || row.outwardDate || row.createdAt;
+      if (rowDateStr) {
+        const rowDateStrClean = String(rowDateStr).split('T')[0];
+        const todayStr = new Date().toISOString().split('T')[0];
+
+        if (dateFilter === 'TODAY') {
+          if (rowDateStrClean !== todayStr) return false;
+        } else if (dateFilter === 'THIS_WEEK') {
+          const rowDateObj = new Date(rowDateStrClean);
+          const todayObj = new Date();
+          const diffDays = (todayObj - rowDateObj) / (1000 * 60 * 60 * 24);
+          if (diffDays < 0 || diffDays > 7) return false;
+        } else if (dateFilter === 'THIS_MONTH') {
+          const rowDateObj = new Date(rowDateStrClean);
+          const todayObj = new Date();
+          const isSameMonth =
+            rowDateObj.getMonth() === todayObj.getMonth() &&
+            rowDateObj.getFullYear() === todayObj.getFullYear();
+          if (!isSameMonth) return false;
+        } else if (dateFilter === 'CUSTOM') {
+          if (startDate && rowDateStrClean < startDate) return false;
+          if (endDate && rowDateStrClean > endDate) return false;
+        }
+      }
+    }
+
+    // 3. Transporter Filter
+    if (transporterFilter !== 'ALL') {
+      const rowTransporter = String(row.transporterName || row.transporter || row.transporters || '');
+      if (!rowTransporter.toLowerCase().includes(transporterFilter.toLowerCase())) return false;
+    }
+
+    // 4. Station Filter
+    if (stationFilter !== 'ALL') {
+      const rowStations = [
+        row.from,
+        row.ctTo,
+        row.toStation,
+        row.station,
+        row.fromStation,
+      ]
+        .filter(Boolean)
+        .map((s) => String(s).toLowerCase());
+      if (!rowStations.some((s) => s.includes(stationFilter.toLowerCase()))) return false;
+    }
+
+    // 4. Status Filter
+    if (statusFilter !== 'ALL') {
+      const rowStatus = String(row.status || '').toUpperCase();
+      if (rowStatus !== statusFilter) return false;
+    }
+
+    // 5. Consigner Filter
+    if (consignerFilter !== 'ALL') {
+      const rowConsigner = String(row.consignorName || row.consignor || row.consigners || '');
+      if (!rowConsigner.toLowerCase().includes(consignerFilter.toLowerCase())) return false;
+    }
+
+    // 6. Consignee Filter
+    if (consigneeFilter !== 'ALL') {
+      const rowConsignee = String(row.consigneeName || row.consignee || row.consignees || '');
+      if (!rowConsignee.toLowerCase().includes(consigneeFilter.toLowerCase())) return false;
+    }
+
+    return true;
+  });
+
+  const handleSelectAllChange = (e) => {
+    if (onSelectAll) {
+      onSelectAll(e.target.checked, filteredData);
+    }
+  };
+
+  const isAllSelected =
+    filteredData.length > 0 && filteredData.every((r) => selectedIds.includes(r.id));
+  const isSomeSelected =
+    filteredData.some((r) => selectedIds.includes(r.id)) && !isAllSelected;
+
+  // Determine which columns are numeric totals
+  const isTotalColumn = (col) => {
+    if (col.type === 'currency' || col.showTotal) return true;
+    const k = (col.key || '').toLowerCase();
+    return (
+      k.includes('pkg') ||
+      k.includes('qty') ||
+      k.includes('topay') ||
+      k.includes('tbb') ||
+      k.includes('paid') ||
+      k.includes('freight') ||
+      k.includes('amount') ||
+      k.includes('money')
+    );
+  };
+
+  const totalColIndices = columns
+    .map((col, idx) => (isTotalColumn(col) ? idx : -1))
+    .filter((idx) => idx !== -1);
+
+  const firstTotalIndex = totalColIndices.length > 0 ? totalColIndices[0] : -1;
+  const labelIndex = firstTotalIndex > 0 ? firstTotalIndex - 1 : 0;
+
+  const renderCell = (row, col) => {
+    let cellVal = row[col.key];
+    if (col.render) {
+      return col.render(row);
+    } else if (col.type === 'status') {
+      return <StatusBadge status={cellVal} />;
+    } else if (col.type === 'currency') {
+      return formatCurrency(cellVal);
+    } else if (col.type === 'date') {
+      return formatDate(cellVal);
+    }
+    return cellVal ?? '-';
+  };
+
+  return (
+    <div className={`bg-white rounded-2xl shadow-2xs border border-[#E1E5EE] overflow-hidden ${className}`}>
+      {/* Table Filter Controls Header Bar */}
+      <div className="px-4 py-3 bg-[#F6F7F9] border-b border-[#E1E5EE] flex flex-wrap items-center gap-3 text-xs font-bold text-[#2D3661]">
+        {/* Date Filter */}
+        <div className="flex flex-wrap items-center gap-1.5">
+          <Calendar className="w-3.5 h-3.5 text-slate-400" />
+          <span className="text-slate-500 font-bold">Date:</span>
+          <select
+            value={dateFilter}
+            onChange={(e) => setDateFilter(e.target.value)}
+            className="px-2.5 py-1 bg-white border border-[#E1E5EE] rounded-lg font-bold text-[#061944] focus:outline-none focus:ring-2 focus:ring-[#3956D4] shadow-2xs text-xs"
+          >
+            <option value="ALL">All Dates</option>
+            <option value="TODAY">Today</option>
+            <option value="THIS_WEEK">This Week</option>
+            <option value="THIS_MONTH">This Month</option>
+            <option value="CUSTOM">Custom Date</option>
+          </select>
+
+          {dateFilter === 'CUSTOM' && (
+            <div className="flex items-center space-x-1.5 bg-white px-2 py-1 border border-[#E1E5EE] rounded-lg shadow-2xs">
+              <span className="text-slate-400 text-[10px]">From</span>
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="px-1 py-0.5 border border-[#E1E5EE] rounded text-xs font-semibold text-[#061944]"
+              />
+              <span className="text-slate-400 text-[10px]">To</span>
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="px-1 py-0.5 border border-[#E1E5EE] rounded text-xs font-semibold text-[#061944]"
+              />
+            </div>
+          )}
+        </div>
+
+        {/* Transporter Filter */}
+        {transporterOptions.length > 0 && (
+          <div className="flex items-center space-x-1.5">
+            <Truck className="w-3.5 h-3.5 text-slate-400" />
+            <span className="text-slate-500 font-bold">Transporter:</span>
+            <select
+              value={transporterFilter}
+              onChange={(e) => setTransporterFilter(e.target.value)}
+              className="px-2.5 py-1 bg-white border border-[#E1E5EE] rounded-lg font-bold text-[#061944] focus:outline-none focus:ring-2 focus:ring-[#3956D4] shadow-2xs text-xs max-w-[170px] truncate cursor-pointer"
+            >
+              <option value="ALL">All Transporters</option>
+              {transporterOptions.map((tr) => (
+                <option key={tr} value={tr}>
+                  {tr}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {/* Station Filter */}
+        <div className="flex items-center space-x-1.5">
+          <MapPin className="w-3.5 h-3.5 text-slate-400" />
+          <span className="text-slate-500 font-bold">Station:</span>
+          <select
+            value={stationFilter}
+            onChange={(e) => setStationFilter(e.target.value)}
+            className="px-2.5 py-1 bg-white border border-[#E1E5EE] rounded-lg font-bold text-[#061944] focus:outline-none focus:ring-2 focus:ring-[#3956D4] shadow-2xs text-xs"
+          >
+            <option value="ALL">All Stations</option>
+            {stationOptions.map((st) => (
+              <option key={st} value={st}>
+                {st}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Status Filter */}
+        <div className="flex items-center space-x-1.5">
+          <Tag className="w-3.5 h-3.5 text-slate-400" />
+          <span className="text-slate-500 font-bold">Status:</span>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="px-2.5 py-1 bg-white border border-[#E1E5EE] rounded-lg font-bold text-[#061944] focus:outline-none focus:ring-2 focus:ring-[#3956D4] shadow-2xs text-xs"
+          >
+            <option value="ALL">All Status</option>
+            <option value="PENDING">PENDING</option>
+            <option value="DELIVERED">DELIVERED</option>
+            <option value="DISPATCHED">DISPATCHED</option>
+          </select>
+        </div>
+
+        {/* Consigner Filter */}
+        {consignerOptions.length > 0 && (
+          <div className="flex items-center space-x-1.5">
+            <span className="text-slate-500 font-bold">Consigner:</span>
+            <select
+              value={consignerFilter}
+              onChange={(e) => setConsignerFilter(e.target.value)}
+              className="px-2.5 py-1 bg-white border border-[#E1E5EE] rounded-lg font-bold text-[#061944] focus:outline-none focus:ring-2 focus:ring-[#3956D4] shadow-2xs text-xs max-w-[150px] truncate"
+            >
+              <option value="ALL">All Consigners</option>
+              {consignerOptions.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {/* Consignee Filter */}
+        {consigneeOptions.length > 0 && (
+          <div className="flex items-center space-x-1.5">
+            <span className="text-slate-500 font-bold">Consignee:</span>
+            <select
+              value={consigneeFilter}
+              onChange={(e) => setConsigneeFilter(e.target.value)}
+              className="px-2.5 py-1 bg-white border border-[#E1E5EE] rounded-lg font-bold text-[#061944] focus:outline-none focus:ring-2 focus:ring-[#3956D4] shadow-2xs text-xs max-w-[150px] truncate"
+            >
+              <option value="ALL">All Consignees</option>
+              {consigneeOptions.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {(dateFilter !== 'ALL' ||
+          transporterFilter !== 'ALL' ||
+          stationFilter !== 'ALL' ||
+          statusFilter !== 'ALL' ||
+          consignerFilter !== 'ALL' ||
+          consigneeFilter !== 'ALL') && (
+          <button
+            onClick={() => {
+              setDateFilter('ALL');
+              setTransporterFilter('ALL');
+              setStationFilter('ALL');
+              setStatusFilter('ALL');
+              setConsignerFilter('ALL');
+              setConsigneeFilter('ALL');
+              setStartDate('');
+              setEndDate('');
+            }}
+            className="text-[11px] text-[#3956D4] hover:text-[#2D3661] underline font-bold cursor-pointer ml-auto"
+            title="Reset all active filters"
+          >
+            Reset Filters
+          </button>
+        )}
+      </div>
+
+      {/* Table Toolbar */}
+      <div className="p-3.5 border-b border-[#E1E5EE] flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white">
+        {searchable && (
+          <div className="relative flex-1 max-w-md">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder={searchPlaceholder}
+              className="w-full pl-9 pr-4 py-2 bg-[#F6F7F9] border border-[#E1E5EE] rounded-xl text-xs font-semibold text-[#061944] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#3956D4] focus:border-[#3956D4] transition-all shadow-inner"
+            />
+          </div>
+        )}
+
+        <div className="flex items-center space-x-2 flex-wrap">
+          {onExportExcel && (
+            <button
+              onClick={() => onExportExcel(filteredData)}
+              className="inline-flex items-center space-x-1.5 px-3 py-1.5 border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 rounded-xl text-xs font-bold transition-all shadow-2xs"
+            >
+              <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Export Excel</span>
+            </button>
+          )}
+
+          {onExportPDF && (
+            <button
+              onClick={() => onExportPDF(filteredData)}
+              className="inline-flex items-center space-x-1.5 px-3 py-1.5 border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-800 rounded-xl text-xs font-bold transition-all shadow-2xs"
+            >
+              <FileText className="w-3.5 h-3.5 text-[#CF1113]" />
+              <span>Export PDF</span>
+            </button>
+          )}
+
+          {actionButtons}
+        </div>
+      </div>
+
+      {/* Mobile Card View (NO Horizontal Scroll on Mobile Screens) */}
+      <div className="sm:hidden divide-y divide-slate-100 bg-white">
+        {filteredData.length === 0 ? (
+          <div className="p-8 text-center text-slate-400 font-medium text-xs">
+            No records found matching filters.
+          </div>
+        ) : (
+          filteredData.map((row, rowIdx) => {
+            const isRowSelected = selectedIds.includes(row.id);
+            const actionCol = columns.find((c) => c.key === 'actions');
+            const dataCols = columns.filter((c) => c.key !== 'actions');
+            const primaryCol = dataCols[0];
+            const statusCol = dataCols.find((c) => c.type === 'status');
+            const secondaryCols = dataCols.slice(1);
+
+            return (
+              <div
+                key={row.id || rowIdx}
+                className={`p-3.5 space-y-2 transition-colors ${
+                  isRowSelected ? 'bg-[#3956D4]/10' : rowIdx % 2 === 1 ? 'bg-[#F6F7F9]/70' : 'bg-white'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2 min-w-0">
+                    {selectable && (
+                      <input
+                        type="checkbox"
+                        checked={isRowSelected}
+                        onChange={() => onSelectRow && onSelectRow(row)}
+                        className="rounded border-[#E1E5EE] text-[#3956D4] focus:ring-[#3956D4] cursor-pointer flex-shrink-0"
+                      />
+                    )}
+                    {primaryCol && (
+                      <div className="font-black text-xs text-[#061944] truncate">
+                        {renderCell(row, primaryCol)}
+                      </div>
+                    )}
+                  </div>
+                  {statusCol && (
+                    <div className="flex-shrink-0">
+                      {renderCell(row, statusCol)}
+                    </div>
+                  )}
+                </div>
+
+                {/* 2-column key-value grid for secondary details */}
+                <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs text-[#2D3661] pt-1">
+                  {secondaryCols
+                    .filter((c) => c.type !== 'status')
+                    .map((col, cIdx) => (
+                      <div key={cIdx} className="min-w-0">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight block truncate">
+                          {col.label}
+                        </span>
+                        <div className="text-xs font-semibold text-[#061944] truncate">
+                          {renderCell(row, col)}
+                        </div>
+                      </div>
+                    ))}
+                </div>
+
+                {/* Actions row */}
+                {actionCol && (
+                  <div className="flex items-center justify-end pt-1.5 border-t border-[#E1E5EE]">
+                    {renderCell(row, actionCol)}
+                  </div>
+                )}
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      {/* Desktop Table Container (hidden on mobile) */}
+      <div className="hidden sm:block w-full overflow-x-auto scrollbar-thin scrollbar-thumb-[#E1E5EE] scrollbar-track-transparent">
+        <table className={`w-full text-[#061944] border-collapse table-${tableLayout}`}>
+          <thead className="bg-[#061944] text-white uppercase font-black text-[10px] tracking-wider border-b-2 border-[#3956D4]">
+            <tr>
+              {selectable && (
+                <th className={`${isCompact ? 'px-1.5 py-2 w-7' : 'p-3 w-8'} text-center`}>
+                  <input
+                    type="checkbox"
+                    checked={isAllSelected}
+                    ref={(input) => {
+                      if (input) input.indeterminate = isSomeSelected;
+                    }}
+                    onChange={handleSelectAllChange}
+                    className="rounded border-[#E1E5EE] text-[#3956D4] focus:ring-[#3956D4] cursor-pointer"
+                  />
+                </th>
+              )}
+
+              {columns.map((col, idx) => {
+                const isAction = col.key === 'actions';
+                const isCenter =
+                  isAction || col.type === 'status' || col.align === 'center' || col.key === 'pkg';
+                const isRight = col.type === 'currency' || col.align === 'right';
+                const alignCls = isRight ? 'text-right' : isCenter ? 'text-center' : 'text-left';
+                const widthCls = col.width
+                  ? col.width
+                  : isAction
+                  ? isCompact
+                    ? 'w-14 min-w-[56px]'
+                    : 'w-20 min-w-[76px]'
+                  : '';
+                const thPadding = isCompact ? 'px-1.5 py-2 text-[10px]' : 'px-3 py-3 text-[11px]';
+
+                return (
+                  <th
+                    key={idx}
+                    className={`${thPadding} ${alignCls} ${widthCls} whitespace-nowrap select-none`}
+                  >
+                    {col.label}
+                  </th>
+                );
+              })}
+            </tr>
+          </thead>
+
+          <tbody className="divide-y divide-[#E1E5EE]">
+            {filteredData.length === 0 ? (
+              <tr>
+                <td
+                  colSpan={columns.length + (selectable ? 1 : 0)}
+                  className="p-8 text-center text-slate-400 font-medium text-xs"
+                >
+                  No records found matching filters.
+                </td>
+              </tr>
+            ) : (
+              filteredData.map((row, rowIdx) => {
+                const isRowSelected = selectedIds.includes(row.id);
+                return (
+                  <tr
+                    key={row.id || rowIdx}
+                    className={`hover:bg-[#E1E5EE]/40 transition-colors ${
+                      isRowSelected ? 'bg-[#3956D4]/10' : rowIdx % 2 === 1 ? 'bg-[#F6F7F9]/50' : 'bg-white'
+                    }`}
+                  >
+                    {selectable && (
+                      <td className={`${isCompact ? 'px-1.5 py-1.5 w-7' : 'p-3 w-8'} text-center`}>
+                        <input
+                          type="checkbox"
+                          checked={isRowSelected}
+                          onChange={() => onSelectRow && onSelectRow(row)}
+                          className="rounded border-[#E1E5EE] text-[#3956D4] focus:ring-[#3956D4] cursor-pointer"
+                        />
+                      </td>
+                    )}
+
+                    {columns.map((col, colIdx) => {
+                      let cellVal = row[col.key];
+
+                      if (col.render) {
+                        cellVal = col.render(row);
+                      } else if (col.type === 'status') {
+                        cellVal = <StatusBadge status={cellVal} />;
+                      } else if (col.type === 'currency') {
+                        cellVal = formatCurrency(cellVal);
+                      } else if (col.type === 'date') {
+                        cellVal = formatDate(cellVal);
+                      }
+
+                      const isAction = col.key === 'actions';
+                      const isCenter =
+                        isAction || col.type === 'status' || col.align === 'center' || col.key === 'pkg';
+                      const isRight = col.type === 'currency' || col.align === 'right';
+                      const isNumOrDate =
+                        col.nowrap ||
+                        col.type === 'status' ||
+                        col.type === 'currency' ||
+                        col.type === 'date' ||
+                        col.key === 'type' ||
+                        col.key === 'receiptNo' ||
+                        col.key === 'lrNo' ||
+                        col.key === 'inwardNo' ||
+                        col.key === 'outwardNo' ||
+                        col.key === 'vehicleNo' ||
+                        col.key === 'pkg' ||
+                        col.key === 'totalQty' ||
+                        col.key === 'srNo';
+
+                      const paddingCls = isCompact ? 'px-1.5 py-1.5' : 'px-3 py-2.5';
+                      const textCls = isCompact ? 'text-[10.5px]' : 'text-xs';
+                      const alignCls = isRight ? 'text-right font-black' : isCenter ? 'text-center' : 'text-left';
+                      const isBadgeCol = col.type === 'status' || col.key === 'type';
+                      const wrapCls =
+                        isAction || isRight || isCenter || isNumOrDate || isBadgeCol
+                          ? 'whitespace-nowrap'
+                          : 'truncate';
+                      const widthCls = col.width
+                        ? col.width
+                        : isAction
+                        ? isCompact
+                          ? 'w-14 min-w-[56px]'
+                          : 'w-20 min-w-[76px]'
+                        : col.type === 'status'
+                        ? isCompact ? 'min-w-[68px]' : 'min-w-[96px]'
+                        : col.key === 'type'
+                        ? 'min-w-[105px]'
+                        : isNumOrDate
+                        ? 'whitespace-nowrap'
+                        : isCompact
+                        ? 'max-w-[100px] truncate'
+                        : 'max-w-[140px] truncate';
+
+                      return (
+                        <td
+                          key={colIdx}
+                          className={`${paddingCls} font-semibold text-slate-800 ${textCls} leading-snug ${alignCls} ${wrapCls} ${widthCls} ${
+                            col.className || ''
+                          }`}
+                          title={!col.render && typeof row[col.key] === 'string' ? row[col.key] : undefined}
+                        >
+                          {cellVal ?? '-'}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                );
+              })
+            )}
+          </tbody>
+
+          {/* TOTAL Summary Footer Row */}
+          {showTotal && filteredData.length > 0 && (() => {
+            const grandTotalSum = filteredData.reduce((acc, curr) => {
+              const toPay = Number(curr.toPayAmount ?? curr.totalToPay) || 0;
+              const tbb = Number(curr.tbbAmount ?? curr.totalTbb) || 0;
+              const paid = Number(curr.paidAmount ?? curr.totalPaid) || 0;
+              const sum = toPay + tbb + paid;
+              return acc + (sum || Number(curr.totalFreight || curr.freight) || 0);
+            }, 0);
+
+            const lastTotalIndex =
+              totalColIndices.length > 0 ? totalColIndices[totalColIndices.length - 1] : -1;
+            const hasExplicitTotalCol = columns.some((c) =>
+              ['totalfreight', 'totalmoney', 'grandtotal', 'netamount'].includes(
+                (c.key || '').toLowerCase()
+              )
+            );
+            const grandTotalColIndex =
+              !hasExplicitTotalCol &&
+              lastTotalIndex !== -1 &&
+              lastTotalIndex + 1 < columns.length &&
+              columns[lastTotalIndex + 1].key !== 'actions'
+                ? lastTotalIndex + 1
+                : -1;
+
+            const padCls = isCompact ? 'px-1.5 py-1.5' : 'px-3 py-2.5';
+            const fTextCls = isCompact ? 'text-[10.5px]' : 'text-xs';
+
+            return (
+              <tfoot className={`bg-[#F6F7F9] border-t-2 border-[#E1E5EE] font-black text-[#061944] ${fTextCls}`}>
+                <tr>
+                  {selectable && <td className={`${isCompact ? 'px-1.5 py-1.5 w-7' : 'p-3 w-8'}`}></td>}
+                  {columns.map((col, colIdx) => {
+                    const isAction = col.key === 'actions';
+
+                    if (colIdx === labelIndex) {
+                      return (
+                        <td
+                          key={colIdx}
+                          className={`${padCls} text-right font-black tracking-wider uppercase text-[#061944] whitespace-nowrap`}
+                        >
+                          TOTAL:
+                        </td>
+                      );
+                    }
+
+                    if (isTotalColumn(col)) {
+                      const k = (col.key || '').toLowerCase();
+                      const sum = filteredData.reduce(
+                        (acc, curr) => acc + (Number(curr[col.key]) || 0),
+                        0
+                      );
+
+                      if (k.includes('pkg') || k.includes('qty')) {
+                        return (
+                          <td
+                            key={colIdx}
+                            className={`${padCls} font-black text-[#061944] text-center whitespace-nowrap`}
+                          >
+                            {sum} Pkgs
+                          </td>
+                        );
+                      }
+
+                      return (
+                        <td
+                          key={colIdx}
+                          className={`${padCls} font-black text-[#3956D4] text-right whitespace-nowrap`}
+                        >
+                          {formatCurrency(sum)}
+                        </td>
+                      );
+                    }
+
+                    if (colIdx === grandTotalColIndex) {
+                      return (
+                        <td
+                          key={colIdx}
+                          className={`${isCompact ? 'px-1 py-1.5' : 'px-2 py-2'} text-center whitespace-nowrap`}
+                        >
+                          <span
+                            className="inline-flex items-center px-2 py-0.5 text-[10px] font-black text-[#3956D4] bg-[#3956D4]/10 rounded border border-[#3956D4]/30 shadow-2xs"
+                            title="Total Freight (To Pay + TBB + Paid)"
+                          >
+                            Total: {formatCurrency(grandTotalSum)}
+                          </span>
+                        </td>
+                      );
+                    }
+
+                    const widthCls = col.width
+                      ? col.width
+                      : isAction
+                      ? isCompact
+                        ? 'w-14 min-w-[56px]'
+                        : 'w-20 min-w-[76px]'
+                      : '';
+
+                    return <td key={colIdx} className={`${padCls} ${widthCls}`}></td>;
+                  })}
+                </tr>
+              </tfoot>
+            );
+          })()}
+        </table>
+      </div>
+    </div>
+  );
+};

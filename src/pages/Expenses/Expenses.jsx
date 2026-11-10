@@ -1,0 +1,1347 @@
+import React, { useState, useMemo, useCallback } from 'react';
+import { useApp } from '../../context/AppContext';
+import { useAuth } from '../../context/AuthContext';
+import {
+  Receipt,
+  Plus,
+  Fuel,
+  Wrench,
+  Navigation,
+  Users,
+  Package,
+  ArrowDownToLine,
+  ArrowUpFromLine,
+  MoreHorizontal,
+  FileSpreadsheet,
+  FileText,
+  Search,
+  Eye,
+  Edit2,
+  Trash2,
+  CheckCircle2,
+  AlertCircle,
+  IndianRupee,
+  Wallet,
+  ShieldCheck,
+  MapPin,
+} from 'lucide-react';
+import { Modal } from '../../components/common/Modal';
+import { EditableCombobox } from '../../components/common/EditableCombobox';
+import {
+  EXPENSE_CATEGORIES,
+  PAYMENT_MODES,
+  getNextExpenseVoucherNo,
+} from '../../services/expenseService';
+import { exportToExcel, exportToPDF } from '../../services/exportService';
+import { formatDate, getTodayDateString } from '../../utils/dateUtils';
+import { formatCurrency } from '../../utils/numberUtils';
+
+export const Expenses = () => {
+  const {
+    expenses,
+    masters,
+    handleCreateExpense,
+    handleUpdateExpense,
+    handleDeleteExpense,
+    handleClearAllExpenses,
+    handleEnsureMasterItem,
+  } = useApp();
+  const { user } = useAuth();
+
+  // Search & Filter States
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('ALL');
+  const [selectedVehicle, setSelectedVehicle] = useState('ALL');
+  const [selectedPaymentMode, setSelectedPaymentMode] = useState('ALL');
+  const [dateFilter, setDateFilter] = useState('all'); // 'all' | 'today' | 'week' | 'month' | 'custom'
+  const [customStartDate, setCustomStartDate] = useState('');
+  const [customEndDate, setCustomEndDate] = useState('');
+
+  // Modals & Forms
+  const [isAddEditModalOpen, setIsAddEditModalOpen] = useState(false);
+  const [editingExpenseId, setEditingExpenseId] = useState(null);
+  const [viewingExpense, setViewingExpense] = useState(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState(null);
+  const [deleteConfirmItem, setDeleteConfirmItem] = useState(null);
+  const [isClearAllModalOpen, setIsClearAllModalOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const [formError, setFormError] = useState('');
+  const [formSuccess, setFormSuccess] = useState('');
+
+  // Add / Edit Form State
+  const initialFormState = {
+    voucherNo: '',
+    date: getTodayDateString(),
+    category: 'RTO and Insurance',
+    amount: '',
+    vehicleNo: '',
+    payeeName: '',
+    paymentMode: 'CASH',
+    referenceNo: '',
+    notes: '',
+  };
+
+  const [formData, setFormData] = useState(initialFormState);
+
+  // Category Configuration (Icon & Theme)
+  const categoryConfig = {
+    'RTO and Insurance': {
+      icon: ShieldCheck,
+      color: 'text-purple-700 bg-purple-50 border-purple-200',
+      badge: 'bg-purple-100 text-purple-800 border-purple-300',
+      cardBorder: 'border-l-4 border-l-purple-500',
+    },
+    'Local': {
+      icon: MapPin,
+      color: 'text-amber-700 bg-amber-50 border-amber-200',
+      badge: 'bg-amber-100 text-amber-800 border-amber-300',
+      cardBorder: 'border-l-4 border-l-amber-500',
+    },
+    'Salary': {
+      icon: Users,
+      color: 'text-emerald-700 bg-emerald-50 border-emerald-200',
+      badge: 'bg-emerald-100 text-emerald-800 border-emerald-300',
+      cardBorder: 'border-l-4 border-l-emerald-500',
+    },
+    'Diesel / Fuel Expense': {
+      icon: Fuel,
+      color: 'text-amber-700 bg-amber-50 border-amber-200',
+      badge: 'bg-amber-100 text-amber-800 border-amber-300',
+      cardBorder: 'border-l-4 border-l-amber-500',
+    },
+    'Vehicle Maintenance': {
+      icon: Wrench,
+      color: 'text-rose-700 bg-rose-50 border-rose-200',
+      badge: 'bg-rose-100 text-rose-800 border-rose-300',
+      cardBorder: 'border-l-4 border-l-rose-500',
+    },
+    'Toll and Road Charges': {
+      icon: Navigation,
+      color: 'text-purple-700 bg-purple-50 border-purple-200',
+      badge: 'bg-purple-100 text-purple-800 border-purple-300',
+      cardBorder: 'border-l-4 border-l-purple-500',
+    },
+    'Driver and Helper Expenses': {
+      icon: Users,
+      color: 'text-sky-700 bg-sky-50 border-sky-200',
+      badge: 'bg-sky-100 text-sky-800 border-sky-300',
+      cardBorder: 'border-l-4 border-l-sky-500',
+    },
+    'Loading Expense': {
+      icon: ArrowUpFromLine,
+      color: 'text-emerald-700 bg-emerald-50 border-emerald-200',
+      badge: 'bg-emerald-100 text-emerald-800 border-emerald-300',
+      cardBorder: 'border-l-4 border-l-emerald-500',
+    },
+    'Unloading Expense': {
+      icon: ArrowDownToLine,
+      color: 'text-teal-700 bg-teal-50 border-teal-200',
+      badge: 'bg-teal-100 text-teal-800 border-teal-300',
+      cardBorder: 'border-l-4 border-l-teal-500',
+    },
+    'Loading and Unloading': {
+      icon: Package,
+      color: 'text-emerald-700 bg-emerald-50 border-emerald-200',
+      badge: 'bg-emerald-100 text-emerald-800 border-emerald-300',
+      cardBorder: 'border-l-4 border-l-emerald-500',
+    },
+    'Other Expenses': {
+      icon: MoreHorizontal,
+      color: 'text-slate-700 bg-slate-50 border-slate-200',
+      badge: 'bg-slate-100 text-slate-800 border-slate-300',
+      cardBorder: 'border-l-4 border-l-slate-500',
+    },
+  };
+
+  // Dynamic fallback for any category config
+  const getCategoryConfig = useCallback(
+    (catName) => {
+      if (catName && categoryConfig[catName]) return categoryConfig[catName];
+      return {
+        icon: Receipt,
+        color: 'text-indigo-700 bg-indigo-50 border-indigo-200',
+        badge: 'bg-indigo-100 text-indigo-800 border-indigo-300',
+        cardBorder: 'border-l-4 border-l-indigo-500',
+      };
+    },
+    []
+  );
+
+  // Dynamic Category Options: includes defaults, masters.expenseCategories, and any existing expense records
+  const categoryOptions = useMemo(() => {
+    const defaultList = ['RTO and Insurance', 'Local', 'Salary'];
+    const set = new Set();
+    const result = [];
+
+    const addCat = (item) => {
+      const val = typeof item === 'string' ? item.trim() : item?.name?.trim();
+      if (!val) return;
+      const lower = val.toLowerCase();
+      if (!set.has(lower)) {
+        set.add(lower);
+        result.push({
+          id: item?.id || `ec-${lower.replace(/\s+/g, '-')}`,
+          name: val,
+        });
+      }
+    };
+
+    defaultList.forEach(addCat);
+    (masters.expenseCategories || []).forEach(addCat);
+    (expenses || []).forEach((e) => addCat(e.category));
+
+    return result;
+  }, [masters.expenseCategories, expenses]);
+
+  // Helper for Date Filtering
+  const isDateInFilter = useCallback(
+    (dateStr) => {
+      if (!dateStr) return true;
+      if (dateFilter === 'all') return true;
+
+      const d = new Date(dateStr);
+      const now = new Date();
+      if (isNaN(d.getTime())) return true;
+
+      if (dateFilter === 'today') {
+        return d.toDateString() === now.toDateString();
+      }
+      if (dateFilter === 'week') {
+        const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        return d >= oneWeekAgo && d <= now;
+      }
+      if (dateFilter === 'month') {
+        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+      }
+      if (dateFilter === 'custom') {
+        if (customStartDate && d < new Date(customStartDate)) return false;
+        if (customEndDate && d > new Date(customEndDate + 'T23:59:59')) return false;
+        return true;
+      }
+      return true;
+    },
+    [dateFilter, customStartDate, customEndDate]
+  );
+
+  // Filtered Expense Records
+  const filteredExpenses = useMemo(() => {
+    return (expenses || []).filter((item) => {
+      // Date Filter
+      if (!isDateInFilter(item.date)) return false;
+
+      // Category Filter
+      if (selectedCategory !== 'ALL' && item.category !== selectedCategory) return false;
+
+      // Vehicle Filter
+      if (selectedVehicle !== 'ALL' && item.vehicleNo !== selectedVehicle) return false;
+
+      // Payment Mode Filter
+      if (selectedPaymentMode !== 'ALL' && item.paymentMode !== selectedPaymentMode) return false;
+
+      // Search Query
+      if (searchTerm.trim()) {
+        const term = searchTerm.toLowerCase().trim();
+        const vNo = String(item.voucherNo || '').toLowerCase();
+        const cat = String(item.category || '').toLowerCase();
+        const payee = String(item.payeeName || '').toLowerCase();
+        const veh = String(item.vehicleNo || '').toLowerCase();
+        const ref = String(item.referenceNo || '').toLowerCase();
+        const notes = String(item.notes || '').toLowerCase();
+
+        return (
+          vNo.includes(term) ||
+          cat.includes(term) ||
+          payee.includes(term) ||
+          veh.includes(term) ||
+          ref.includes(term) ||
+          notes.includes(term)
+        );
+      }
+
+      return true;
+    });
+  }, [
+    expenses,
+    searchTerm,
+    selectedCategory,
+    selectedVehicle,
+    selectedPaymentMode,
+    isDateInFilter,
+  ]);
+
+  // Aggregate Category Totals
+  const categoryTotals = useMemo(() => {
+    const totals = {
+      total: 0,
+      'RTO and Insurance': 0,
+      'Local': 0,
+      'Salary': 0,
+    };
+
+    filteredExpenses.forEach((item) => {
+      const amt = Number(item.amount) || 0;
+      totals.total += amt;
+      if (totals[item.category] !== undefined) {
+        totals[item.category] += amt;
+      }
+    });
+
+    return totals;
+  }, [filteredExpenses]);
+
+  // Unique Vehicles present in expenses or masters
+  const vehicleOptions = useMemo(() => {
+    const set = new Set();
+    (masters.vehicles || []).forEach((v) => {
+      if (v.vehicleNo) set.add(v.vehicleNo);
+    });
+    (expenses || []).forEach((e) => {
+      if (e.vehicleNo) set.add(e.vehicleNo);
+    });
+    return Array.from(set).sort();
+  }, [masters.vehicles, expenses]);
+
+  // Open Create Modal
+  const handleOpenCreateModal = () => {
+    setEditingExpenseId(null);
+    setFormData({
+      voucherNo: getNextExpenseVoucherNo(expenses),
+      date: getTodayDateString(),
+      category: selectedCategory !== 'ALL' ? selectedCategory : 'RTO and Insurance',
+      amount: '',
+      vehicleNo: '',
+      payeeName: '',
+      paymentMode: 'CASH',
+      referenceNo: '',
+      notes: '',
+    });
+    setFormError('');
+    setFormSuccess('');
+    setIsAddEditModalOpen(true);
+  };
+
+  // Open Edit Modal
+  const handleOpenEditModal = (item) => {
+    setEditingExpenseId(item.id);
+    setFormData({
+      voucherNo: item.voucherNo || '',
+      date: item.date || getTodayDateString(),
+      category: item.category || 'RTO and Insurance',
+      amount: item.amount || '',
+      vehicleNo: item.vehicleNo || '',
+      payeeName: item.payeeName || '',
+      paymentMode: item.paymentMode || 'CASH',
+      referenceNo: item.referenceNo || '',
+      notes: item.notes || '',
+    });
+    setFormError('');
+    setFormSuccess('');
+    setIsAddEditModalOpen(true);
+  };
+
+  // Form Submit (Create / Update)
+  const handleSaveForm = (e) => {
+    e.preventDefault();
+    setFormError('');
+    setFormSuccess('');
+
+    if (!formData.amount || Number(formData.amount) <= 0) {
+      setFormError('Please enter a valid expense amount greater than 0.');
+      return;
+    }
+
+    if (!formData.category || !String(formData.category).trim()) {
+      setFormError('Please select or enter an expense category.');
+      return;
+    }
+
+    const cleanCategory = String(formData.category).trim();
+
+    // Auto-save manual category into masters so it appears in the dropdown permanently
+    if (handleEnsureMasterItem) {
+      handleEnsureMasterItem('expenseCategories', cleanCategory);
+    }
+
+    try {
+      if (editingExpenseId) {
+        handleUpdateExpense(editingExpenseId, formData, user?.displayName || 'Administrator');
+        setFormSuccess('Expense record updated successfully!');
+      } else {
+        handleCreateExpense(formData, user?.displayName || 'Administrator');
+        setFormSuccess('Expense record created successfully!');
+      }
+
+      setTimeout(() => {
+        setIsAddEditModalOpen(false);
+      }, 400);
+    } catch (err) {
+      setFormError(err.message || 'Failed to save expense record.');
+    }
+  };
+
+  // Delete Expense Record
+  const handleConfirmDelete = async () => {
+    const targetId = deleteConfirmId || deleteConfirmItem?.id || deleteConfirmItem?.voucherNo;
+    if (!targetId) return;
+    setIsDeleting(true);
+    try {
+      await handleDeleteExpense(targetId);
+      setDeleteConfirmId(null);
+      setDeleteConfirmItem(null);
+    } catch (err) {
+      alert('Failed to delete expense: ' + err.message);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  // Clear All Expense Records
+  const handleConfirmClearAll = async () => {
+    setIsDeleting(true);
+    try {
+      await handleClearAllExpenses();
+      setIsClearAllModalOpen(false);
+    } catch (err) {
+      alert('Failed to clear expenses: ' + err.message);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  // Export to Excel
+  const handleExportExcel = () => {
+    const exportData = filteredExpenses.map((e, idx) => ({
+      'Sr No': idx + 1,
+      'Voucher No': e.voucherNo,
+      'Date': formatDate(e.date),
+      'Expense Category': e.category,
+      'Amount (₹)': Number(e.amount) || 0,
+      'Vehicle No': e.vehicleNo || '-',
+      'Paid To / Payee': e.payeeName || '-',
+      'Payment Mode': e.paymentMode || 'CASH',
+      'Ref / Bill No': e.referenceNo || '-',
+      'Remarks / Notes': e.notes || '-',
+      'Recorded By': e.createdBy || '-',
+    }));
+    exportToExcel(exportData, `Athahar_Expenses_${getTodayDateString()}`);
+  };
+
+  // Export to PDF
+  const handleExportPDF = () => {
+    const title = 'ATHAHAR ROADWAYS - EXPENSE SUMMARY REPORT';
+    const columns = [
+      { header: 'Date', dataKey: 'date' },
+      { header: 'Voucher', dataKey: 'voucherNo' },
+      { header: 'Category', dataKey: 'category' },
+      { header: 'Vehicle', dataKey: 'vehicleNo' },
+      { header: 'Paid To', dataKey: 'payeeName' },
+      { header: 'Mode', dataKey: 'paymentMode' },
+      { header: 'Amount (₹)', dataKey: 'amount' },
+      { header: 'Notes', dataKey: 'notes' },
+    ];
+    const data = filteredExpenses.map((e) => ({
+      date: formatDate(e.date),
+      voucherNo: e.voucherNo,
+      category: e.category,
+      vehicleNo: e.vehicleNo || '-',
+      payeeName: e.payeeName || '-',
+      paymentMode: e.paymentMode,
+      amount: formatCurrency(e.amount),
+      notes: e.notes || '-',
+    }));
+    exportToPDF(title, columns, data, `Athahar_Expenses_${getTodayDateString()}`);
+  };
+
+  // Helper for compact short labels in table
+  const getCategoryShortLabel = (cat) => {
+    if (cat === 'RTO and Insurance') return 'RTO & Insurance';
+    if (cat === 'Local') return 'Local';
+    if (cat === 'Salary') return 'Salary';
+    return cat;
+  };
+
+  const getPaymentModeShortLabel = (mode) => {
+    if (mode === 'BANK_TRANSFER') return 'BANK TRF';
+    return mode || 'CASH';
+  };
+
+  return (
+    <div className="space-y-5 text-slate-800 max-w-full">
+      {/* PAGE HEADER */}
+      <div className="bg-gradient-to-r from-[#061944] via-[#102256] to-[#2D3661] rounded-3xl p-6 text-white shadow-xl border border-blue-900/40 flex flex-col md:flex-row md:items-center justify-between gap-4 relative overflow-hidden">
+        <div className="h-1 highway-accent-line absolute top-0 left-0 right-0" />
+        <div className="absolute right-0 top-0 w-80 h-80 bg-[#3956D4]/20 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="space-y-1.5 z-10">
+          <div className="flex items-center space-x-2 text-[10px] font-black tracking-widest uppercase text-[#3956D4]">
+            <span className="bg-white/10 px-2.5 py-0.5 rounded-full border border-white/20 flex items-center">
+              OPERATIONAL EXPENSES
+            </span>
+            <span>&bull; SANGLI TERMINAL &mdash; ATHAHAR ROADWAYS</span>
+          </div>
+
+          <h2 className="text-2xl sm:text-3xl font-black tracking-tight flex items-center space-x-2.5 text-white">
+            <IndianRupee className="w-7 h-7 text-[#3956D4]" />
+            <span>Operating Expense Management</span>
+          </h2>
+
+          <p className="text-blue-100 text-xs sm:text-sm font-medium">
+            Record and track Diesel/Fuel, Vehicle Maintenance, Toll, Driver Advances, Loading/Unloading, and Other operational expenses.
+          </p>
+        </div>
+
+        {/* Header Action Buttons */}
+        <div className="flex flex-wrap items-center gap-2 z-10">
+          <button
+            onClick={handleExportExcel}
+            className="flex items-center space-x-1.5 px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer"
+            title="Export to Excel"
+          >
+            <FileSpreadsheet className="w-4 h-4" />
+            <span>Excel</span>
+          </button>
+          <button
+            onClick={handleExportPDF}
+            className="flex items-center space-x-1.5 px-3 py-2 bg-[#CF1113] hover:bg-[#CF1113]/80 text-white rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer"
+            title="Export to PDF"
+          >
+            <FileText className="w-4 h-4" />
+            <span>PDF</span>
+          </button>
+          {expenses.length > 0 && (
+            <button
+              onClick={() => setIsClearAllModalOpen(true)}
+              className="flex items-center space-x-1.5 px-3 py-2 bg-amber-600 hover:bg-amber-700 text-white border border-amber-400/40 rounded-xl text-xs font-black transition-all shadow-md active:scale-95 cursor-pointer"
+              title="Delete all expense records"
+            >
+              <Trash2 className="w-4 h-4 text-white" />
+              <span>Clear All</span>
+            </button>
+          )}
+          <button
+            onClick={handleOpenCreateModal}
+            className="flex items-center space-x-1.5 px-4 py-2 bg-[#3956D4] hover:bg-[#2D3661] text-white font-black rounded-xl text-xs shadow-lg shadow-[#3956D4]/25 transition-all active:scale-95 cursor-pointer"
+          >
+            <Plus className="w-4 h-4 text-white" />
+            <span>+ Add Expense</span>
+          </button>
+        </div>
+      </div>
+
+      {/* TOP KPI CARDS FOR CATEGORIES */}
+      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        {/* Total Overall Expenses */}
+        <div className="bg-gradient-to-br from-[#072440] to-[#0c3761] text-white p-3 rounded-xl shadow-md border border-sky-950 flex flex-col justify-between">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-black uppercase tracking-wider text-sky-300">
+              Total Expenses
+            </span>
+            <IndianRupee className="w-4 h-4 text-sky-400" />
+          </div>
+          <div className="mt-2">
+            <div className="text-base sm:text-lg font-black tracking-tight text-white">
+              {formatCurrency(categoryTotals.total)}
+            </div>
+            <div className="text-[10px] text-sky-200/80 font-semibold mt-0.5">
+              {filteredExpenses.length} Vouchers
+            </div>
+          </div>
+        </div>
+
+        {/* 1. RTO and Insurance */}
+        <div
+          onClick={() => setSelectedCategory(selectedCategory === 'RTO and Insurance' ? 'ALL' : 'RTO and Insurance')}
+          className={`bg-white p-3 rounded-xl border transition-all cursor-pointer shadow-2xs hover:shadow-md ${
+            selectedCategory === 'RTO and Insurance' ? 'ring-2 ring-purple-500 border-purple-500' : 'border-slate-200'
+          } ${categoryConfig['RTO and Insurance'].cardBorder}`}
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-bold uppercase text-slate-500 truncate">RTO & Insurance</span>
+            <div className="p-1 rounded-md bg-purple-50 text-purple-600">
+              <ShieldCheck className="w-3.5 h-3.5" />
+            </div>
+          </div>
+          <div className="mt-2">
+            <div className="text-base font-black text-slate-900">
+              {formatCurrency(categoryTotals['RTO and Insurance'] || 0)}
+            </div>
+            <div className="text-[10px] font-bold text-purple-600 mt-0.5 truncate">
+              Tax, Permit & Policy
+            </div>
+          </div>
+        </div>
+
+        {/* 2. Local */}
+        <div
+          onClick={() => setSelectedCategory(selectedCategory === 'Local' ? 'ALL' : 'Local')}
+          className={`bg-white p-3 rounded-xl border transition-all cursor-pointer shadow-2xs hover:shadow-md ${
+            selectedCategory === 'Local' ? 'ring-2 ring-amber-500 border-amber-500' : 'border-slate-200'
+          } ${categoryConfig['Local'].cardBorder}`}
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-bold uppercase text-slate-500 truncate">Local</span>
+            <div className="p-1 rounded-md bg-amber-50 text-amber-600">
+              <MapPin className="w-3.5 h-3.5" />
+            </div>
+          </div>
+          <div className="mt-2">
+            <div className="text-base font-black text-slate-900">
+              {formatCurrency(categoryTotals['Local'] || 0)}
+            </div>
+            <div className="text-[10px] font-bold text-amber-600 mt-0.5 truncate">
+              Local Expenses
+            </div>
+          </div>
+        </div>
+
+        {/* 3. Salary */}
+        <div
+          onClick={() => setSelectedCategory(selectedCategory === 'Salary' ? 'ALL' : 'Salary')}
+          className={`bg-white p-3 rounded-xl border transition-all cursor-pointer shadow-2xs hover:shadow-md ${
+            selectedCategory === 'Salary' ? 'ring-2 ring-emerald-500 border-emerald-500' : 'border-slate-200'
+          } ${categoryConfig['Salary'].cardBorder}`}
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-bold uppercase text-slate-500 truncate">Salary</span>
+            <div className="p-1 rounded-md bg-emerald-50 text-emerald-600">
+              <Users className="w-3.5 h-3.5" />
+            </div>
+          </div>
+          <div className="mt-2">
+            <div className="text-base font-black text-slate-900">
+              {formatCurrency(categoryTotals['Salary'] || 0)}
+            </div>
+            <div className="text-[10px] font-bold text-emerald-600 mt-0.5 truncate">
+              Staff & Driver Wages
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* SEARCH & FILTERS BAR */}
+      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs space-y-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 items-center">
+          {/* Search Box */}
+          <div className="lg:col-span-4 relative">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search by Voucher, Payee, Vehicle, Notes..."
+              className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs font-semibold text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-1 focus:ring-sky-500"
+            />
+          </div>
+
+          {/* Category Dropdown */}
+          <div className="lg:col-span-3">
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs font-bold text-slate-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-sky-500"
+            >
+              <option value="ALL">All Expense Categories</option>
+              {categoryOptions.map((cat) => (
+                <option key={cat.id || cat.name} value={cat.name}>
+                  {cat.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Vehicle Filter */}
+          <div className="lg:col-span-2">
+            <select
+              value={selectedVehicle}
+              onChange={(e) => setSelectedVehicle(e.target.value)}
+              className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs font-bold text-slate-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-sky-500"
+            >
+              <option value="ALL">All Vehicles</option>
+              {vehicleOptions.map((veh) => (
+                <option key={veh} value={veh}>
+                  {veh}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Payment Mode Filter */}
+          <div className="lg:col-span-3">
+            <select
+              value={selectedPaymentMode}
+              onChange={(e) => setSelectedPaymentMode(e.target.value)}
+              className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs font-bold text-slate-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-sky-500"
+            >
+              <option value="ALL">All Payment Modes</option>
+              {PAYMENT_MODES.map((pm) => (
+                <option key={pm} value={pm}>
+                  {pm}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* Date Filter Badges */}
+        <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100">
+          <div className="flex items-center space-x-1.5 overflow-x-auto no-scrollbar py-0.5">
+            <span className="text-[11px] font-bold text-slate-500 uppercase mr-1">Date:</span>
+            {[
+              { id: 'all', label: 'All Dates' },
+              { id: 'today', label: 'Today' },
+              { id: 'week', label: 'This Week' },
+              { id: 'month', label: 'This Month' },
+              { id: 'custom', label: 'Custom Range' },
+            ].map((d) => (
+              <button
+                key={d.id}
+                type="button"
+                onClick={() => setDateFilter(d.id)}
+                className={`px-2.5 py-1 rounded-md text-xs font-bold transition-all cursor-pointer ${
+                  dateFilter === d.id
+                    ? 'bg-sky-600 text-white shadow-xs'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                {d.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Custom Date Inputs if 'custom' is active */}
+          {dateFilter === 'custom' && (
+            <div className="flex items-center space-x-2">
+              <input
+                type="date"
+                value={customStartDate}
+                onChange={(e) => setCustomStartDate(e.target.value)}
+                className="px-2 py-1 text-xs border border-slate-300 rounded bg-white text-slate-800"
+              />
+              <span className="text-xs text-slate-400">to</span>
+              <input
+                type="date"
+                value={customEndDate}
+                onChange={(e) => setCustomEndDate(e.target.value)}
+                className="px-2 py-1 text-xs border border-slate-300 rounded bg-white text-slate-800"
+              />
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* EXPENSES DATA TABLE */}
+      <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+        {/* MOBILE CARD VIEW (sm:hidden) */}
+        <div className="sm:hidden divide-y divide-slate-100">
+          {filteredExpenses.length === 0 ? (
+            <div className="py-10 px-4 text-center text-slate-400 font-medium">
+              <Wallet className="w-8 h-8 mx-auto mb-2 opacity-40 text-slate-500" />
+              No expenses found matching the selected filters.
+            </div>
+          ) : (
+            filteredExpenses.map((item) => {
+              const conf = getCategoryConfig(item.category);
+              const Icon = conf.icon;
+              return (
+                <div key={item.id} className="p-3.5 space-y-2 hover:bg-slate-50/60 transition-colors">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <span className="font-extrabold text-sky-800 bg-sky-50 px-2 py-0.5 rounded border border-sky-200 text-xs">
+                        #{item.voucherNo}
+                      </span>
+                      <span className="text-[11px] font-bold text-slate-500">
+                        {formatDate(item.date)}
+                      </span>
+                    </div>
+                    <div className="text-right font-black text-sm text-[#072440]">
+                      {formatCurrency(item.amount)}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between gap-2">
+                    <span className={`inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-[10px] font-black border ${conf.badge}`}>
+                      <Icon className="w-2.5 h-2.5 mr-0.5 shrink-0" />
+                      <span>{getCategoryShortLabel(item.category)}</span>
+                    </span>
+                    <span className="text-[9.5px] font-extrabold px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-slate-700 uppercase">
+                      {getPaymentModeShortLabel(item.paymentMode)}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 text-[11px] pt-1">
+                    <div>
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block">Payee</span>
+                      <span className="font-bold text-slate-800 truncate block">
+                        {item.payeeName || '-'}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block">Vehicle</span>
+                      <span className="font-extrabold text-slate-900 truncate block">
+                        {item.vehicleNo || '-'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {(item.notes || item.referenceNo) && (
+                    <div className="text-[10.5px] text-slate-500 bg-slate-50 rounded-lg p-1.5 border border-slate-100">
+                      {item.notes ? item.notes : `Ref: ${item.referenceNo}`}
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-end space-x-1 pt-1 border-t border-slate-100">
+                    <button
+                      type="button"
+                      onClick={() => setViewingExpense(item)}
+                      className="px-2.5 py-1 text-sky-600 hover:bg-sky-50 rounded-lg text-xs font-bold flex items-center space-x-1 cursor-pointer"
+                    >
+                      <Eye className="w-3.5 h-3.5" />
+                      <span>View</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleOpenEditModal(item)}
+                      className="px-2.5 py-1 text-amber-600 hover:bg-amber-50 rounded-lg text-xs font-bold flex items-center space-x-1 cursor-pointer"
+                    >
+                      <Edit2 className="w-3.5 h-3.5" />
+                      <span>Edit</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setDeleteConfirmItem(item);
+                        setDeleteConfirmId(item.id || item.voucherNo);
+                      }}
+                      className="px-2.5 py-1 text-rose-600 hover:bg-rose-50 rounded-lg text-xs font-bold flex items-center space-x-1 cursor-pointer"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Delete</span>
+                    </button>
+                  </div>
+                </div>
+              );
+            })
+          )}
+
+          {filteredExpenses.length > 0 && (
+            <div className="p-3 bg-sky-50/90 border-t-2 border-slate-300 flex items-center justify-between text-xs font-black text-slate-900">
+              <span className="text-[10.5px] uppercase tracking-wider text-slate-600">
+                Total ({filteredExpenses.length} Records)
+              </span>
+              <span className="text-sm font-black text-[#1e295b]">
+                {formatCurrency(categoryTotals.total)}
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* DESKTOP TABLE VIEW (hidden sm:block) */}
+        <div className="hidden sm:block w-full overflow-x-hidden">
+          <table className="w-full text-left border-collapse table-fixed">
+            <thead>
+              <tr className="bg-slate-100/90 border-b border-slate-200 text-[10px] font-black text-slate-700 uppercase tracking-tight">
+                <th className="py-2.5 px-2 w-[76px] whitespace-nowrap">Date</th>
+                <th className="py-2.5 px-2 w-[72px] whitespace-nowrap">Voucher</th>
+                <th className="py-2.5 px-2 w-[125px] whitespace-nowrap">Category</th>
+                <th className="py-2.5 px-2 w-[98px] whitespace-nowrap">Vehicle No</th>
+                <th className="py-2.5 px-2 w-[125px] whitespace-nowrap">Paid To / Payee</th>
+                <th className="py-2.5 px-2 w-[65px] text-center whitespace-nowrap">Mode</th>
+                <th className="py-2.5 px-2 w-[85px] text-right whitespace-nowrap">Amount (₹)</th>
+                <th className="py-2.5 px-2 whitespace-nowrap">Notes / Ref</th>
+                <th className="py-2.5 px-2 w-[65px] text-center whitespace-nowrap">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 text-xs font-semibold text-slate-800">
+              {filteredExpenses.length === 0 ? (
+                <tr>
+                  <td colSpan={9} className="py-12 text-center text-slate-400 font-medium">
+                    <Wallet className="w-8 h-8 mx-auto mb-2 opacity-40 text-slate-500" />
+                    No expenses found matching the selected filters.
+                  </td>
+                </tr>
+              ) : (
+                filteredExpenses.map((item) => {
+                  const conf = getCategoryConfig(item.category);
+                  const Icon = conf.icon;
+                  return (
+                    <tr key={item.id} className="hover:bg-sky-50/50 transition-colors">
+                      <td className="py-2 px-2 font-bold text-slate-700 whitespace-nowrap text-[10.5px]">
+                        {formatDate(item.date)}
+                      </td>
+                      <td className="py-2 px-2 whitespace-nowrap">
+                        <span className="font-extrabold text-sky-800 bg-sky-50 px-1.5 py-0.5 rounded border border-sky-200 text-[10.5px]">
+                          #{item.voucherNo}
+                        </span>
+                      </td>
+                      <td className="py-2 px-2 whitespace-nowrap" title={item.category}>
+                        <span
+                          className={`inline-flex items-center space-x-1 px-1.5 py-0.5 rounded-full text-[10px] font-black border ${conf.badge}`}
+                        >
+                          <Icon className="w-2.5 h-2.5 mr-0.5 shrink-0" />
+                          <span className="truncate">{getCategoryShortLabel(item.category)}</span>
+                        </span>
+                      </td>
+                      <td className="py-2 px-2 whitespace-nowrap" title={item.vehicleNo || ''}>
+                        {item.vehicleNo ? (
+                          <span className="font-extrabold text-slate-900 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200 text-[10.5px]">
+                            {item.vehicleNo}
+                          </span>
+                        ) : (
+                          <span className="text-slate-400 font-normal">-</span>
+                        )}
+                      </td>
+                      <td
+                        className="py-2 px-2 truncate font-bold text-slate-900 text-[11px]"
+                        title={item.payeeName}
+                      >
+                        {item.payeeName || <span className="text-slate-400 font-normal">-</span>}
+                      </td>
+                      <td className="py-2 px-2 whitespace-nowrap text-center">
+                        <span
+                          className="text-[9.5px] font-extrabold px-1.5 py-0.5 rounded bg-slate-100 border border-slate-300 text-slate-700 uppercase"
+                          title={item.paymentMode || 'CASH'}
+                        >
+                          {getPaymentModeShortLabel(item.paymentMode)}
+                        </span>
+                      </td>
+                      <td className="py-2 px-2 text-right font-black text-xs text-slate-900 whitespace-nowrap">
+                        {formatCurrency(item.amount)}
+                      </td>
+                      <td
+                        className="py-2 px-2 truncate text-slate-600 font-medium text-[11px]"
+                        title={item.notes ? item.notes : item.referenceNo ? `Ref: ${item.referenceNo}` : ''}
+                      >
+                        {item.notes ? item.notes : item.referenceNo ? `Ref: ${item.referenceNo}` : '-'}
+                      </td>
+                      <td className="py-2 px-2 text-center whitespace-nowrap">
+                        <div className="flex items-center justify-center space-x-0.5">
+                          <button
+                            type="button"
+                            onClick={() => setViewingExpense(item)}
+                            title="View Voucher"
+                            className="p-1 text-sky-600 hover:text-sky-800 hover:bg-sky-50 rounded transition-colors cursor-pointer"
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleOpenEditModal(item)}
+                            title="Edit Record"
+                            className="p-1 text-amber-600 hover:text-amber-800 hover:bg-amber-50 rounded transition-colors cursor-pointer"
+                          >
+                            <Edit2 className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setDeleteConfirmItem(item);
+                              setDeleteConfirmId(item.id || item.voucherNo);
+                            }}
+                            title="Delete Record"
+                            className="p-1 text-rose-600 hover:text-rose-800 hover:bg-rose-50 rounded transition-colors cursor-pointer"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+            {filteredExpenses.length > 0 && (
+              <tfoot>
+                <tr className="bg-sky-50/90 font-black border-t-2 border-slate-300 text-slate-900 text-[11px]">
+                  <td colSpan={6} className="py-2 px-2 uppercase tracking-wider text-right font-black text-slate-900">
+                    TOTAL FILTERED EXPENSES:
+                  </td>
+                  <td className="py-2 px-2 text-right font-black text-xs text-[#1e295b] whitespace-nowrap">
+                    {formatCurrency(categoryTotals.total)}
+                  </td>
+                  <td colSpan={2} className="py-2 px-2 text-slate-500 font-bold text-left truncate">
+                    {filteredExpenses.length} Records
+                  </td>
+                </tr>
+              </tfoot>
+            )}
+          </table>
+        </div>
+      </div>
+
+      {/* ADD / EDIT EXPENSE MODAL */}
+      <Modal
+        isOpen={isAddEditModalOpen}
+        onClose={() => setIsAddEditModalOpen(false)}
+        title={editingExpenseId ? `Edit Expense Voucher #${formData.voucherNo}` : '+ Add New Expense Record'}
+        maxWidth="max-w-2xl"
+      >
+        <form onSubmit={handleSaveForm} className="space-y-4">
+          {formError && (
+            <div className="flex items-center space-x-2 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-xs font-bold">
+              <AlertCircle className="w-4 h-4 flex-shrink-0" />
+              <span>{formError}</span>
+            </div>
+          )}
+
+          {formSuccess && (
+            <div className="flex items-center space-x-2 p-3 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-lg text-xs font-bold">
+              <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
+              <span>{formSuccess}</span>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            {/* Voucher No */}
+            <div>
+              <label className="block text-[11px] font-black text-slate-700 uppercase mb-1">
+                Voucher No. *
+              </label>
+              <input
+                type="text"
+                value={formData.voucherNo}
+                onChange={(e) => setFormData((prev) => ({ ...prev, voucherNo: e.target.value.toUpperCase() }))}
+                required
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs font-bold text-slate-900 bg-slate-50 uppercase focus:bg-white focus:outline-none focus:ring-1 focus:ring-sky-500"
+              />
+            </div>
+
+            {/* Date */}
+            <div>
+              <label className="block text-[11px] font-black text-slate-700 uppercase mb-1">
+                Expense Date *
+              </label>
+              <input
+                type="date"
+                value={formData.date}
+                onChange={(e) => setFormData((prev) => ({ ...prev, date: e.target.value }))}
+                required
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs font-semibold text-slate-900 bg-white focus:outline-none focus:ring-1 focus:ring-sky-500"
+              />
+            </div>
+
+            {/* Expense Category Combobox (Manual input + dropdown that saves custom categories) */}
+            <div className="sm:col-span-2">
+              <label className="block text-[11px] font-black text-slate-700 uppercase mb-1">
+                Expense Category *
+              </label>
+              <EditableCombobox
+                name="category"
+                value={formData.category}
+                onChange={(e, val) => setFormData((prev) => ({ ...prev, category: val }))}
+                options={categoryOptions}
+                masterCategory="expenseCategories"
+                placeholder="Select or type custom expense category..."
+                uppercase={false}
+                required
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs font-extrabold text-slate-900 bg-white focus:outline-none focus:ring-1 focus:ring-sky-500"
+              />
+            </div>
+
+            {/* Amount (₹) */}
+            <div>
+              <label className="block text-[11px] font-black text-slate-700 uppercase mb-1">
+                Amount (₹) *
+              </label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs">
+                  ₹
+                </span>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="1"
+                  autoComplete="off"
+                  autoCorrect="off"
+                  spellCheck={false}
+                  data-lpignore="true"
+                  value={formData.amount}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, amount: e.target.value }))}
+                  required
+                  placeholder="0.00"
+                  className="w-full pl-8 pr-3 py-2 border border-slate-300 rounded-lg text-sm font-black text-slate-900 bg-white focus:outline-none focus:ring-1 focus:ring-sky-500"
+                />
+              </div>
+            </div>
+
+            {/* Payment Mode */}
+            <div>
+              <label className="block text-[11px] font-black text-slate-700 uppercase mb-1">
+                Payment Mode *
+              </label>
+              <select
+                value={formData.paymentMode}
+                onChange={(e) => setFormData((prev) => ({ ...prev, paymentMode: e.target.value }))}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs font-bold text-slate-900 bg-white focus:outline-none focus:ring-1 focus:ring-sky-500"
+              >
+                {PAYMENT_MODES.map((pm) => (
+                  <option key={pm} value={pm}>
+                    {pm}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Vehicle No */}
+            <div>
+              <label className="block text-[11px] font-black text-slate-700 uppercase mb-1">
+                Vehicle No. (If applicable)
+              </label>
+              <EditableCombobox
+                name="vehicleNo"
+                value={formData.vehicleNo}
+                onChange={(e, val) => setFormData((prev) => ({ ...prev, vehicleNo: val }))}
+                options={masters.vehicles}
+                masterCategory="vehicles"
+                placeholder=""
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs font-bold text-slate-900 focus:outline-none focus:ring-1 focus:ring-sky-500"
+              />
+            </div>
+
+            {/* Payee / Driver / Vendor */}
+            <div>
+              <label className="block text-[11px] font-black text-slate-700 uppercase mb-1">
+                Paid To / Payee / Driver Name
+              </label>
+              <input
+                type="text"
+                value={formData.payeeName}
+                onChange={(e) => setFormData((prev) => ({ ...prev, payeeName: e.target.value }))}
+                placeholder=""
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs font-bold text-slate-900 uppercase focus:outline-none focus:ring-1 focus:ring-sky-500"
+              />
+            </div>
+
+            {/* Reference No / Bill No */}
+            <div className="sm:col-span-2">
+              <label className="block text-[11px] font-black text-slate-700 uppercase mb-1">
+                Bill / Invoice / Receipt / Ref No.
+              </label>
+              <input
+                type="text"
+                value={formData.referenceNo}
+                onChange={(e) => setFormData((prev) => ({ ...prev, referenceNo: e.target.value }))}
+                placeholder=""
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs font-semibold text-slate-900 uppercase focus:outline-none focus:ring-1 focus:ring-sky-500"
+              />
+            </div>
+
+            {/* Notes / Remarks */}
+            <div className="sm:col-span-2">
+              <label className="block text-[11px] font-black text-slate-700 uppercase mb-1">
+                Expense Notes / Remarks
+              </label>
+              <textarea
+                rows={2}
+                value={formData.notes}
+                onChange={(e) => setFormData((prev) => ({ ...prev, notes: e.target.value }))}
+                placeholder=""
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs font-medium text-slate-900 focus:outline-none focus:ring-1 focus:ring-sky-500"
+              />
+            </div>
+          </div>
+
+          {/* Form Action Buttons */}
+          <div className="flex items-center justify-end space-x-2 pt-3 border-t border-slate-200">
+            <button
+              type="button"
+              onClick={() => setIsAddEditModalOpen(false)}
+              className="px-4 py-2 border border-slate-300 rounded-lg text-xs font-bold text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-5 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-lg text-xs font-black shadow-md shadow-sky-600/20 transition-all cursor-pointer"
+            >
+              {editingExpenseId ? 'Update Expense' : 'Save Expense'}
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* VIEW VOUCHER MODAL */}
+      <Modal
+        isOpen={!!viewingExpense}
+        onClose={() => setViewingExpense(null)}
+        title={`Expense Voucher #${viewingExpense?.voucherNo}`}
+        maxWidth="max-w-xl"
+      >
+        {viewingExpense && (
+          <div className="space-y-4 text-slate-800">
+            {/* Printable Voucher Header */}
+            <div className="bg-[#072440] text-white p-4 rounded-xl flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="w-12 h-12 rounded-xl bg-white p-1 flex items-center justify-center shadow-xs flex-shrink-0">
+                  <img src="/logo.png" alt="ATHAHAR ROADWAYS" className="w-full h-full object-contain" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-black tracking-wider uppercase">ATHAHAR ROADWAYS</h3>
+                  <p className="text-[10px] text-sky-400 font-bold uppercase">SANGLI-416416</p>
+                  <div className="mt-1 text-[11px] font-extrabold text-sky-200">
+                    Payment Voucher #{viewingExpense.voucherNo}
+                  </div>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-[10px] text-sky-300 font-bold uppercase">Date</div>
+                <div className="text-sm font-bold">{formatDate(viewingExpense.date)}</div>
+              </div>
+            </div>
+
+            {/* Amount Big Display */}
+            <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between">
+              <span className="text-xs font-black text-emerald-900 uppercase">Paid Amount:</span>
+              <span className="text-2xl font-black text-emerald-700">
+                {formatCurrency(viewingExpense.amount)}
+              </span>
+            </div>
+
+            {/* Details Grid */}
+            <div className="grid grid-cols-2 gap-3 text-xs bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+              <div>
+                <span className="text-[10px] font-bold text-slate-400 uppercase block">Category</span>
+                <span className="font-extrabold text-slate-900">{viewingExpense.category}</span>
+              </div>
+              <div>
+                <span className="text-[10px] font-bold text-slate-400 uppercase block">Payment Mode</span>
+                <span className="font-extrabold text-slate-900">{viewingExpense.paymentMode}</span>
+              </div>
+              <div>
+                <span className="text-[10px] font-bold text-slate-400 uppercase block">Vehicle No.</span>
+                <span className="font-extrabold text-slate-900">{viewingExpense.vehicleNo || 'N/A'}</span>
+              </div>
+              <div>
+                <span className="text-[10px] font-bold text-slate-400 uppercase block">Paid To / Payee</span>
+                <span className="font-extrabold text-slate-900">{viewingExpense.payeeName || '-'}</span>
+              </div>
+              <div>
+                <span className="text-[10px] font-bold text-slate-400 uppercase block">Bill / Ref No.</span>
+                <span className="font-bold text-slate-800">{viewingExpense.referenceNo || '-'}</span>
+              </div>
+              <div>
+                <span className="text-[10px] font-bold text-slate-400 uppercase block">Recorded By</span>
+                <span className="font-bold text-slate-800">{viewingExpense.createdBy || 'Administrator'}</span>
+              </div>
+              <div className="col-span-2 pt-2 border-t border-slate-200">
+                <span className="text-[10px] font-bold text-slate-400 uppercase block">Notes / Remarks</span>
+                <span className="font-medium text-slate-700">{viewingExpense.notes || '-'}</span>
+              </div>
+            </div>
+
+            {/* Modal Actions */}
+            <div className="flex items-center justify-end space-x-2 pt-3 border-t border-slate-200">
+              <button
+                type="button"
+                onClick={() => setViewingExpense(null)}
+                className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-lg text-xs font-bold transition-colors cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* DELETE CONFIRMATION MODAL */}
+      <Modal
+        isOpen={Boolean(deleteConfirmId || deleteConfirmItem)}
+        onClose={() => {
+          if (!isDeleting) {
+            setDeleteConfirmId(null);
+            setDeleteConfirmItem(null);
+          }
+        }}
+        title="Confirm Delete Expense"
+        maxWidth="max-w-md"
+      >
+        <div className="space-y-4 text-slate-800">
+          <div className="flex items-start space-x-3 bg-rose-50 border border-rose-200 rounded-xl p-3.5">
+            <Trash2 className="w-5 h-5 text-rose-600 flex-shrink-0 mt-0.5" />
+            <div className="text-xs space-y-1">
+              <p className="font-black text-rose-900">
+                Delete Expense Voucher {deleteConfirmItem?.voucherNo ? `#${deleteConfirmItem.voucherNo}` : ''}?
+              </p>
+              <p className="text-rose-700 font-medium">
+                {deleteConfirmItem?.category} &bull; {formatCurrency(deleteConfirmItem?.amount || 0)}
+              </p>
+              {deleteConfirmItem?.payeeName && (
+                <p className="text-rose-600 font-medium">Paid to: {deleteConfirmItem.payeeName}</p>
+              )}
+            </div>
+          </div>
+          <p className="text-xs text-slate-600 font-medium">
+            Are you sure you want to delete this expense record? This action will permanently remove it from your records.
+          </p>
+          <div className="flex items-center justify-end space-x-2 pt-3 border-t border-slate-200">
+            <button
+              type="button"
+              disabled={isDeleting}
+              onClick={() => {
+                setDeleteConfirmId(null);
+                setDeleteConfirmItem(null);
+              }}
+              className="px-4 py-2 border border-slate-300 rounded-lg text-xs font-bold text-slate-700 hover:bg-slate-100 cursor-pointer disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              disabled={isDeleting}
+              onClick={handleConfirmDelete}
+              className="px-4 py-2 bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white rounded-lg text-xs font-black shadow-xs cursor-pointer disabled:opacity-50 flex items-center space-x-1.5"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>{isDeleting ? 'Deleting...' : 'Delete Record'}</span>
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* CLEAR ALL EXPENSES MODAL */}
+      <Modal
+        isOpen={isClearAllModalOpen}
+        onClose={() => !isDeleting && setIsClearAllModalOpen(false)}
+        title="Delete All Expense Records"
+        maxWidth="max-w-md"
+      >
+        <div className="space-y-4 text-slate-800">
+          <div className="flex items-start space-x-3 bg-rose-50 border border-rose-200 rounded-xl p-3.5">
+            <Trash2 className="w-5 h-5 text-rose-600 flex-shrink-0 mt-0.5" />
+            <div className="text-xs space-y-1">
+              <p className="font-black text-rose-900">
+                Clear all {expenses.length} expense vouchers?
+              </p>
+              <p className="text-rose-700 font-medium">
+                Total Amount: {formatCurrency(categoryTotals.total)}
+              </p>
+            </div>
+          </div>
+          <p className="text-xs text-slate-600 font-medium">
+            This will permanently remove all expense records from Athahar Roadways and reset the register.
+          </p>
+          <div className="flex items-center justify-end space-x-2 pt-3 border-t border-slate-200">
+            <button
+              type="button"
+              disabled={isDeleting}
+              onClick={() => setIsClearAllModalOpen(false)}
+              className="px-4 py-2 border border-slate-300 rounded-lg text-xs font-bold text-slate-700 hover:bg-slate-100 cursor-pointer disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              disabled={isDeleting}
+              onClick={handleConfirmClearAll}
+              className="px-4 py-2 bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white rounded-lg text-xs font-black shadow-xs cursor-pointer disabled:opacity-50 flex items-center space-x-1.5"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>{isDeleting ? 'Clearing...' : 'Delete All Records'}</span>
+            </button>
+          </div>
+        </div>
+      </Modal>
+    </div>
+  );
+};
+export default Expenses;
