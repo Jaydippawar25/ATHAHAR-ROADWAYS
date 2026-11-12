@@ -210,7 +210,7 @@ export const DataTable = ({
   return (
     <div className={`bg-white rounded-2xl shadow-2xs border border-[#E1E5EE] overflow-hidden ${className}`}>
       {/* Table Filter Controls Header Bar */}
-      <div className="px-4 py-3 bg-[#F6F7F9] border-b border-[#E1E5EE] flex flex-wrap items-center gap-3 text-xs font-bold text-[#2D3661]">
+      <div className="px-3 sm:px-4 py-2.5 sm:py-3 bg-[#F6F7F9] border-b border-[#E1E5EE] flex flex-wrap items-center gap-2 sm:gap-3 text-xs font-bold text-[#2D3661] overflow-x-auto no-scrollbar">
         {/* Date Filter */}
         <div className="flex flex-wrap items-center gap-1.5">
           <Calendar className="w-3.5 h-3.5 text-slate-400" />
@@ -365,7 +365,7 @@ export const DataTable = ({
       </div>
 
       {/* Table Toolbar */}
-      <div className="p-3.5 border-b border-[#E1E5EE] flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white">
+      <div className="p-3 sm:p-3.5 border-b border-[#E1E5EE] flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3 bg-white">
         {searchable && (
           <div className="relative flex-1 max-w-md">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -379,7 +379,7 @@ export const DataTable = ({
           </div>
         )}
 
-        <div className="flex items-center space-x-2 flex-wrap">
+        <div className="flex items-center space-x-2 flex-wrap w-full sm:w-auto justify-end">
           {onExportExcel && (
             <button
               onClick={() => onExportExcel(filteredData)}

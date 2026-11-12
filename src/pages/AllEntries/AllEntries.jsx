@@ -767,16 +767,16 @@ export const AllEntries = () => {
           </p>
         </div>
 
-        <div className="flex items-center space-x-2.5 flex-shrink-0 z-10">
+        <div className="flex items-center space-x-2.5 flex-shrink-0 z-10 w-full sm:w-auto">
           <button
             onClick={() => navigate('/inward/new')}
-            className="inline-flex items-center space-x-1.5 bg-[#3956D4] hover:bg-[#2D3661] text-white font-black px-4 py-2.5 rounded-xl text-xs shadow-lg shadow-[#3956D4]/25 transition-all active:scale-[0.98] cursor-pointer"
+            className="flex-1 sm:flex-none justify-center inline-flex items-center space-x-1.5 bg-[#3956D4] hover:bg-[#2D3661] text-white font-black px-4 py-2.5 rounded-xl text-xs shadow-lg shadow-[#3956D4]/25 transition-all active:scale-[0.98] cursor-pointer"
           >
             <span>+ New Inward</span>
           </button>
           <button
             onClick={() => navigate('/outward/new')}
-            className="inline-flex items-center space-x-1.5 bg-white/10 hover:bg-white/20 border border-white/20 text-white font-bold px-4 py-2.5 rounded-xl text-xs transition-all active:scale-[0.98] cursor-pointer"
+            className="flex-1 sm:flex-none justify-center inline-flex items-center space-x-1.5 bg-white/10 hover:bg-white/20 border border-white/20 text-white font-bold px-4 py-2.5 rounded-xl text-xs transition-all active:scale-[0.98] cursor-pointer"
           >
             <span>+ New Outward</span>
           </button>
@@ -784,44 +784,44 @@ export const AllEntries = () => {
       </div>
 
       {/* Summary KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3.5">
-        <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-2xs">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3.5">
+        <div className="bg-white p-3.5 sm:p-4 rounded-xl sm:rounded-2xl border border-slate-200/90 shadow-2xs">
           <div className="flex items-center justify-between text-slate-500 mb-1">
-            <span className="text-[10.5px] font-black uppercase text-slate-400 tracking-wider">Inward Receipts</span>
+            <span className="text-[10px] sm:text-[10.5px] font-black uppercase text-slate-400 tracking-wider">Inward Receipts</span>
             <ArrowDownLeft className="w-4 h-4 text-sky-600" />
           </div>
-          <p className="text-2xl font-black text-slate-900">{enrichedInwards.length}</p>
-          <p className="text-[11px] text-sky-700 font-bold mt-0.5">{totalInwardPkg} Total PKG</p>
+          <p className="text-xl sm:text-2xl font-black text-slate-900">{enrichedInwards.length}</p>
+          <p className="text-[10px] sm:text-[11px] text-sky-700 font-bold mt-0.5">{totalInwardPkg} Total PKG</p>
         </div>
 
-        <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-2xs">
+        <div className="bg-white p-3.5 sm:p-4 rounded-xl sm:rounded-2xl border border-slate-200/90 shadow-2xs">
           <div className="flex items-center justify-between text-slate-500 mb-1">
-            <span className="text-[10.5px] font-black uppercase text-slate-400 tracking-wider">Outward Receipts</span>
+            <span className="text-[10px] sm:text-[10.5px] font-black uppercase text-slate-400 tracking-wider">Outward Receipts</span>
             <ArrowUpRight className="w-4 h-4 text-emerald-600" />
           </div>
-          <p className="text-2xl font-black text-slate-900">{enrichedOutwards.length}</p>
-          <p className="text-[11px] text-emerald-700 font-bold mt-0.5">{totalOutwardPkg} Total PKG</p>
+          <p className="text-xl sm:text-2xl font-black text-slate-900">{enrichedOutwards.length}</p>
+          <p className="text-[10px] sm:text-[11px] text-emerald-700 font-bold mt-0.5">{totalOutwardPkg} Total PKG</p>
         </div>
 
-        <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-2xs">
+        <div className="bg-white p-3.5 sm:p-4 rounded-xl sm:rounded-2xl border border-slate-200/90 shadow-2xs">
           <div className="flex items-center justify-between text-slate-500 mb-1">
-            <span className="text-[10.5px] font-black uppercase text-slate-400 tracking-wider">Stock-Out Receipts</span>
+            <span className="text-[10px] sm:text-[10.5px] font-black uppercase text-slate-400 tracking-wider">Stock-Out</span>
             <Shuffle className="w-4 h-4 text-indigo-600" />
           </div>
-          <p className="text-2xl font-black text-slate-900">{enrichedStockOuts.length}</p>
-          <p className="text-[11px] text-indigo-700 font-bold mt-0.5">{totalStockOutPkg} Total PKG</p>
+          <p className="text-xl sm:text-2xl font-black text-slate-900">{enrichedStockOuts.length}</p>
+          <p className="text-[10px] sm:text-[11px] text-indigo-700 font-bold mt-0.5">{totalStockOutPkg} Total PKG</p>
         </div>
 
-        <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-2xs">
+        <div className="bg-white p-3.5 sm:p-4 rounded-xl sm:rounded-2xl border border-slate-200/90 shadow-2xs">
           <div className="flex items-center justify-between text-slate-500 mb-1">
-            <span className="text-[10.5px] font-black uppercase text-slate-400 tracking-wider">Total LR Entries</span>
+            <span className="text-[10px] sm:text-[10.5px] font-black uppercase text-slate-400 tracking-wider">Total LR Entries</span>
             <Layers className="w-4 h-4 text-blue-600" />
           </div>
-          <p className="text-2xl font-black text-blue-700">{combinedLREntries.length}</p>
-          <p className="text-[11px] text-blue-600 font-bold mt-0.5">Combined LRs</p>
+          <p className="text-xl sm:text-2xl font-black text-blue-700">{combinedLREntries.length}</p>
+          <p className="text-[10px] sm:text-[11px] text-blue-600 font-bold mt-0.5">Combined LRs</p>
         </div>
 
-        <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-2xs">
+        <div className="col-span-2 sm:col-span-1 bg-white p-3.5 sm:p-4 rounded-xl sm:rounded-2xl border border-slate-200/90 shadow-2xs">
           <div className="flex items-center justify-between text-slate-500 mb-1">
             <span className="text-[10.5px] font-black uppercase text-slate-400 tracking-wider">Pending Stock</span>
             <PackageCheck className="w-4 h-4 text-amber-600" />
@@ -834,7 +834,7 @@ export const AllEntries = () => {
       {/* Main Tab Controls & Data Table */}
       <div className="space-y-4">
         {/* Tab Selection Buttons */}
-        <div className="flex flex-wrap items-center gap-2.5 border-b border-[#E1E5EE] pb-3">
+        <div className="flex items-center gap-2 border-b border-[#E1E5EE] pb-3 overflow-x-auto no-scrollbar">
           <button
             onClick={() => setActiveTab('all_lrs')}
             className={`px-5 py-2.5 rounded-xl font-black text-xs transition-all flex items-center space-x-2 cursor-pointer shadow-2xs ${

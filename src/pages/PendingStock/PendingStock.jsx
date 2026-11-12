@@ -238,11 +238,11 @@ export const PendingStock = () => {
           </p>
         </div>
 
-        <div className="flex items-center space-x-3 flex-shrink-0 z-10">
+        <div className="flex items-center space-x-3 flex-shrink-0 z-10 w-full sm:w-auto">
           {selectedIds.length > 0 ? (
             <button
               onClick={handleProceedToOutward}
-              className="inline-flex items-center space-x-2 bg-[#3956D4] hover:bg-[#2D3661] text-white font-black px-5 py-3 rounded-xl text-xs shadow-lg shadow-[#3956D4]/30 transition-all active:scale-[0.98]"
+              className="w-full sm:w-auto inline-flex items-center justify-center space-x-2 bg-[#3956D4] hover:bg-[#2D3661] text-white font-black px-5 py-3 rounded-xl text-xs shadow-lg shadow-[#3956D4]/30 transition-all active:scale-[0.98]"
             >
               <ArrowUpRight className="w-4 h-4" />
               <span>Process Outward ({selectedIds.length} LRs Selected)</span>
@@ -254,7 +254,7 @@ export const PendingStock = () => {
                   navigate('/outward/new');
                 }
               }}
-              className="inline-flex items-center space-x-2 bg-white/10 hover:bg-white/20 text-white font-bold px-4 py-2.5 rounded-xl text-xs border border-white/20 transition-all"
+              className="w-full sm:w-auto inline-flex items-center justify-center space-x-2 bg-white/10 hover:bg-white/20 text-white font-bold px-4 py-2.5 rounded-xl text-xs border border-white/20 transition-all"
             >
               <ArrowUpRight className="w-4 h-4 text-[#3956D4]" />
               <span>Create Outward Dispatch</span>
@@ -264,7 +264,7 @@ export const PendingStock = () => {
       </div>
 
       {/* Summary KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3.5">
         <div className="bg-white p-4 rounded-2xl border border-[#E1E5EE] border-t-4 border-t-[#7A4F05] shadow-xs">
           <span className="text-[10.5px] font-black uppercase text-slate-400 tracking-wider block mb-1">
             Pending LRs

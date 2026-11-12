@@ -666,7 +666,7 @@ export const InwardCreate = () => {
           </span>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-4 items-end">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4 items-end">
           <div>
             <div className="flex items-center justify-between mb-1">
               <label className="block text-[10px] sm:text-[11px] font-extrabold text-slate-600 uppercase truncate">
@@ -972,7 +972,7 @@ export const InwardCreate = () => {
         </div>
 
         {/* Row 2: CONSIGNOR, CONSIGNEE, STATION, INV NO. */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-3.5 items-end">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3.5 items-end">
           <div>
             <label className="block text-[10px] sm:text-[11px] font-extrabold text-slate-600 uppercase mb-1 truncate">CONSIGNOR (SENDER)</label>
             <div className="flex items-center space-x-1 min-w-0">

@@ -448,7 +448,7 @@ export const Accounting = () => {
       </div>
 
       {/* Primary Financial Summary Cards (Inward Money, Outward Money, Stock Out Money, 20% Commission, Total Handled) */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-2.5 sm:gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-4">
         {/* Card 1: Inward Money */}
         <div className="bg-white p-3.5 sm:p-5 rounded-xl sm:rounded-2xl border-2 border-sky-100 shadow-sm relative overflow-hidden flex flex-col justify-between">
           <div>
@@ -532,7 +532,7 @@ export const Accounting = () => {
         </div>
 
         {/* Card 5: Net Difference of Inward and Outward */}
-        <div className="col-span-2 lg:col-span-1 bg-white p-3.5 sm:p-5 rounded-xl sm:rounded-2xl border-2 border-emerald-200 shadow-sm relative overflow-hidden flex flex-col justify-between">
+        <div className="col-span-2 sm:col-span-1 lg:col-span-1 bg-white p-3.5 sm:p-5 rounded-xl sm:rounded-2xl border-2 border-emerald-200 shadow-sm relative overflow-hidden flex flex-col justify-between">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-black uppercase tracking-wider text-emerald-800">
               Net Difference (Inward - Outward)
@@ -555,7 +555,7 @@ export const Accounting = () => {
       <div className="space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-3">
           {/* Tabs */}
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 sm:pb-0">
             <button
               onClick={() => setActiveTab('all_accounting')}
               className={`px-4 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center space-x-1.5 cursor-pointer ${

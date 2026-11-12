@@ -375,7 +375,7 @@ export const Settings = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* 1. CHANGE PASSWORD CARD */}
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-2xs space-y-4 flex flex-col justify-between">
+        <div className="bg-white p-4 sm:p-6 rounded-2xl border border-slate-200 shadow-2xs space-y-4 flex flex-col justify-between">
           <div className="space-y-4">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center space-x-2.5">
@@ -483,7 +483,7 @@ export const Settings = () => {
         </div>
 
         {/* 2. UPDATE EMAIL CARD */}
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-2xs space-y-4 flex flex-col justify-between">
+        <div className="bg-white p-4 sm:p-6 rounded-2xl border border-slate-200 shadow-2xs space-y-4 flex flex-col justify-between">
           <div className="space-y-4">
             <div className="flex items-center space-x-2.5 border-b border-slate-100 pb-3">
               <div className="w-9 h-9 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center text-[#1d4ed8]">
@@ -564,7 +564,7 @@ export const Settings = () => {
         </div>
 
         {/* 3. ADD NEW USER / OPERATOR PROVISIONING CARD */}
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-2xs space-y-4 lg:col-span-2">
+        <div className="bg-white p-4 sm:p-6 rounded-2xl border border-slate-200 shadow-2xs space-y-4 lg:col-span-2">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-100 pb-3 gap-2">
             <div className="flex items-center space-x-2.5">
               <div className="w-9 h-9 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600">

@@ -100,7 +100,7 @@ export const Login = () => {
         </div>
 
         {/* LEFT COLUMN: INTERACTIVE SIGN IN FORM */}
-        <div className="w-full lg:w-[50%] p-7 sm:p-10 flex flex-col justify-between relative z-10 bg-transparent">
+        <div className="w-full lg:w-[50%] p-5 sm:p-8 lg:p-10 flex flex-col justify-between relative z-10 bg-transparent">
           <div>
             {/* Top Logo & Enterprise Portal Badge */}
             <div className="flex items-center space-x-3 mb-5">
@@ -245,7 +245,7 @@ export const Login = () => {
         </div>
 
         {/* RIGHT COLUMN: CRYSTAL-CLEAR BRAND INFORMATION PANEL & HIGHWAY FLEET */}
-        <div className="w-full lg:w-[48%] lg:ml-auto flex flex-col justify-between items-center text-center relative z-10 pt-7 sm:pt-9 text-white overflow-hidden">
+        <div className="w-full lg:w-[48%] lg:ml-auto flex flex-col justify-between items-center text-center relative z-10 p-6 sm:p-8 lg:p-0 lg:pt-9 bg-gradient-to-br from-[#061944] via-[#102256] to-[#2D3661] lg:bg-transparent text-white overflow-hidden rounded-b-[28px] sm:rounded-b-[32px] lg:rounded-none">
           {/* Brand Presentation with Crisp Vector Typography & High-Res Logo */}
           <div className="flex flex-col items-center px-6 relative z-20">
             {/* White Squircle Logo Card */}

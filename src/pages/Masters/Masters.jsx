@@ -127,7 +127,7 @@ export const Masters = () => {
       </div>
 
       {/* CATEGORY SELECTOR CARDS */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3.5">
         {masterTypes.map((type) => {
           const Icon = type.icon;
           const count = (masters[type.key] || []).length;
@@ -139,7 +139,7 @@ export const Masters = () => {
                 setActiveMaster(type.key);
                 setSearchFilter('');
               }}
-              className={`p-4 rounded-2xl border text-left flex items-center space-x-3.5 transition-all cursor-pointer ${
+              className={`p-3 sm:p-4 rounded-xl sm:rounded-2xl border text-left flex items-center space-x-2.5 sm:space-x-3.5 transition-all cursor-pointer ${
                 isActive
                   ? 'bg-[#061944] border-[#061944] text-white shadow-lg border-b-4 border-b-[#3956D4]'
                   : 'bg-white border-[#E1E5EE] text-slate-700 hover:border-[#3956D4]/40 hover:bg-[#3956D4]/5 shadow-2xs'

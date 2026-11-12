@@ -101,8 +101,8 @@ export const Sidebar = () => {
         }`}
       >
         {/* Top Branding Section */}
-        <div className="p-4 border-b border-[#1B2A5E]">
-          <div className="flex items-center space-x-3">
+        <div className="p-4 border-b border-[#1B2A5E] flex items-center justify-between">
+          <div className="flex items-center space-x-3 min-w-0">
             <div className="w-11 h-11 rounded-xl bg-white border border-[#1B2A5E] p-1 flex items-center justify-center shadow-md flex-shrink-0 overflow-hidden ring-2 ring-[#3956D4]/40">
               <img src="/logo.png" alt="ATHAHAR ROADWAYS" className="w-full h-full object-contain" />
             </div>
@@ -117,6 +117,13 @@ export const Sidebar = () => {
               </p>
             </div>
           </div>
+          <button
+            onClick={() => setMobileOpen(false)}
+            className="lg:hidden p-1.5 text-blue-300 hover:text-white hover:bg-white/10 rounded-lg transition-colors flex-shrink-0 cursor-pointer"
+            title="Close menu"
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
 
         {/* Navigation Items List */}
