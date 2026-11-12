@@ -87,10 +87,10 @@ export const Login = () => {
       <div className="absolute top-0 right-1/4 w-[500px] h-[500px] bg-[#3956D4]/10 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-0 left-1/4 w-[500px] h-[500px] bg-[#EA580C]/10 rounded-full blur-3xl pointer-events-none" />
 
-      {/* Main Login Split Card (Exact Image 2 Matching Artwork & Layout) */}
-      <div className="bg-white rounded-[28px] sm:rounded-[32px] shadow-2xl overflow-hidden w-full max-w-4xl min-h-[540px] sm:min-h-[560px] relative border border-[#DCE4F0] z-10 flex flex-col lg:flex-row">
+      {/* Main Login Card - Responsive max-w-md on mobile, split-card max-w-4xl on desktop */}
+      <div className="bg-white rounded-[24px] sm:rounded-[32px] shadow-2xl overflow-hidden w-full max-w-md lg:max-w-4xl min-h-0 lg:min-h-[560px] relative border border-[#DCE4F0] z-10 flex flex-col lg:flex-row">
         
-        {/* DESKTOP 1:1 EXACT GRAPHIC BACKGROUND FROM IMAGE 2 (Retina 2x Crisp) */}
+        {/* DESKTOP 1:1 EXACT GRAPHIC BACKGROUND (Retina 2x Crisp) */}
         <div className="hidden lg:block absolute inset-0 w-full h-full pointer-events-none z-0">
           <img
             src="/login-card-bg-v4.png"
@@ -100,7 +100,7 @@ export const Login = () => {
         </div>
 
         {/* LEFT COLUMN: INTERACTIVE SIGN IN FORM */}
-        <div className="w-full lg:w-[50%] p-5 sm:p-8 lg:p-10 flex flex-col justify-between relative z-10 bg-transparent">
+        <div className="w-full lg:w-[50%] p-6 sm:p-8 lg:p-10 flex flex-col justify-between relative z-10 bg-white lg:bg-transparent">
           <div>
             {/* Top Logo & Enterprise Portal Badge */}
             <div className="flex items-center space-x-3 mb-5">
@@ -150,13 +150,13 @@ export const Login = () => {
             )}
 
             {/* Login Form */}
-            <form onSubmit={handleSubmit} className="space-y-4 max-w-sm">
+            <form onSubmit={handleSubmit} className="space-y-4 w-full max-w-sm mx-auto lg:mx-0">
               {/* Operator Email Input */}
               <div className="space-y-1.5">
                 <label className="block text-[11px] font-black uppercase text-[#061944] tracking-wider">
                   OPERATOR EMAIL
                 </label>
-                <div className="relative bg-[#F0F4FA] border border-[#DCE4F0] rounded-2xl px-4 py-3.5 flex items-center space-x-3 focus-within:border-[#FF8A00] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#FF8A00]/20 transition-all shadow-inner">
+                <div className="relative bg-[#F0F4FA] border border-[#DCE4F0] rounded-2xl px-4 py-3 sm:py-3.5 flex items-center space-x-3 focus-within:border-[#FF8A00] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#FF8A00]/20 transition-all shadow-inner">
                   <User className="w-4 h-4 text-slate-400 flex-shrink-0" />
                   <input
                     type="email"
@@ -164,7 +164,7 @@ export const Login = () => {
                     placeholder="atharva@admin.com"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
-                    className="w-full text-xs font-bold text-[#061944] placeholder-slate-400 focus:outline-none bg-transparent"
+                    className="w-full text-sm sm:text-xs font-bold text-[#061944] placeholder-slate-400 focus:outline-none bg-transparent"
                   />
                 </div>
               </div>
@@ -174,7 +174,7 @@ export const Login = () => {
                 <label className="block text-[11px] font-black uppercase text-[#061944] tracking-wider">
                   ACCOUNT PASSWORD
                 </label>
-                <div className="relative bg-[#F0F4FA] border border-[#DCE4F0] rounded-2xl px-4 py-3.5 flex items-center space-x-3 focus-within:border-[#FF8A00] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#FF8A00]/20 transition-all shadow-inner">
+                <div className="relative bg-[#F0F4FA] border border-[#DCE4F0] rounded-2xl px-4 py-3 sm:py-3.5 flex items-center space-x-3 focus-within:border-[#FF8A00] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#FF8A00]/20 transition-all shadow-inner">
                   <Lock className="w-4 h-4 text-slate-400 flex-shrink-0" />
                   <input
                     type={showPassword ? 'text' : 'password'}
@@ -182,7 +182,7 @@ export const Login = () => {
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full text-xs font-bold text-[#061944] placeholder-slate-400 focus:outline-none bg-transparent"
+                    className="w-full text-sm sm:text-xs font-bold text-[#061944] placeholder-slate-400 focus:outline-none bg-transparent"
                   />
                   <button
                     type="button"
@@ -215,7 +215,7 @@ export const Login = () => {
               </button>
 
               {/* Keep Me Logged In & Forgot Password */}
-              <div className="flex items-center justify-between text-xs pt-2">
+              <div className="flex items-center justify-between flex-wrap gap-2 text-xs pt-2">
                 <label className="flex items-center space-x-2 cursor-pointer select-none">
                   <input
                     type="checkbox"
@@ -238,14 +238,20 @@ export const Login = () => {
             </form>
           </div>
 
-          {/* Left Footer Copyright */}
-          <p className="text-[10px] text-slate-400 font-medium pt-7">
-            &copy; 2026 ATHAHAR ROADWAYS. Cloud Transport ERP.
-          </p>
+          {/* Footer: Terminal Info on Mobile & Copyright */}
+          <div className="pt-6 sm:pt-7 mt-4 border-t border-slate-100 lg:border-none space-y-1.5">
+            <div className="lg:hidden text-[11px] text-slate-600 font-medium text-center space-y-0.5 pb-1">
+              <p className="font-extrabold text-[#061944] tracking-tight">HQ &amp; Godown Hub 01 &bull; Vakhar Bhag, Sangli - 416416</p>
+              <p className="font-mono text-[10.5px] text-slate-500 font-bold">TEL.: 9370229449 / 9850329449</p>
+            </div>
+            <p className="text-[10px] text-slate-400 font-medium text-center lg:text-left">
+              &copy; 2026 ATHAHAR ROADWAYS. Cloud Transport ERP.
+            </p>
+          </div>
         </div>
 
-        {/* RIGHT COLUMN: CRYSTAL-CLEAR BRAND INFORMATION PANEL & HIGHWAY FLEET */}
-        <div className="w-full lg:w-[48%] lg:ml-auto flex flex-col justify-between items-center text-center relative z-10 p-6 sm:p-8 lg:p-0 lg:pt-9 bg-gradient-to-br from-[#061944] via-[#102256] to-[#2D3661] lg:bg-transparent text-white overflow-hidden rounded-b-[28px] sm:rounded-b-[32px] lg:rounded-none">
+        {/* RIGHT COLUMN: CRYSTAL-CLEAR BRAND INFORMATION PANEL & HIGHWAY FLEET (Desktop Only) */}
+        <div className="hidden lg:flex lg:w-[48%] lg:ml-auto flex-col justify-between items-center text-center relative z-10 pt-7 sm:pt-9 text-white overflow-hidden">
           {/* Brand Presentation with Crisp Vector Typography & High-Res Logo */}
           <div className="flex flex-col items-center px-6 relative z-20">
             {/* White Squircle Logo Card */}
@@ -288,16 +294,7 @@ export const Login = () => {
           </div>
 
           {/* Desktop Spacer: Truck is seamlessly part of /login-card-bg-v4.png background, perfectly clipped to the curve with zero steps or protrusion */}
-          <div className="hidden lg:block h-36 sm:h-44 w-full pointer-events-none" />
-
-          {/* Mobile-Only Fleet Photo when stacked vertically on small screens */}
-          <div className="block lg:hidden w-full mt-6 rounded-2xl overflow-hidden shadow-lg">
-            <img
-              src="/truck-fleet.jpg"
-              alt="Highway Linehaul Fleet"
-              className="w-full h-36 object-cover object-center"
-            />
-          </div>
+          <div className="h-36 sm:h-44 w-full pointer-events-none" />
         </div>
 
       </div>
