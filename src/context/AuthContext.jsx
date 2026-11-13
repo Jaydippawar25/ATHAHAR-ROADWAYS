@@ -17,32 +17,99 @@ import {
 import { initializeApp, getApps } from 'firebase/app';
 import { auth, firebaseConfig } from '../firebase/firebase';
 
+// Ensure local persistence is set immediately on module load
+try {
+  setPersistence(auth, browserLocalPersistence).catch(() => {});
+} catch {
+  // Ignore fallback
+}
+
+const getStoredUser = () => {
+  try {
+    const saved = localStorage.getItem('athahar_user') || localStorage.getItem('atharva_user');
+    return saved ? JSON.parse(saved) : null;
+  } catch {
+    return null;
+  }
+};
+
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(getStoredUser);
+  const [loading, setLoading] = useState(!getStoredUser());
   const [authError, setAuthError] = useState(null);
 
   useEffect(() => {
     // Real Firebase Auth listener
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        setUser({
+        const formattedUser = {
           uid: firebaseUser.uid,
           email: firebaseUser.email,
           displayName:
             firebaseUser.displayName ||
             (firebaseUser.email ? firebaseUser.email.split('@')[0].toUpperCase() : 'ADMINISTRATOR'),
           raw: firebaseUser,
-        });
+        };
+        setUser(formattedUser);
+        try {
+          localStorage.setItem('athahar_user', JSON.stringify({
+            uid: formattedUser.uid,
+            email: formattedUser.email,
+            displayName: formattedUser.displayName,
+          }));
+        } catch {
+          // Ignore localStorage quota errors
+        }
       } else {
-        setUser(null);
+        // If Firebase temporarily returns null (e.g. background token renewal or transient offline state),
+        // preserve the cached operator session unless the user has explicitly logged out.
+        const stored = getStoredUser();
+        if (!stored) {
+          setUser(null);
+        }
       }
       setLoading(false);
     });
 
     return () => unsubscribe();
+  }, []);
+
+  // Proactive Keep-Alive: Automatically renew token before the 60-minute Firebase limit
+  useEffect(() => {
+    const keepSessionAlive = async () => {
+      try {
+        if (auth.currentUser) {
+          await auth.currentUser.getIdToken(true);
+        }
+      } catch (err) {
+        // Silently ignore network blips; local session stays active
+        console.warn('Keep-alive session renewal postponed (offline or network pause):', err?.message);
+      }
+    };
+
+    // 1. Proactively refresh token every 15 minutes (long before 60-minute expiration)
+    const intervalId = setInterval(keepSessionAlive, 15 * 60 * 1000);
+
+    // 2. Refresh token immediately whenever the operator returns to the tab or unlocks their PC
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        keepSessionAlive();
+      }
+    };
+    const handleWindowFocus = () => {
+      keepSessionAlive();
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleWindowFocus);
+
+    return () => {
+      clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleWindowFocus);
+    };
   }, []);
 
   const login = async (email, password, remember = true) => {
@@ -64,6 +131,15 @@ export const AuthProvider = ({ children }) => {
         raw: fbUser,
       };
       setUser(formattedUser);
+      try {
+        localStorage.setItem('athahar_user', JSON.stringify({
+          uid: formattedUser.uid,
+          email: formattedUser.email,
+          displayName: formattedUser.displayName,
+        }));
+      } catch {
+        // Ignore localStorage quota errors
+      }
       return formattedUser;
     } catch (error) {
       setAuthError(error.message);
@@ -74,10 +150,10 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     setAuthError(null);
     try {
-      await signOut(auth);
-      setUser(null);
-      localStorage.removeItem('atharva_user');
       localStorage.removeItem('athahar_user');
+      localStorage.removeItem('atharva_user');
+      setUser(null);
+      await signOut(auth);
     } catch (error) {
       console.error('Error signing out of Firebase Auth:', error);
       throw error;
