@@ -229,22 +229,22 @@ export const Reports = () => {
             </div>
           </div>
           <div>
-            <div className="text-xl sm:text-2xl font-black text-amber-600 tracking-tight truncate">{formatCurrency(totalToPay)}</div>
-            <div className="text-[10px] sm:text-[11px] font-medium text-slate-400 mt-0.5 truncate">Due on delivery</div>
+            <div className="text-xl sm:text-2xl font-black text-amber-600 tracking-tight tabular-nums whitespace-nowrap overflow-visible" title={formatCurrency(totalToPay)}>{formatCurrency(totalToPay)}</div>
+            <div className="text-[10px] sm:text-[11px] font-medium text-slate-400 mt-0.5">Due on delivery</div>
           </div>
         </div>
 
         {/* Card 4: Settled / Paid Amount */}
         <div className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-5 border border-slate-200 shadow-2xs flex flex-col justify-between">
           <div className="flex items-center justify-between text-slate-500 mb-2">
-            <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider truncate">PAID &amp; TBB</span>
+            <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider">PAID &amp; TBB</span>
             <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center flex-shrink-0">
               <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
           </div>
           <div>
-            <div className="text-xl sm:text-2xl font-black text-emerald-600 tracking-tight truncate">{formatCurrency(totalPaid + totalTbb)}</div>
-            <div className="text-[10px] sm:text-[11px] font-medium text-slate-400 mt-0.5 truncate">Paid: {formatCurrency(totalPaid)}</div>
+            <div className="text-xl sm:text-2xl font-black text-emerald-600 tracking-tight tabular-nums whitespace-nowrap overflow-visible" title={formatCurrency(totalPaid + totalTbb)}>{formatCurrency(totalPaid + totalTbb)}</div>
+            <div className="text-[10px] sm:text-[11px] font-medium text-slate-400 mt-0.5">Paid: {formatCurrency(totalPaid)}</div>
           </div>
         </div>
       </div>

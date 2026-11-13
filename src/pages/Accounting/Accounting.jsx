@@ -448,105 +448,151 @@ export const Accounting = () => {
       </div>
 
       {/* Primary Financial Summary Cards (Inward Money, Outward Money, Stock Out Money, 20% Commission, Total Handled) */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-2.5 xl:gap-3.5">
         {/* Card 1: Inward Money */}
-        <div className="bg-white p-3.5 sm:p-5 rounded-xl sm:rounded-2xl border-2 border-sky-100 shadow-sm relative overflow-hidden flex flex-col justify-between">
+        <div className="bg-white p-3 sm:p-3.5 xl:p-4 rounded-xl sm:rounded-2xl border-2 border-sky-100 shadow-sm relative overflow-hidden flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider text-sky-800 truncate">
+            <div className="flex items-center justify-between mb-1.5 sm:mb-2">
+              <span className="text-[11px] sm:text-xs font-black uppercase tracking-tight text-sky-800 whitespace-nowrap">
                 Money Inward
               </span>
-              <div className="p-1.5 sm:p-2 bg-sky-100 text-sky-700 rounded-lg sm:rounded-xl flex-shrink-0">
-                <ArrowDownLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+              <div className="p-1 sm:p-1.5 bg-sky-100 text-sky-700 rounded-lg flex-shrink-0">
+                <ArrowDownLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </div>
             </div>
-            <p className="text-xl sm:text-3xl font-black text-sky-900 truncate">
+            <p
+              className="text-base sm:text-lg md:text-xl lg:text-[17px] xl:text-2xl font-black text-sky-900 tracking-tight tabular-nums whitespace-nowrap overflow-visible"
+              title={formatCurrency(accountingSummary.inwardMoneyTotal)}
+            >
               {formatCurrency(accountingSummary.inwardMoneyTotal)}
             </p>
           </div>
-          <div className="mt-2 pt-2 sm:mt-2.5 sm:pt-2 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between text-[10px] sm:text-[11px] font-bold text-slate-500 gap-0.5">
-            <span className="truncate">Gross: {formatCurrency(accountingSummary.inwardGrossFreight)}</span>
-            <span className="truncate text-[#7A4F05]">Comm: -{formatCurrency(accountingSummary.inwardCommission)}</span>
+          <div className="mt-2 pt-2 border-t border-slate-100 flex flex-col gap-0.5 text-[10px] xl:text-[11px] font-semibold text-slate-500">
+            <div className="flex items-center justify-between gap-1">
+              <span className="text-slate-400">Gross:</span>
+              <span className="font-bold text-slate-700 tabular-nums">{formatCurrency(accountingSummary.inwardGrossFreight)}</span>
+            </div>
+            <div className="flex items-center justify-between gap-1 text-[#7A4F05]">
+              <span>Comm:</span>
+              <span className="font-bold tabular-nums">-{formatCurrency(accountingSummary.inwardCommission)}</span>
+            </div>
           </div>
         </div>
 
         {/* Card 2: Outward Money */}
-        <div className="bg-white p-3.5 sm:p-5 rounded-xl sm:rounded-2xl border-2 border-emerald-100 shadow-sm relative overflow-hidden flex flex-col justify-between">
+        <div className="bg-white p-3 sm:p-3.5 xl:p-4 rounded-xl sm:rounded-2xl border-2 border-emerald-100 shadow-sm relative overflow-hidden flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider text-emerald-800 truncate">
+            <div className="flex items-center justify-between mb-1.5 sm:mb-2">
+              <span className="text-[11px] sm:text-xs font-black uppercase tracking-tight text-emerald-800 whitespace-nowrap">
                 Money Outward
               </span>
-              <div className="p-1.5 sm:p-2 bg-emerald-100 text-emerald-700 rounded-lg sm:rounded-xl flex-shrink-0">
-                <ArrowUpRight className="w-4 h-4 sm:w-5 sm:h-5" />
+              <div className="p-1 sm:p-1.5 bg-emerald-100 text-emerald-700 rounded-lg flex-shrink-0">
+                <ArrowUpRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </div>
             </div>
-            <p className="text-xl sm:text-3xl font-black text-emerald-900 truncate">
+            <p
+              className="text-base sm:text-lg md:text-xl lg:text-[17px] xl:text-2xl font-black text-emerald-900 tracking-tight tabular-nums whitespace-nowrap overflow-visible"
+              title={formatCurrency(accountingSummary.outwardMoneyTotal)}
+            >
               {formatCurrency(accountingSummary.outwardMoneyTotal)}
             </p>
           </div>
-          <div className="mt-2 pt-2 sm:mt-2.5 sm:pt-2 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between text-[10px] sm:text-[11px] font-bold text-slate-500 gap-0.5">
-            <span className="truncate">To Pay: {formatCurrency(accountingSummary.outwardToPay)}</span>
-            <span className="truncate">Paid: {formatCurrency(accountingSummary.outwardPaid)}</span>
+          <div className="mt-2 pt-2 border-t border-slate-100 flex flex-col gap-0.5 text-[10px] xl:text-[11px] font-semibold text-slate-500">
+            <div className="flex items-center justify-between gap-1">
+              <span className="text-slate-400">To Pay:</span>
+              <span className="font-bold text-slate-700 tabular-nums">{formatCurrency(accountingSummary.outwardToPay)}</span>
+            </div>
+            <div className="flex items-center justify-between gap-1">
+              <span className="text-slate-400">Paid:</span>
+              <span className="font-bold text-emerald-700 tabular-nums">{formatCurrency(accountingSummary.outwardPaid)}</span>
+            </div>
           </div>
         </div>
 
         {/* Card 3: Stock Out Money */}
-        <div className="bg-white p-3.5 sm:p-5 rounded-xl sm:rounded-2xl border-2 border-purple-100 shadow-sm relative overflow-hidden flex flex-col justify-between">
+        <div className="bg-white p-3 sm:p-3.5 xl:p-4 rounded-xl sm:rounded-2xl border-2 border-purple-100 shadow-sm relative overflow-hidden flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider text-purple-800 truncate">
+            <div className="flex items-center justify-between mb-1.5 sm:mb-2">
+              <span className="text-[11px] sm:text-xs font-black uppercase tracking-tight text-purple-800 whitespace-nowrap">
                 Stock Out
               </span>
-              <div className="p-1.5 sm:p-2 bg-purple-100 text-purple-700 rounded-lg sm:rounded-xl flex-shrink-0">
-                <Shuffle className="w-4 h-4 sm:w-5 sm:h-5" />
+              <div className="p-1 sm:p-1.5 bg-purple-100 text-purple-700 rounded-lg flex-shrink-0">
+                <Shuffle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </div>
             </div>
-            <p className="text-xl sm:text-3xl font-black text-purple-900 truncate">
+            <p
+              className="text-base sm:text-lg md:text-xl lg:text-[17px] xl:text-2xl font-black text-purple-900 tracking-tight tabular-nums whitespace-nowrap overflow-visible"
+              title={formatCurrency(accountingSummary.stockOutMoneyTotal)}
+            >
               {formatCurrency(accountingSummary.stockOutMoneyTotal)}
             </p>
           </div>
-          <div className="mt-2 pt-2 sm:mt-2.5 sm:pt-2 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between text-[10px] sm:text-[11px] font-bold text-slate-500 gap-0.5">
-            <span className="truncate">To Pay: {formatCurrency(accountingSummary.stockOutToPay)}</span>
-            <span className="truncate">Paid: {formatCurrency(accountingSummary.stockOutPaid)}</span>
+          <div className="mt-2 pt-2 border-t border-slate-100 flex flex-col gap-0.5 text-[10px] xl:text-[11px] font-semibold text-slate-500">
+            <div className="flex items-center justify-between gap-1">
+              <span className="text-slate-400">To Pay:</span>
+              <span className="font-bold text-slate-700 tabular-nums">{formatCurrency(accountingSummary.stockOutToPay)}</span>
+            </div>
+            <div className="flex items-center justify-between gap-1">
+              <span className="text-slate-400">Paid:</span>
+              <span className="font-bold text-purple-700 tabular-nums">{formatCurrency(accountingSummary.stockOutPaid)}</span>
+            </div>
           </div>
         </div>
 
         {/* Card 4: Commission (20%) */}
-        <div className="bg-white p-3.5 sm:p-5 rounded-xl sm:rounded-2xl border-2 border-amber-200 shadow-sm relative overflow-hidden flex flex-col justify-between">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-black uppercase tracking-wider text-amber-800">
-              COMMISSION ({commissionRate}%)
-            </span>
-            <div className="p-2 bg-amber-100 text-amber-700 rounded-xl">
-              <Percent className="w-5 h-5" />
+        <div className="bg-white p-3 sm:p-3.5 xl:p-4 rounded-xl sm:rounded-2xl border-2 border-amber-200 shadow-sm relative overflow-hidden flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-1.5 sm:mb-2">
+              <span className="text-[11px] sm:text-xs font-black uppercase tracking-tight text-amber-800 whitespace-nowrap">
+                Commission ({commissionRate}%)
+              </span>
+              <div className="p-1 sm:p-1.5 bg-amber-100 text-amber-700 rounded-lg flex-shrink-0">
+                <Percent className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              </div>
             </div>
+            <p
+              className="text-base sm:text-lg md:text-xl lg:text-[17px] xl:text-2xl font-black text-amber-900 tracking-tight tabular-nums whitespace-nowrap overflow-visible"
+              title={formatCurrency(accountingSummary.totalCommission20)}
+            >
+              {formatCurrency(accountingSummary.totalCommission20)}
+            </p>
           </div>
-          <p className="text-xl sm:text-3xl font-black text-amber-900 truncate">
-            {formatCurrency(accountingSummary.totalCommission20)}
-          </p>
-          <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] font-bold text-slate-500">
-            <span>Inward ({commissionRate}%): {formatCurrency(accountingSummary.inwardCommission)}</span>
-            <span className="text-slate-400 font-medium">Inward Freight Only</span>
+          <div className="mt-2 pt-2 border-t border-slate-100 flex flex-col gap-0.5 text-[10px] xl:text-[11px] font-semibold text-slate-500">
+            <div className="flex items-center justify-between gap-1">
+              <span className="text-slate-400">Inward ({commissionRate}%):</span>
+              <span className="font-bold text-amber-800 tabular-nums">{formatCurrency(accountingSummary.inwardCommission)}</span>
+            </div>
+            <span className="text-[9.5px] text-slate-400 font-medium">Inward Freight Only</span>
           </div>
         </div>
 
         {/* Card 5: Net Difference of Inward and Outward */}
-        <div className="col-span-2 sm:col-span-1 lg:col-span-1 bg-white p-3.5 sm:p-5 rounded-xl sm:rounded-2xl border-2 border-emerald-200 shadow-sm relative overflow-hidden flex flex-col justify-between">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-black uppercase tracking-wider text-emerald-800">
-              Net Difference (Inward - Outward)
-            </span>
-            <div className="p-2 bg-emerald-100 text-emerald-700 rounded-xl">
-              <TrendingUp className="w-5 h-5" />
+        <div className="col-span-2 sm:col-span-1 lg:col-span-1 bg-white p-3 sm:p-3.5 xl:p-4 rounded-xl sm:rounded-2xl border-2 border-emerald-200 shadow-sm relative overflow-hidden flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-1.5 sm:mb-2">
+              <span className="text-[10.5px] sm:text-[11px] xl:text-xs font-black uppercase tracking-tight text-emerald-800 leading-tight">
+                Net Difference <span className="text-[9px] xl:text-[10px] font-bold text-emerald-600 block sm:inline">(Inw - Out)</span>
+              </span>
+              <div className="p-1 sm:p-1.5 bg-emerald-100 text-emerald-700 rounded-lg flex-shrink-0">
+                <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              </div>
             </div>
+            <p
+              className="text-base sm:text-lg md:text-xl lg:text-[17px] xl:text-2xl font-black text-emerald-950 tracking-tight tabular-nums whitespace-nowrap overflow-visible"
+              title={formatCurrency(accountingSummary.netDifference)}
+            >
+              {formatCurrency(accountingSummary.netDifference)}
+            </p>
           </div>
-          <p className="text-xl sm:text-3xl font-black text-emerald-950 truncate">
-            {formatCurrency(accountingSummary.netDifference)}
-          </p>
-          <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] font-bold text-slate-500">
-            <span>Inward: {formatCurrency(accountingSummary.inwardMoneyTotal)}</span>
-            <span>Outward: {formatCurrency(accountingSummary.outwardMoneyTotal)}</span>
+          <div className="mt-2 pt-2 border-t border-slate-100 flex flex-col gap-0.5 text-[10px] xl:text-[11px] font-semibold text-slate-500">
+            <div className="flex items-center justify-between gap-1">
+              <span className="text-slate-400">Inward:</span>
+              <span className="font-bold text-sky-800 tabular-nums">{formatCurrency(accountingSummary.inwardMoneyTotal)}</span>
+            </div>
+            <div className="flex items-center justify-between gap-1">
+              <span className="text-slate-400">Outward:</span>
+              <span className="font-bold text-emerald-800 tabular-nums">{formatCurrency(accountingSummary.outwardMoneyTotal)}</span>
+            </div>
           </div>
         </div>
       </div>
@@ -753,7 +799,7 @@ export const Accounting = () => {
                 <span className="text-xs font-bold text-sky-800 uppercase block">
                   Inward Commission (20%)
                 </span>
-                <p className="text-lg sm:text-2xl font-black text-sky-950 truncate">
+                <p className="text-lg sm:text-2xl font-black text-sky-950 tracking-tight tabular-nums whitespace-nowrap">
                   {formatCurrency(accountingSummary.inwardCommission)}
                 </p>
                 <div className="text-[11px] text-sky-700 font-semibold space-y-0.5 pt-2 border-t border-sky-200/80">
@@ -766,7 +812,7 @@ export const Accounting = () => {
                 <span className="text-xs font-bold text-emerald-800 uppercase block">
                   Outward (No Commission)
                 </span>
-                <p className="text-lg sm:text-2xl font-black text-emerald-950 truncate">
+                <p className="text-lg sm:text-2xl font-black text-emerald-950 tracking-tight tabular-nums whitespace-nowrap">
                   {formatCurrency(0)}
                 </p>
                 <div className="text-[11px] text-emerald-700 font-semibold space-y-0.5 pt-2 border-t border-emerald-200/80">
@@ -779,7 +825,7 @@ export const Accounting = () => {
                 <span className="text-xs font-bold text-purple-800 uppercase block">
                   Stock Out (No Commission)
                 </span>
-                <p className="text-lg sm:text-2xl font-black text-purple-950 truncate">
+                <p className="text-lg sm:text-2xl font-black text-purple-950 tracking-tight tabular-nums whitespace-nowrap">
                   {formatCurrency(0)}
                 </p>
                 <div className="text-[11px] text-purple-700 font-semibold space-y-0.5 pt-2 border-t border-purple-200/80">
@@ -792,7 +838,7 @@ export const Accounting = () => {
                 <span className="text-xs font-bold text-amber-900 uppercase block">
                   Total Commission Earned
                 </span>
-                <p className="text-lg sm:text-2xl font-black text-amber-950 truncate">
+                <p className="text-lg sm:text-2xl font-black text-amber-950 tracking-tight tabular-nums whitespace-nowrap">
                   {formatCurrency(accountingSummary.totalCommission20)}
                 </p>
                 <div className="text-[11px] text-amber-800 font-semibold space-y-0.5 pt-2 border-t border-amber-200/80">
