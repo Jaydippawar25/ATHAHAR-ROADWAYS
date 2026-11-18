@@ -93,63 +93,68 @@ export const AllEntries = () => {
   };
 
   const handlePrintRecord = (row, category) => {
-    if (category?.includes('header')) {
-      const isInward = category === 'inward_header';
-      const isStockOut = category === 'stock_out_header' || row.isCrossOutward;
-      const items = isInward
-        ? inwardItems.filter((item) => item.inwardId === row.id || item.inwardNo === row.inwardNo)
-        : outwardItems.filter((item) => item.outwardId === row.id || item.outwardNo === row.outwardNo);
-      const totalFreight =
-        (Number(row.totalToPay) || 0) + (Number(row.totalTbb) || 0) + (Number(row.totalPaid) || 0);
+    try {
+      if (category?.includes('header')) {
+        const isInward = category === 'inward_header';
+        const isStockOut = category === 'stock_out_header' || Boolean(row.isCrossOutward);
+        const isOutward = category === 'outward_header' && !row.isCrossOutward;
+        const items = isInward
+          ? inwardItems.filter((item) => item.inwardId === row.id || item.inwardNo === row.inwardNo)
+          : outwardItems.filter((item) => item.outwardId === row.id || item.outwardNo === row.outwardNo);
+        const totalFreight =
+          (Number(row.totalToPay) || 0) + (Number(row.totalTbb) || 0) + (Number(row.totalPaid) || 0);
 
-      printRecordDetails({
-        title: isInward
-          ? `Inward Receipt Details #${row.inwardNo}`
-          : isStockOut
-          ? `Stock-Out Receipt Details #${row.outwardNo}`
-          : `Outward Receipt Details #${row.outwardNo}`,
-        fields: [
-          {
-            label: isInward ? 'Inward No.' : isStockOut ? 'Stock-Out No.' : 'Outward No.',
-            value: row.inwardNo || row.outwardNo,
-          },
-          { label: 'Date', value: formatDate(row.date) },
-          { label: 'Vehicle No.', value: row.vehicleNo || '-' },
-          {
-            label: isInward ? 'Vehicle Owner' : 'Driver Name',
-            value: isInward ? row.ownerName || '-' : row.driverName || row.ownerName || '-',
-          },
-          ...(isStockOut && row.ownerName
-            ? [{ label: 'Vehicle Owner', value: row.ownerName }]
-            : []),
-          { label: 'From Station', value: row.from || '-' },
-          ...(!isOutward ? [{ label: 'Memo No.', value: row.memoNo || '-' }] : []),
-          { label: 'Total PKG', value: `${row.totalQty || 0} Pkgs` },
-          { label: 'Total Freight', value: formatCurrency(totalFreight) },
-        ],
-        items,
-      });
-    } else {
-      printRecordDetails({
-        title: `LR Entry Details #${row.lrNo}`,
-        fields: [
-          { label: 'LR No.', value: row.lrNo },
-          { label: 'Status', value: row.status },
-          { label: 'Packages', value: `${row.pkg || 0} Pkgs` },
-          { label: 'Inward No.', value: row.inwardNo || '-' },
-          { label: 'Inward Date', value: formatDate(row.inwardDate) },
-          { label: 'Outward No.', value: row.outwardNo || '-' },
-          { label: 'Outward Date', value: formatDate(row.outwardDate) },
-          { label: 'Delivery Person', value: row.deliveryPersonName || '-' },
-          { label: 'CT To', value: row.ctTo || '-' },
-          { label: 'Consigner', value: row.consignorName || '-' },
-          { label: 'Consignee', value: row.consigneeName || '-' },
-          { label: 'Memo No.', value: row.memoNo || '-' },
-          { label: 'To Pay', value: formatCurrency(row.toPayAmount) },
-          { label: 'T.B.B', value: formatCurrency(row.tbbAmount) },
-          { label: 'Paid', value: formatCurrency(row.paidAmount) },
-        ],
-      });
+        printRecordDetails({
+          title: isInward
+            ? `Inward Receipt Details #${row.inwardNo}`
+            : isStockOut
+            ? `Stock-Out Receipt Details #${row.outwardNo}`
+            : `Outward Receipt Details #${row.outwardNo}`,
+          fields: [
+            {
+              label: isInward ? 'Inward No.' : isStockOut ? 'Stock-Out No.' : 'Outward No.',
+              value: row.inwardNo || row.outwardNo,
+            },
+            { label: 'Date', value: formatDate(row.date) },
+            { label: 'Vehicle No.', value: row.vehicleNo || '-' },
+            {
+              label: isInward ? 'Vehicle Owner' : 'Driver Name',
+              value: isInward ? row.ownerName || '-' : row.driverName || row.ownerName || '-',
+            },
+            ...(isStockOut && row.ownerName
+              ? [{ label: 'Vehicle Owner', value: row.ownerName }]
+              : []),
+            { label: 'From Station', value: row.from || '-' },
+            ...(!isOutward ? [{ label: 'Memo No.', value: row.memoNo || '-' }] : []),
+            { label: 'Total PKG', value: `${row.totalQty || 0} Pkgs` },
+            { label: 'Total Freight', value: formatCurrency(totalFreight) },
+          ],
+          items,
+        });
+      } else {
+        printRecordDetails({
+          title: `LR Entry Details #${row.lrNo}`,
+          fields: [
+            { label: 'LR No.', value: row.lrNo },
+            { label: 'Status', value: row.status },
+            { label: 'Packages', value: `${row.pkg || 0} Pkgs` },
+            { label: 'Inward No.', value: row.inwardNo || '-' },
+            { label: 'Inward Date', value: formatDate(row.inwardDate) },
+            { label: 'Outward No.', value: row.outwardNo || '-' },
+            { label: 'Outward Date', value: formatDate(row.outwardDate) },
+            { label: 'Delivery Person', value: row.deliveryPersonName || '-' },
+            { label: 'CT To', value: row.ctTo || '-' },
+            { label: 'Consigner', value: row.consignorName || '-' },
+            { label: 'Consignee', value: row.consigneeName || '-' },
+            { label: 'Memo No.', value: row.memoNo || '-' },
+            { label: 'To Pay', value: formatCurrency(row.toPayAmount) },
+            { label: 'T.B.B', value: formatCurrency(row.tbbAmount) },
+            { label: 'Paid', value: formatCurrency(row.paidAmount) },
+          ],
+        });
+      }
+    } catch (err) {
+      console.error('Error generating print preview:', err);
     }
   };
 

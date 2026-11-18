@@ -220,11 +220,13 @@ export const printRecordDetails = ({ title, fields = [], items = [], showDeliver
   iframe = document.createElement('iframe');
   iframe.id = 'athahar-print-frame';
   iframe.style.position = 'fixed';
-  iframe.style.right = '0';
-  iframe.style.bottom = '0';
-  iframe.style.width = '0';
-  iframe.style.height = '0';
+  iframe.style.left = '-9999px';
+  iframe.style.top = '-9999px';
+  iframe.style.width = '1000px';
+  iframe.style.height = '1000px';
   iframe.style.border = '0';
+  iframe.style.opacity = '0';
+  iframe.style.pointerEvents = 'none';
   document.body.appendChild(iframe);
 
   const fieldsHtml = fields
@@ -351,10 +353,21 @@ export const printRecordDetails = ({ title, fields = [], items = [], showDeliver
   doc.close();
 
   setTimeout(() => {
-    if (iframe.contentWindow) {
-      iframe.contentWindow.focus();
-      iframe.contentWindow.print();
+    try {
+      if (iframe.contentWindow) {
+        iframe.contentWindow.focus();
+        iframe.contentWindow.print();
+      }
+    } catch (err) {
+      console.warn('Iframe print failed, falling back to window.open:', err);
+      const printWin = window.open('', '_blank');
+      if (printWin) {
+        printWin.document.write(html);
+        printWin.document.close();
+        printWin.focus();
+        printWin.print();
+      }
     }
-  }, 200);
+  }, 250);
 };
 
