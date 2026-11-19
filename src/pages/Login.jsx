@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { User, Lock, Eye, EyeOff, AlertCircle, RefreshCw, CheckCircle2, ArrowRight } from 'lucide-react';
 
@@ -244,9 +244,15 @@ export const Login = () => {
               <p className="font-extrabold text-[#061944] tracking-tight">HQ &amp; Godown Hub 01 &bull; Vakhar Bhag, Sangli - 416416</p>
               <p className="font-mono text-[10.5px] text-slate-500 font-bold">TEL.: 9370229449 / 9850329449</p>
             </div>
-            <p className="text-[10px] text-slate-400 font-medium text-center lg:text-left">
-              &copy; 2026 ATHAHAR ROADWAYS. Cloud Transport ERP.
-            </p>
+            <div className="flex items-center justify-between text-[10px] text-slate-400 font-medium pt-1">
+              <span>&copy; 2026 ATHAHAR ROADWAYS. Cloud Transport ERP.</span>
+              <Link
+                to="/privacy-policy"
+                className="text-[#3956D4] hover:text-[#061944] hover:underline font-bold transition-colors ml-2"
+              >
+                Privacy Policy
+              </Link>
+            </div>
           </div>
         </div>
 

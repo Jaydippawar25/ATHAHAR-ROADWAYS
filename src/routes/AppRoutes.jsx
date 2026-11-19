@@ -15,6 +15,7 @@ const Reports = lazy(() => import('../pages/Reports/Reports').then((m) => ({ def
 const Accounting = lazy(() => import('../pages/Accounting/Accounting').then((m) => ({ default: m.Accounting })));
 const Expenses = lazy(() => import('../pages/Expenses/Expenses').then((m) => ({ default: m.Expenses })));
 const Settings = lazy(() => import('../pages/Settings/Settings').then((m) => ({ default: m.Settings })));
+const PrivacyPolicy = lazy(() => import('../pages/PrivacyPolicy').then((m) => ({ default: m.PrivacyPolicy })));
 
 const RouteLoadingFallback = () => (
   <div className="flex items-center justify-center min-h-[50vh] w-full">
@@ -30,6 +31,8 @@ export const AppRoutes = () => {
     <Suspense fallback={<RouteLoadingFallback />}>
       <Routes>
       <Route path="/login" element={<Login />} />
+      <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+      <Route path="/privacy" element={<Navigate to="/privacy-policy" replace />} />
       <Route
         path="/dashboard"
         element={
