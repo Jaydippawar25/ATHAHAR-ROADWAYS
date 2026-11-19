@@ -1015,13 +1015,9 @@ export const AllEntries = () => {
                 </div>
 
                 {/* Associated LRs Table */}
-                <div className="space-y-2">
-                  <h4 className="font-black text-slate-700 uppercase tracking-wider text-[11px]">
-                    Associated LR Items
-                  </h4>
-                  {/* Mobile Cards (sm:hidden) */}
-                  <div className="sm:hidden space-y-2 max-h-64 overflow-y-auto pr-0.5">
-                    {(viewCategory === 'inward_header'
+                {(() => {
+                  const modalChildItems =
+                    viewCategory === 'inward_header'
                       ? inwardItems.filter(
                           (item) =>
                             item.inwardId === viewingRecord.id || item.inwardNo === viewingRecord.inwardNo
@@ -1029,85 +1025,106 @@ export const AllEntries = () => {
                       : outwardItems.filter(
                           (item) =>
                             item.outwardId === viewingRecord.id || item.outwardNo === viewingRecord.outwardNo
-                        )
-                    ).map((lr, idx) => (
-                      <div key={lr.id || idx} className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="font-black text-sky-800 text-xs">LR #{lr.lrNo}</span>
-                          <StatusBadge status={lr.status} />
-                        </div>
-                        <div className="grid grid-cols-2 gap-1.5 text-[11px] text-slate-600">
-                          <div>
-                            <span className="text-[10px] uppercase font-bold text-slate-400 block">Consigner</span>
-                            <span className="font-semibold truncate block">{lr.consignorName || '-'}</span>
-                          </div>
-                          <div>
-                            <span className="text-[10px] uppercase font-bold text-slate-400 block">Consignee</span>
-                            <span className="font-semibold truncate block">{lr.consigneeName || '-'}</span>
-                          </div>
-                          <div>
-                            <span className="text-[10px] uppercase font-bold text-slate-400 block">CT To</span>
-                            <span className="font-semibold truncate block">{lr.ctTo || '-'}</span>
-                          </div>
-                          <div>
-                            <span className="text-[10px] uppercase font-bold text-slate-400 block">PKG</span>
-                            <span className="font-black text-slate-800">{lr.pkg}</span>
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-3 gap-1 text-[10px] text-slate-500 pt-1.5 border-t border-slate-200">
-                          <div>To Pay: <span className="font-bold text-slate-800">{formatCurrency(lr.toPayAmount)}</span></div>
-                          <div>TBB: <span className="font-bold text-slate-800">{formatCurrency(lr.tbbAmount)}</span></div>
-                          <div>Paid: <span className="font-bold text-slate-800">{formatCurrency(lr.paidAmount)}</span></div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                        );
 
-                  {/* Desktop Table (hidden sm:block) */}
-                  <div className="hidden sm:block border border-slate-200 rounded-xl overflow-x-auto max-h-60">
-                    <table className="w-full text-left text-[11px]">
-                      <thead className="bg-slate-100 text-slate-700 font-black uppercase border-b border-slate-200">
-                        <tr>
-                          <th className="p-2">LR No.</th>
-                          <th className="p-2">Consigner</th>
-                          <th className="p-2">Consignee</th>
-                          <th className="p-2">CT To</th>
-                          <th className="p-2">PKG</th>
-                          <th className="p-2">To Pay</th>
-                          <th className="p-2">TBB</th>
-                          <th className="p-2">Paid</th>
-                          <th className="p-2">Status</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100">
-                        {(viewCategory === 'inward_header'
-                          ? inwardItems.filter(
-                              (item) =>
-                                item.inwardId === viewingRecord.id || item.inwardNo === viewingRecord.inwardNo
-                            )
-                          : outwardItems.filter(
-                              (item) =>
-                                item.outwardId === viewingRecord.id || item.outwardNo === viewingRecord.outwardNo
-                            )
-                        ).map((lr, idx) => (
-                          <tr key={lr.id || idx} className="hover:bg-slate-50 font-semibold">
-                            <td className="p-2 font-black text-sky-700">{lr.lrNo}</td>
-                            <td className="p-2">{lr.consignorName || '-'}</td>
-                            <td className="p-2">{lr.consigneeName || '-'}</td>
-                            <td className="p-2">{lr.ctTo || '-'}</td>
-                            <td className="p-2 font-bold">{lr.pkg}</td>
-                            <td className="p-2">{formatCurrency(lr.toPayAmount)}</td>
-                            <td className="p-2">{formatCurrency(lr.tbbAmount)}</td>
-                            <td className="p-2">{formatCurrency(lr.paidAmount)}</td>
-                            <td className="p-2">
-                              <StatusBadge status={lr.status} />
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
+                  return (
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <h4 className="font-black text-slate-700 uppercase tracking-wider text-[11px]">
+                          Associated LR Items
+                        </h4>
+                        <span className="text-[10px] font-bold text-slate-400">
+                          {modalChildItems.length} {modalChildItems.length === 1 ? 'item' : 'items'}
+                        </span>
+                      </div>
+
+                      {/* Mobile Cards (sm:hidden) */}
+                      <div className="sm:hidden space-y-2 max-h-64 overflow-y-auto pr-0.5">
+                        {modalChildItems.length === 0 ? (
+                          <div className="py-6 px-4 text-center text-slate-400 font-medium text-xs bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                            No LR items found. Click the Edit (pencil) button on this row to add or update LR items.
+                          </div>
+                        ) : (
+                          modalChildItems.map((lr, idx) => (
+                            <div key={lr.id || idx} className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs space-y-2">
+                              <div className="flex items-center justify-between">
+                                <span className="font-black text-sky-800 text-xs">LR #{lr.lrNo}</span>
+                                <StatusBadge status={lr.status} />
+                              </div>
+                              <div className="grid grid-cols-2 gap-1.5 text-[11px] text-slate-600">
+                                <div>
+                                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Consigner</span>
+                                  <span className="font-semibold truncate block">{lr.consignorName || '-'}</span>
+                                </div>
+                                <div>
+                                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Consignee</span>
+                                  <span className="font-semibold truncate block">{lr.consigneeName || '-'}</span>
+                                </div>
+                                <div>
+                                  <span className="text-[10px] uppercase font-bold text-slate-400 block">CT To</span>
+                                  <span className="font-semibold truncate block">{lr.ctTo || '-'}</span>
+                                </div>
+                                <div>
+                                  <span className="text-[10px] uppercase font-bold text-slate-400 block">PKG</span>
+                                  <span className="font-black text-slate-800">{lr.pkg}</span>
+                                </div>
+                              </div>
+                              <div className="grid grid-cols-3 gap-1 text-[10px] text-slate-500 pt-1.5 border-t border-slate-200">
+                                <div>To Pay: <span className="font-bold text-slate-800">{formatCurrency(lr.toPayAmount)}</span></div>
+                                <div>TBB: <span className="font-bold text-slate-800">{formatCurrency(lr.tbbAmount)}</span></div>
+                                <div>Paid: <span className="font-bold text-slate-800">{formatCurrency(lr.paidAmount)}</span></div>
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+
+                      {/* Desktop Table (hidden sm:block) */}
+                      <div className="hidden sm:block border border-slate-200 rounded-xl overflow-x-auto max-h-60">
+                        <table className="w-full text-left text-[11px]">
+                          <thead className="bg-slate-100 text-slate-700 font-black uppercase border-b border-slate-200">
+                            <tr>
+                              <th className="p-2">LR No.</th>
+                              <th className="p-2">Consigner</th>
+                              <th className="p-2">Consignee</th>
+                              <th className="p-2">CT To</th>
+                              <th className="p-2">PKG</th>
+                              <th className="p-2">To Pay</th>
+                              <th className="p-2">TBB</th>
+                              <th className="p-2">Paid</th>
+                              <th className="p-2">Status</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100">
+                            {modalChildItems.length === 0 ? (
+                              <tr>
+                                <td colSpan={9} className="py-8 px-4 text-center text-slate-400 font-medium text-xs">
+                                  No LR items found. Click the Edit (pencil) button on this row in the table to add or update LR items.
+                                </td>
+                              </tr>
+                            ) : (
+                              modalChildItems.map((lr, idx) => (
+                                <tr key={lr.id || idx} className="hover:bg-slate-50 font-semibold">
+                                  <td className="p-2 font-black text-sky-700">{lr.lrNo}</td>
+                                  <td className="p-2">{lr.consignorName || '-'}</td>
+                                  <td className="p-2">{lr.consigneeName || '-'}</td>
+                                  <td className="p-2">{lr.ctTo || '-'}</td>
+                                  <td className="p-2 font-bold">{lr.pkg}</td>
+                                  <td className="p-2">{formatCurrency(lr.toPayAmount)}</td>
+                                  <td className="p-2">{formatCurrency(lr.tbbAmount)}</td>
+                                  <td className="p-2">{formatCurrency(lr.paidAmount)}</td>
+                                  <td className="p-2">
+                                    <StatusBadge status={lr.status} />
+                                  </td>
+                                </tr>
+                              ))
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  );
+                })()}
               </>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200">

@@ -4,7 +4,7 @@ import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 import { Modal } from '../../components/common/Modal';
 import { EditableCombobox } from '../../components/common/EditableCombobox';
-import { Save, Printer, AlertCircle, AlertTriangle, Trash2, Edit2, Layers, CheckCircle } from 'lucide-react';
+import { Save, Printer, AlertCircle, AlertTriangle, Trash2, Edit2, Layers, CheckCircle, Plus } from 'lucide-react';
 import { getTodayDateString, formatDate } from '../../utils/dateUtils';
 import { formatCurrency } from '../../utils/numberUtils';
 import { printRecordDetails } from '../../services/exportService';
@@ -1142,6 +1142,21 @@ export const InwardCreate = () => {
               className="w-full px-2.5 py-1.5 sm:px-3 sm:py-2 bg-slate-100 border border-slate-200 rounded-xl text-xs font-black text-slate-900 text-right outline-none cursor-default select-none"
             />
           </div>
+        </div>
+
+        {/* Quick Action Bar for LR Staging */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-2 border-t border-slate-100">
+          <span className="text-[11px] text-slate-500 font-medium hidden sm:inline">
+            Press <kbd className="px-1.5 py-0.5 bg-slate-100 border border-slate-300 rounded text-[10px] font-bold text-slate-700">Enter</kbd> across fields or <kbd className="px-1.5 py-0.5 bg-slate-100 border border-slate-300 rounded text-[10px] font-bold text-slate-700">Ctrl + Enter</kbd> to stage LR
+          </span>
+          <button
+            type="button"
+            onClick={handleAddOrUpdateLR}
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-extrabold text-xs rounded-xl shadow-xs transition-colors cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            <span>{editingIndex !== null ? 'Update LR in Manifest' : '+ Add LR to Manifest'}</span>
+          </button>
         </div>
       </div>
 

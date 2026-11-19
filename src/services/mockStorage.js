@@ -58,6 +58,8 @@ export const setStoredItem = (key, val) => {
   }
 };
 
+const CHUNK_SIZE = 250;
+
 /**
  * Sync item to Cloud Firestore asynchronously
  */
@@ -68,28 +70,59 @@ export const syncToFirestore = async (key, val) => {
   }
 
   try {
-    // 1. Write the full snapshot to the primary doc `app_data/${key}`
-    const docRef = doc(db, 'app_data', key);
-    await setDoc(
-      docRef,
-      {
-        data: val,
-        updatedAt: new Date().toISOString(),
-      },
-      { merge: true }
-    );
+    const isLargeArray = Array.isArray(val) && val.length > CHUNK_SIZE;
 
-    // 2. Granular document-level write for arrays (allows granular querying in Firebase console)
+    if (isLargeArray) {
+      // 1. Chunked storage for large arrays to never exceed Firestore's 1 MiB document limit
+      const chunkCount = Math.ceil(val.length / CHUNK_SIZE);
+      const chunkPromises = [];
+      for (let i = 0; i < chunkCount; i++) {
+        const chunkData = val.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
+        const chunkDocRef = doc(db, 'app_data', `${key}_chunk_${i}`);
+        chunkPromises.push(
+          setDoc(chunkDocRef, {
+            chunkIndex: i,
+            data: chunkData,
+            updatedAt: new Date().toISOString(),
+          })
+        );
+      }
+      await Promise.all(chunkPromises);
+
+      // Primary doc holds metadata pointing to chunks
+      const docRef = doc(db, 'app_data', key);
+      await setDoc(docRef, {
+        chunked: true,
+        chunkCount,
+        totalCount: val.length,
+        updatedAt: new Date().toISOString(),
+      });
+    } else {
+      // Small arrays or objects fit comfortably in primary doc
+      const docRef = doc(db, 'app_data', key);
+      await setDoc(
+        docRef,
+        {
+          chunked: false,
+          data: val,
+          updatedAt: new Date().toISOString(),
+        },
+        { merge: true }
+      );
+    }
+
+    // 2. Granular document-level write for recent items only (avoiding heavy 1000+ sequential network calls)
     if (Array.isArray(val)) {
-      for (let index = 0; index < val.length; index++) {
-        const item = val[index];
+      const recentItems = val.slice(0, 30);
+      for (let index = 0; index < recentItems.length; index++) {
+        const item = recentItems[index];
         if (item && (item.id || item.lrNo)) {
           const itemDocId = String(item.id || item.lrNo || index);
-          await setDoc(
+          setDoc(
             doc(db, key, itemDocId),
             { ...item, updatedAt: new Date().toISOString() },
             { merge: true }
-          );
+          ).catch(() => {});
         }
       }
     } else if (typeof val === 'object' && val !== null) {
@@ -116,8 +149,27 @@ export const fetchFromFirestore = async (key) => {
     const docRef = doc(db, 'app_data', key);
     const snap = await getDoc(docRef);
 
-    if (snap.exists() && snap.data()?.data !== undefined) {
-      return { exists: true, data: snap.data().data };
+    if (snap.exists()) {
+      const snapData = snap.data();
+      if (snapData?.chunked && snapData?.chunkCount) {
+        // Fetch all chunks in parallel and reassemble array
+        const chunkPromises = [];
+        for (let i = 0; i < snapData.chunkCount; i++) {
+          chunkPromises.push(getDoc(doc(db, 'app_data', `${key}_chunk_${i}`)));
+        }
+        const chunkSnaps = await Promise.all(chunkPromises);
+        const allData = [];
+        for (const cSnap of chunkSnaps) {
+          if (cSnap.exists() && Array.isArray(cSnap.data()?.data)) {
+            allData.push(...cSnap.data().data);
+          }
+        }
+        return { exists: true, data: allData };
+      }
+
+      if (snapData?.data !== undefined) {
+        return { exists: true, data: snapData.data };
+      }
     }
 
     // Fallback: check if stored as an individual collection
@@ -163,6 +215,20 @@ export const pullAllFromFirestore = async () => {
     for (const key of keys) {
       const res = await fetchFromFirestore(key);
       if (res.exists && res.data !== null && res.data !== undefined) {
+        // Smart merge: never lose local items that are newer or not in cloud!
+        const localData = getStoredItem(key, null);
+        if (Array.isArray(localData) && Array.isArray(res.data) && localData.length > res.data.length) {
+          const cloudIds = new Set(res.data.map((i) => i.id));
+          const localOnlyItems = localData.filter((i) => i.id && !cloudIds.has(i.id));
+          if (localOnlyItems.length > 0) {
+            console.log(`[Storage] Preserving ${localOnlyItems.length} local items for "${key}" not yet in cloud`);
+            const merged = [...localOnlyItems, ...res.data];
+            setStoredItemLocalOnly(key, merged);
+            syncToFirestore(key, merged).catch(console.warn);
+            pulledCount++;
+            continue;
+          }
+        }
         setStoredItemLocalOnly(key, res.data);
         pulledCount++;
       }
@@ -338,9 +404,33 @@ export const subscribeToFirestore = (onKeyChange) => {
       const docRef = doc(db, 'app_data', key);
       const unsubscribe = onSnapshot(
         docRef,
-        (snap) => {
+        async (snap) => {
           if (!snap.exists()) return;
-          const remoteData = snap.data()?.data;
+          // Ignore local pending writes to avoid race conditions or clobbering optimistic UI state
+          if (snap.metadata.hasPendingWrites) return;
+
+          let remoteData = snap.data()?.data;
+          if (snap.data()?.chunked && snap.data()?.chunkCount) {
+            // Reassemble chunks
+            try {
+              const chunkPromises = [];
+              for (let i = 0; i < snap.data().chunkCount; i++) {
+                chunkPromises.push(getDoc(doc(db, 'app_data', `${key}_chunk_${i}`)));
+              }
+              const chunkSnaps = await Promise.all(chunkPromises);
+              const allData = [];
+              for (const cSnap of chunkSnaps) {
+                if (cSnap.exists() && Array.isArray(cSnap.data()?.data)) {
+                  allData.push(...cSnap.data().data);
+                }
+              }
+              remoteData = allData;
+            } catch (chunkErr) {
+              console.warn(`[Firestore onSnapshot chunk reassembly error] "${key}":`, chunkErr);
+              return;
+            }
+          }
+
           if (remoteData === undefined || remoteData === null) return;
 
           // Compare with current local storage to avoid redundant re-renders
@@ -348,6 +438,17 @@ export const subscribeToFirestore = (onKeyChange) => {
           const remoteStr = JSON.stringify(remoteData);
 
           if (localStr !== remoteStr) {
+            // If local storage currently has more items than incoming remote, do not blindly overwrite!
+            const localData = getStoredItem(key, null);
+            if (Array.isArray(localData) && Array.isArray(remoteData) && localData.length > remoteData.length) {
+              const cloudIds = new Set(remoteData.map((i) => i.id));
+              const localOnlyItems = localData.filter((i) => i.id && !cloudIds.has(i.id));
+              if (localOnlyItems.length > 0) {
+                // Keep local items intact
+                remoteData = [...localOnlyItems, ...remoteData];
+              }
+            }
+
             isApplyingRemoteUpdate = true;
             try {
               setStoredItemLocalOnly(key, remoteData);
