@@ -75,14 +75,13 @@ export const OutwardCreate = () => {
   const filteredPendingStock = availableStock.filter((item) => {
     if (!searchTerm.trim()) return true;
     const term = searchTerm.toLowerCase().trim();
+    // Only search by Consignor, Consignee, and L.R. No.
     return (
       (item.lrNo && String(item.lrNo).toLowerCase().includes(term)) ||
-      (item.transporterName && String(item.transporterName).toLowerCase().includes(term)) ||
-      (item.memoNo && String(item.memoNo).toLowerCase().includes(term)) ||
-      (item.inwardNo && String(item.inwardNo).toLowerCase().includes(term)) ||
       (item.consignorName && String(item.consignorName).toLowerCase().includes(term)) ||
+      (item.consignor && String(item.consignor).toLowerCase().includes(term)) ||
       (item.consigneeName && String(item.consigneeName).toLowerCase().includes(term)) ||
-      (item.ctTo && String(item.ctTo).toLowerCase().includes(term))
+      (item.consignee && String(item.consignee).toLowerCase().includes(term))
     );
   });
 
@@ -695,7 +694,7 @@ export const OutwardCreate = () => {
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search incoming Memo No, Consignor, Consignee or LR No to select..."
+              placeholder="Search Consignor, Consignee or L.R. No. to select..."
               className="w-full pl-10 pr-8 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#1d4ed8] focus:bg-white focus:ring-2 focus:ring-blue-100 rounded-xl text-xs font-semibold text-slate-800 placeholder-slate-400 transition-all outline-none"
             />
             {searchTerm && (
