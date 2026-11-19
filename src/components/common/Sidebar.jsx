@@ -22,7 +22,7 @@ import { useApp } from '../../context/AppContext';
 
 export const Sidebar = () => {
   const { user, logout } = useAuth();
-  const { pendingStock } = useApp();
+  const { pendingStock, syncStatus } = useApp();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const navItems = [
@@ -163,6 +163,33 @@ export const Sidebar = () => {
               </NavLink>
             );
           })}
+        </div>
+
+        {/* Cloud Sync Status Indicator */}
+        <div className="px-4 py-2 border-t border-[#1B2A5E]/80 bg-[#05143a] flex items-center justify-between text-[10px]">
+          <div className="flex items-center space-x-1.5">
+            <span
+              className={`w-2 h-2 rounded-full ${
+                syncStatus?.state === 'connected'
+                  ? 'bg-emerald-400 shadow-xs shadow-emerald-400/50'
+                  : syncStatus?.state === 'syncing'
+                  ? 'bg-sky-400 animate-pulse'
+                  : 'bg-amber-400'
+              }`}
+            />
+            <span className="font-bold text-slate-300">
+              {syncStatus?.state === 'connected'
+                ? 'Cloud Synced'
+                : syncStatus?.state === 'syncing'
+                ? 'Syncing Cloud...'
+                : 'Offline Mode'}
+            </span>
+          </div>
+          {syncStatus?.lastSync && (
+            <span className="text-[9px] text-blue-200/50 font-mono">
+              {syncStatus.lastSync}
+            </span>
+          )}
         </div>
 
         {/* Footer User Profile & Logout */}

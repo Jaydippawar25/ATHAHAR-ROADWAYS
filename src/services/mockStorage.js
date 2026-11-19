@@ -215,11 +215,11 @@ export const pullAllFromFirestore = async () => {
     for (const key of keys) {
       const res = await fetchFromFirestore(key);
       if (res.exists && res.data !== null && res.data !== undefined) {
-        // Smart merge: never lose local items that are newer or not in cloud!
+        // Smart merge: never lose local items that are newer or not yet in cloud!
         const localData = getStoredItem(key, null);
-        if (Array.isArray(localData) && Array.isArray(res.data) && localData.length > res.data.length) {
-          const cloudIds = new Set(res.data.map((i) => i.id));
-          const localOnlyItems = localData.filter((i) => i.id && !cloudIds.has(i.id));
+        if (Array.isArray(localData) && Array.isArray(res.data)) {
+          const cloudIds = new Set(res.data.map((i) => i.id).filter(Boolean));
+          const localOnlyItems = localData.filter((i) => i && i.id && !cloudIds.has(i.id));
           if (localOnlyItems.length > 0) {
             console.log(`[Storage] Preserving ${localOnlyItems.length} local items for "${key}" not yet in cloud`);
             const merged = [...localOnlyItems, ...res.data];
@@ -438,14 +438,15 @@ export const subscribeToFirestore = (onKeyChange) => {
           const remoteStr = JSON.stringify(remoteData);
 
           if (localStr !== remoteStr) {
-            // If local storage currently has more items than incoming remote, do not blindly overwrite!
+            // If local storage currently has items not yet in incoming remote, do not blindly overwrite!
             const localData = getStoredItem(key, null);
-            if (Array.isArray(localData) && Array.isArray(remoteData) && localData.length > remoteData.length) {
-              const cloudIds = new Set(remoteData.map((i) => i.id));
-              const localOnlyItems = localData.filter((i) => i.id && !cloudIds.has(i.id));
+            if (Array.isArray(localData) && Array.isArray(remoteData)) {
+              const cloudIds = new Set(remoteData.map((i) => i.id).filter(Boolean));
+              const localOnlyItems = localData.filter((i) => i && i.id && !cloudIds.has(i.id));
               if (localOnlyItems.length > 0) {
                 // Keep local items intact
                 remoteData = [...localOnlyItems, ...remoteData];
+                syncToFirestore(key, remoteData).catch(console.warn);
               }
             }
 
