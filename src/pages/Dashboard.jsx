@@ -1394,9 +1394,13 @@ export const Dashboard = () => {
           <div className="p-3 sm:p-4 border-t border-slate-100 bg-slate-50/50 flex items-center justify-between gap-2.5 sm:gap-3 text-xs">
             <button
               onClick={() => {
-                if (inwards[0]) handlePrintInward(inwards[0]);
+                if (inwards && inwards.length > 0) {
+                  handlePrintInward(inwards[0]);
+                } else {
+                  navigate('/all-entries', { state: { tab: 'inward_headers' } });
+                }
               }}
-              className="flex-1 py-1.5 sm:py-2 px-2.5 sm:px-3 bg-white border border-slate-200 text-slate-700 font-bold rounded-xl hover:bg-slate-50 transition-colors shadow-2xs text-center text-xs"
+              className="flex-1 py-1.5 sm:py-2 px-2.5 sm:px-3 bg-white border border-slate-200 text-slate-700 font-bold rounded-xl hover:bg-slate-50 transition-colors shadow-2xs text-center text-xs cursor-pointer"
             >
               Receipt Memo
             </button>

@@ -535,7 +535,7 @@ export const CrossOutwardCreate = () => {
           <div className="flex items-center space-x-2.5 self-start sm:self-auto">
             <button
               type="button"
-              onClick={() => navigate('/all-entries', { state: { tab: 'cross_outward_headers' } })}
+              onClick={() => navigate('/all-entries', { state: { tab: 'stock_out_headers' } })}
               className="px-4 py-2.5 bg-white/10 hover:bg-white/20 active:bg-white/30 text-white rounded-xl text-xs font-bold transition-all border border-white/20 flex items-center space-x-2 shadow-xs cursor-pointer"
             >
               <Layers className="w-4 h-4 text-[#3956D4]" />

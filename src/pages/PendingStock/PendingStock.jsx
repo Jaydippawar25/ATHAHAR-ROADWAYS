@@ -249,12 +249,8 @@ export const PendingStock = () => {
             </button>
           ) : (
             <button
-              onClick={() => {
-                if (pendingStock.length > 0) {
-                  navigate('/outward/new');
-                }
-              }}
-              className="w-full sm:w-auto inline-flex items-center justify-center space-x-2 bg-white/10 hover:bg-white/20 text-white font-bold px-4 py-2.5 rounded-xl text-xs border border-white/20 transition-all"
+              onClick={() => navigate('/outward/new')}
+              className="w-full sm:w-auto inline-flex items-center justify-center space-x-2 bg-white/10 hover:bg-white/20 text-white font-bold px-4 py-2.5 rounded-xl text-xs border border-white/20 transition-all cursor-pointer"
             >
               <ArrowUpRight className="w-4 h-4 text-[#3956D4]" />
               <span>Create Outward Dispatch</span>

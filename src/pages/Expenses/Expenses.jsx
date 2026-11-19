@@ -24,6 +24,7 @@ import {
   ShieldCheck,
   Banknote,
   MapPin,
+  Printer,
 } from 'lucide-react';
 import { Modal } from '../../components/common/Modal';
 import { EditableCombobox } from '../../components/common/EditableCombobox';
@@ -32,7 +33,7 @@ import {
   PAYMENT_MODES,
   getNextExpenseVoucherNo,
 } from '../../services/expenseService';
-import { exportToExcel, exportToPDF } from '../../services/exportService';
+import { exportToExcel, exportToPDF, printRecordDetails } from '../../services/exportService';
 import { formatDate, getTodayDateString } from '../../utils/dateUtils';
 import { formatCurrency } from '../../utils/numberUtils';
 
@@ -1348,6 +1349,30 @@ export const Expenses = () => {
 
             {/* Modal Actions */}
             <div className="flex items-center justify-end space-x-2 pt-3 border-t border-slate-200">
+              <button
+                type="button"
+                onClick={() => {
+                  printRecordDetails({
+                    title: `Expense Payment Voucher #${viewingExpense.voucherNo}`,
+                    fields: [
+                      { label: 'Voucher No.', value: viewingExpense.voucherNo },
+                      { label: 'Date', value: formatDate(viewingExpense.date) },
+                      { label: 'Category', value: viewingExpense.category },
+                      { label: 'Payment Mode', value: viewingExpense.paymentMode },
+                      { label: 'Vehicle No.', value: viewingExpense.vehicleNo || 'N/A' },
+                      { label: 'Paid To / Payee', value: viewingExpense.payeeName || viewingExpense.partyName || '-' },
+                      { label: 'Bill / Ref No.', value: viewingExpense.referenceNo || '-' },
+                      { label: 'Recorded By', value: viewingExpense.createdBy || 'Administrator' },
+                      { label: 'Notes / Remarks', value: viewingExpense.notes || '-' },
+                      { label: 'Total Amount', value: formatCurrency(viewingExpense.amount) },
+                    ],
+                  });
+                }}
+                className="px-4 py-2 bg-[#1d4ed8] hover:bg-blue-700 text-white font-bold rounded-lg text-xs flex items-center space-x-1.5 shadow-xs cursor-pointer transition-all"
+              >
+                <Printer className="w-3.5 h-3.5" />
+                <span>Print Voucher</span>
+              </button>
               <button
                 type="button"
                 onClick={() => setViewingExpense(null)}

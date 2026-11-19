@@ -42,11 +42,12 @@ export const AllEntries = () => {
   } = useApp();
 
   // Active view tab: 'all_lrs' | 'inward_headers' | 'outward_headers' | 'stock_out_headers'
-  const [activeTab, setActiveTab] = useState(location.state?.tab || 'all_lrs');
+  const resolveTab = (tab) => (tab === 'cross_outward_headers' ? 'stock_out_headers' : tab);
+  const [activeTab, setActiveTab] = useState(resolveTab(location.state?.tab) || 'all_lrs');
 
   useEffect(() => {
     if (location.state?.tab) {
-      setActiveTab(location.state.tab);
+      setActiveTab(resolveTab(location.state.tab));
     }
   }, [location.state?.tab]);
 
