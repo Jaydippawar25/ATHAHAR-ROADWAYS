@@ -60,16 +60,50 @@ export const OutwardCreate = () => {
   const [searchTerm, setSearchTerm] = useState('');
 
   // Combine pendingStock with items currently in editOutward so they show up in the godown picker
+  // Deduplicate strictly by canonical identity (inwardNo + transporter + lrNo) so duplicate cards never appear
   const availableStock = React.useMemo(() => {
-    if (!editOutwardData?.items?.length) return pendingStock;
-    const existingIds = new Set(pendingStock.map((p) => p.id));
-    const extraEditedItems = editOutwardData.items
-      .map((item) => ({
-        ...item,
-        id: item.inwardItemId || item.id,
-      }))
-      .filter((item) => !existingIds.has(item.id));
-    return [...extraEditedItems, ...pendingStock];
+    const rawList = [];
+
+    if (editOutwardData?.items?.length) {
+      editOutwardData.items.forEach((item) => {
+        rawList.push({
+          ...item,
+          id: item.inwardItemId || item.id,
+        });
+      });
+    }
+
+    (pendingStock || []).forEach((item) => {
+      // If item is already delivered in an outward dispatch, do not show unless editing that outward
+      if (item.status === 'DELIVERED' && !editOutwardData) return;
+      if (
+        item.outwardNo &&
+        item.outwardNo !== '-' &&
+        !item.outwardNo.toUpperCase().startsWith('STOCK-OUT') &&
+        !editOutwardData
+      ) {
+        return;
+      }
+      rawList.push(item);
+    });
+
+    const seen = new Map();
+    for (const item of rawList) {
+      if (!item) continue;
+      const cleanLR = String(item.lrNo ?? '').trim().toLowerCase();
+      const inwKey = String(item.inwardNo || item.inwardId || '').trim().toLowerCase();
+      const transKey = String(item.transporterName || '').trim().toLowerCase();
+      const uniqueKey = inwKey && cleanLR ? `${inwKey}__${transKey}__${cleanLR}` : String(item.id || '').trim();
+
+      if (!seen.has(uniqueKey)) {
+        seen.set(uniqueKey, item);
+      } else {
+        const existing = seen.get(uniqueKey);
+        seen.set(uniqueKey, { ...existing, ...item });
+      }
+    }
+
+    return Array.from(seen.values());
   }, [pendingStock, editOutwardData]);
 
   const filteredPendingStock = React.useMemo(() => {

@@ -345,7 +345,20 @@ export const AllEntries = () => {
   });
 
   // Merge Outward delivered items
-  outwardItems.forEach((item) => {
+  // Pre-deduplicate outward items by (outwardNo + lrNo) to ensure zero double-counting
+  const uniqueOutwardItems = [];
+  const seenOutwardKeys = new Set();
+  for (const item of outwardItems || []) {
+    if (!item) continue;
+    const outKey = String(item.outwardNo || item.outwardId || '').trim().toLowerCase();
+    const lrKey = String(item.lrNo ?? '').trim().toLowerCase();
+    const key = `${outKey}__${lrKey}`;
+    if (seenOutwardKeys.has(key)) continue;
+    seenOutwardKeys.add(key);
+    uniqueOutwardItems.push(item);
+  }
+
+  uniqueOutwardItems.forEach((item) => {
     const isStockOut = Boolean(
       item.isCrossOutward ||
       String(item.outwardNo || '').toUpperCase().startsWith('STOCK-OUT')
@@ -368,13 +381,26 @@ export const AllEntries = () => {
       // Standard Outward delivered from Godown pending stock
       const inwKey = Array.from(allLREntriesMap.keys()).find((k) => {
         const val = allLREntriesMap.get(k);
-        return (
+        const lrMatch = String(val.lrNo ?? '').trim().toLowerCase() === String(item.lrNo ?? '').trim().toLowerCase();
+        const transMatch = !item.transporterName || !val.transporterName || String(item.transporterName).trim().toLowerCase() === String(val.transporterName).trim().toLowerCase();
+        const outMatch = val.outwardNo && item.outwardNo && String(val.outwardNo).trim().toLowerCase() === String(item.outwardNo).trim().toLowerCase();
+
+        // Match 1: Inward item waiting to be marked outward delivered
+        if (
           val.recordCategory === 'inward_item' &&
           ((item.inwardItemId && val.id === item.inwardItemId) ||
             val.id === item.id ||
-            (String(val.lrNo ?? '').trim().toLowerCase() === String(item.lrNo ?? '').trim().toLowerCase() &&
-              (!item.transporterName || !val.transporterName || String(item.transporterName).trim().toLowerCase() === String(val.transporterName).trim().toLowerCase())))
-        );
+            (lrMatch && transMatch))
+        ) {
+          return true;
+        }
+
+        // Match 2: Already matched outward entry for the SAME outward dispatch and LR
+        if (outMatch && lrMatch) {
+          return true;
+        }
+
+        return false;
       });
 
       if (inwKey) {
@@ -383,8 +409,9 @@ export const AllEntries = () => {
           ...existing,
           ...item,
           inwardDate: existing.inwardDate || item.inwardDate || item.date || '-',
-          outwardDate: item.outwardDate || item.date || '-',
-          outwardNo: item.outwardNo || '-',
+          inwardNo: existing.inwardNo && existing.inwardNo !== '-' ? existing.inwardNo : (item.inwardNo || '-'),
+          outwardDate: item.outwardDate || item.date || existing.outwardDate || '-',
+          outwardNo: item.outwardNo || existing.outwardNo || '-',
           deliveryPersonName: item.deliveryPersonName || existing.deliveryPersonName || '-',
           status: 'DELIVERED',
           recordCategory: 'outward_item',

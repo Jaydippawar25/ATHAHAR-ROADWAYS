@@ -152,27 +152,43 @@ export const getAllOutwardItems = () => {
   const rawList = getStoredItem(STORAGE_KEYS.OUTWARD_ITEMS, []);
   if (!Array.isArray(rawList)) return [];
 
-  // Deduplicate items by unique key (outwardNo/outwardId + lrNo, or id)
+  // Deduplicate items by canonical domain key: outwardNo + lrNo (or id fallback)
   const seenMap = new Map();
   let hasDuplicates = false;
 
   for (const item of rawList) {
     if (!item) continue;
     const outKey = String(item.outwardNo || item.outwardId || '').trim().toLowerCase();
-    const lrKey = String(item.lrNo || '').trim().toLowerCase();
-    const transKey = String(item.transporterName || '').trim().toLowerCase();
-    const uniqueKey = item.id ? String(item.id).trim() : `${outKey}__${transKey}__${lrKey}`;
+    const lrKey = String(item.lrNo ?? '').trim().toLowerCase();
+    const uniqueKey = outKey && lrKey ? `${outKey}__${lrKey}` : String(item.id || '').trim();
+
+    if (!uniqueKey) continue;
 
     if (!seenMap.has(uniqueKey)) {
       seenMap.set(uniqueKey, item);
     } else {
       hasDuplicates = true;
       const existing = seenMap.get(uniqueKey);
-      const existingTotal = (Number(existing.toPayAmount) || 0) + (Number(existing.tbbAmount) || 0) + (Number(existing.paidAmount) || 0);
-      const currTotal = (Number(item.toPayAmount) || 0) + (Number(item.tbbAmount) || 0) + (Number(item.paidAmount) || 0);
-      if (currTotal >= existingTotal) {
-        seenMap.set(uniqueKey, { ...existing, ...item });
-      }
+      const existingTotal =
+        (Number(existing.toPayAmount) || 0) +
+        (Number(existing.tbbAmount) || 0) +
+        (Number(existing.paidAmount) || 0);
+      const currTotal =
+        (Number(item.toPayAmount) || 0) +
+        (Number(item.tbbAmount) || 0) +
+        (Number(item.paidAmount) || 0);
+
+      const richerItem = currTotal >= existingTotal ? { ...existing, ...item } : { ...item, ...existing };
+      seenMap.set(uniqueKey, {
+        ...richerItem,
+        inwardItemId: item.inwardItemId || existing.inwardItemId || null,
+        vehicleNo: item.vehicleNo || existing.vehicleNo || '',
+        driverName: item.driverName || existing.driverName || '',
+        ownerName: item.ownerName || existing.ownerName || '',
+        deliveryPersonName: item.deliveryPersonName || existing.deliveryPersonName || '-',
+        memoNo: item.memoNo || existing.memoNo || '',
+        status: STATUS.DELIVERED,
+      });
     }
   }
 
@@ -182,54 +198,40 @@ export const getAllOutwardItems = () => {
     for (const inwItem of inwardItems) {
       const outNo = String(inwItem.outwardNo || '').trim();
       if (!outNo || outNo === '-' || outNo.toUpperCase().startsWith('STOCK-OUT')) continue;
-      const lrKey = String(inwItem.lrNo || '').trim().toLowerCase();
-      const transKey = String(inwItem.transporterName || '').trim().toLowerCase();
-      const uniqueKey = inwItem.id ? `out-item-${inwItem.id}` : `${outNo.toLowerCase()}__${transKey}__${lrKey}`;
+      const lrKey = String(inwItem.lrNo ?? '').trim().toLowerCase();
+      const uniqueKey = `${outNo.toLowerCase()}__${lrKey}`;
 
-      let alreadyExists = seenMap.has(uniqueKey);
-      if (!alreadyExists) {
-        for (const existing of seenMap.values()) {
-          if (
-            String(existing.outwardNo || '').trim().toLowerCase() === outNo.toLowerCase() &&
-            String(existing.lrNo || '').trim().toLowerCase() === lrKey
-          ) {
-            alreadyExists = true;
-            break;
-          }
-        }
-      }
+      if (seenMap.has(uniqueKey)) continue;
 
-      if (!alreadyExists) {
-        const reconstructedItem = {
-          id: `out-item-${inwItem.id || Date.now()}`,
-          outwardId: inwItem.outwardId || `out-${outNo}`,
-          outwardNo: outNo,
-          outwardDate: inwItem.outwardDate || inwItem.date || '2026-11-06',
-          vehicleNo: inwItem.vehicleNo || '',
-          driverName: inwItem.driverName || '',
-          ownerName: inwItem.ownerName || '',
-          from: inwItem.from || 'SANGLI',
-          memoNo: inwItem.memoNo || '',
-          isCrossOutward: false,
-          inwardItemId: inwItem.id,
-          lrNo: String(inwItem.lrNo ?? '').trim(),
-          inwardDate: inwItem.inwardDate || inwItem.date,
-          pkg: Number(inwItem.pkg) || 0,
-          invoiceNo: inwItem.invoiceNo || '',
-          ctTo: inwItem.ctTo || '',
-          deliveryPersonName: inwItem.deliveryPersonName || '-',
-          consignorName: inwItem.consignorName || '',
-          consigneeName: inwItem.consigneeName || '',
-          toPayAmount: Number(inwItem.toPayAmount) || 0,
-          tbbAmount: Number(inwItem.tbbAmount) || 0,
-          paidAmount: Number(inwItem.paidAmount) || 0,
-          status: STATUS.DELIVERED,
-          deliveredAt: inwItem.deliveredAt || new Date().toISOString(),
-          deliveredBy: inwItem.deliveredBy || 'ATHARVA',
-        };
-        seenMap.set(uniqueKey, reconstructedItem);
-        hasDuplicates = true;
-      }
+      const reconstructedItem = {
+        id: `out-item-${inwItem.id || Date.now()}`,
+        outwardId: inwItem.outwardId || `out-${outNo}`,
+        outwardNo: outNo,
+        outwardDate: inwItem.outwardDate || inwItem.date || '2026-11-06',
+        vehicleNo: inwItem.vehicleNo || '',
+        driverName: inwItem.driverName || '',
+        ownerName: inwItem.ownerName || '',
+        from: inwItem.from || 'SANGLI',
+        memoNo: inwItem.memoNo || '',
+        isCrossOutward: false,
+        inwardItemId: inwItem.id,
+        lrNo: String(inwItem.lrNo ?? '').trim(),
+        inwardDate: inwItem.inwardDate || inwItem.date,
+        pkg: Number(inwItem.pkg) || 0,
+        invoiceNo: inwItem.invoiceNo || '',
+        ctTo: inwItem.ctTo || '',
+        deliveryPersonName: inwItem.deliveryPersonName || '-',
+        consignorName: inwItem.consignorName || '',
+        consigneeName: inwItem.consigneeName || '',
+        toPayAmount: Number(inwItem.toPayAmount) || 0,
+        tbbAmount: Number(inwItem.tbbAmount) || 0,
+        paidAmount: Number(inwItem.paidAmount) || 0,
+        status: STATUS.DELIVERED,
+        deliveredAt: inwItem.deliveredAt || new Date().toISOString(),
+        deliveredBy: inwItem.deliveredBy || 'ATHARVA',
+      };
+      seenMap.set(uniqueKey, reconstructedItem);
+      hasDuplicates = true;
     }
   }
 

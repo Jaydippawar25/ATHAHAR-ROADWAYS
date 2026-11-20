@@ -17,6 +17,87 @@ export const STORAGE_KEYS = {
 let isApplyingRemoteUpdate = false;
 
 /**
+ * Canonical Domain Deduplication:
+ * Guarantees that no duplicate records can ever be written or kept in localStorage or Firestore.
+ */
+export const deduplicateCollection = (key, list) => {
+  if (!Array.isArray(list)) return list;
+
+  const seen = new Map();
+
+  for (const item of list) {
+    if (!item) continue;
+    let uniqueKey = '';
+
+    if (key === STORAGE_KEYS.INWARDS) {
+      const inwNo = String(item.inwardNo || '').trim().toLowerCase();
+      uniqueKey = inwNo || String(item.id || '').trim();
+    } else if (key === STORAGE_KEYS.OUTWARDS) {
+      const outNo = String(item.outwardNo || '').trim().toLowerCase();
+      uniqueKey = outNo || String(item.id || '').trim();
+    } else if (key === STORAGE_KEYS.INWARD_ITEMS) {
+      const inwNo = String(item.inwardNo || item.inwardId || '').trim().toLowerCase();
+      const lrNo = String(item.lrNo ?? '').trim().toLowerCase();
+      uniqueKey = inwNo && lrNo ? `${inwNo}__${lrNo}` : String(item.id || '').trim();
+    } else if (key === STORAGE_KEYS.OUTWARD_ITEMS) {
+      const outNo = String(item.outwardNo || item.outwardId || '').trim().toLowerCase();
+      const lrNo = String(item.lrNo ?? '').trim().toLowerCase();
+      uniqueKey = outNo && lrNo ? `${outNo}__${lrNo}` : String(item.id || '').trim();
+    } else {
+      uniqueKey = String(item.id || JSON.stringify(item));
+    }
+
+    if (!uniqueKey) continue;
+
+    if (!seen.has(uniqueKey)) {
+      seen.set(uniqueKey, item);
+    } else {
+      const existing = seen.get(uniqueKey);
+      const isDelivered =
+        existing.status === 'DELIVERED' ||
+        item.status === 'DELIVERED' ||
+        Boolean(item.outwardNo && item.outwardNo !== '-');
+
+      const resolvedOutwardNo =
+        item.outwardNo && item.outwardNo !== '-' ? item.outwardNo : existing.outwardNo;
+      const resolvedOutwardDate =
+        item.outwardDate && item.outwardDate !== '-' ? item.outwardDate : existing.outwardDate;
+
+      seen.set(uniqueKey, {
+        ...existing,
+        ...item,
+        status: isDelivered ? 'DELIVERED' : (existing.status || item.status || 'PENDING'),
+        outwardNo: resolvedOutwardNo || existing.outwardNo || item.outwardNo || '-',
+        outwardDate: resolvedOutwardDate || existing.outwardDate || item.outwardDate || '-',
+        pkg: Math.max(Number(existing.pkg) || 0, Number(item.pkg) || 0),
+        toPayAmount: Math.max(Number(existing.toPayAmount) || 0, Number(item.toPayAmount) || 0),
+        tbbAmount: Math.max(Number(existing.tbbAmount) || 0, Number(item.tbbAmount) || 0),
+        paidAmount: Math.max(Number(existing.paidAmount) || 0, Number(item.paidAmount) || 0),
+      });
+    }
+  }
+
+  return Array.from(seen.values());
+};
+
+export const getCanonicalKeyForCollection = (key, item) => {
+  if (!item) return '';
+  if (key === STORAGE_KEYS.INWARDS) return String(item.inwardNo || item.id || '').trim().toLowerCase();
+  if (key === STORAGE_KEYS.OUTWARDS) return String(item.outwardNo || item.id || '').trim().toLowerCase();
+  if (key === STORAGE_KEYS.INWARD_ITEMS) {
+    const inwNo = String(item.inwardNo || item.inwardId || '').trim().toLowerCase();
+    const lrNo = String(item.lrNo ?? '').trim().toLowerCase();
+    return inwNo && lrNo ? `${inwNo}__${lrNo}` : String(item.id || '').trim();
+  }
+  if (key === STORAGE_KEYS.OUTWARD_ITEMS) {
+    const outNo = String(item.outwardNo || item.outwardId || '').trim().toLowerCase();
+    const lrNo = String(item.lrNo ?? '').trim().toLowerCase();
+    return outNo && lrNo ? `${outNo}__${lrNo}` : String(item.id || '').trim();
+  }
+  return String(item.id || '').trim();
+};
+
+/**
  * Read item from localStorage with fallback default
  */
 export const getStoredItem = (key, defaultVal = []) => {
@@ -33,8 +114,9 @@ export const getStoredItem = (key, defaultVal = []) => {
  * Used during cloud hydration and remote onSnapshot updates.
  */
 export const setStoredItemLocalOnly = (key, val) => {
+  const cleanVal = Array.isArray(val) ? deduplicateCollection(key, val) : val;
   try {
-    localStorage.setItem(key, JSON.stringify(val));
+    localStorage.setItem(key, JSON.stringify(cleanVal));
   } catch (e) {
     console.error(`Local storage write error for ${key}:`, e);
   }
@@ -44,15 +126,16 @@ export const setStoredItemLocalOnly = (key, val) => {
  * Write item to localStorage AND trigger sync to Cloud Firestore
  */
 export const setStoredItem = (key, val) => {
+  const cleanVal = Array.isArray(val) ? deduplicateCollection(key, val) : val;
   try {
-    localStorage.setItem(key, JSON.stringify(val));
+    localStorage.setItem(key, JSON.stringify(cleanVal));
   } catch (e) {
     console.error(`Local storage write error for ${key}:`, e);
   }
 
   // Only trigger Firestore sync if not actively applying a remote Firestore snapshot
   if (!isApplyingRemoteUpdate) {
-    syncToFirestore(key, val).catch((err) =>
+    syncToFirestore(key, cleanVal).catch((err) =>
       console.warn(`[Firestore Sync Warning] Unable to sync "${key}":`, err?.message || err)
     );
   }
@@ -218,18 +301,27 @@ export const pullAllFromFirestore = async () => {
         // Smart merge: never lose local items that are newer or not yet in cloud!
         const localData = getStoredItem(key, null);
         if (Array.isArray(localData) && Array.isArray(res.data)) {
-          const cloudIds = new Set(res.data.map((i) => i.id).filter(Boolean));
-          const localOnlyItems = localData.filter((i) => i && i.id && !cloudIds.has(i.id));
+          const cloudKeys = new Set(res.data.map((i) => getCanonicalKeyForCollection(key, i)).filter(Boolean));
+          const cloudIds = new Set(res.data.map((i) => i && i.id).filter(Boolean));
+
+          const localOnlyItems = localData.filter((i) => {
+            if (!i) return false;
+            const cKey = getCanonicalKeyForCollection(key, i);
+            if (cKey && cloudKeys.has(cKey)) return false;
+            if (i.id && cloudIds.has(i.id)) return false;
+            return true;
+          });
+
           if (localOnlyItems.length > 0) {
             console.log(`[Storage] Preserving ${localOnlyItems.length} local items for "${key}" not yet in cloud`);
-            const merged = [...localOnlyItems, ...res.data];
+            const merged = deduplicateCollection(key, [...localOnlyItems, ...res.data]);
             setStoredItemLocalOnly(key, merged);
             syncToFirestore(key, merged).catch(console.warn);
             pulledCount++;
             continue;
           }
         }
-        setStoredItemLocalOnly(key, res.data);
+        setStoredItemLocalOnly(key, deduplicateCollection(key, res.data));
         pulledCount++;
       }
     }
@@ -279,6 +371,18 @@ export const safeInitializeData = async () => {
     if (cloudHasData) {
       // Cloud has existing data -> pull all collections from Firestore into localStorage
       await pullAllFromFirestore();
+
+      // Cleanse local storage of any legacy duplicate records across collections
+      Object.values(STORAGE_KEYS).forEach((key) => {
+        const current = getStoredItem(key, null);
+        if (Array.isArray(current)) {
+          const deduplicated = deduplicateCollection(key, current);
+          if (deduplicated.length !== current.length) {
+            setStoredItemLocalOnly(key, deduplicated);
+          }
+        }
+      });
+
       return { success: true, source: 'firestore' };
     }
 
@@ -441,13 +545,26 @@ export const subscribeToFirestore = (onKeyChange) => {
             // If local storage currently has items not yet in incoming remote, do not blindly overwrite!
             const localData = getStoredItem(key, null);
             if (Array.isArray(localData) && Array.isArray(remoteData)) {
-              const cloudIds = new Set(remoteData.map((i) => i.id).filter(Boolean));
-              const localOnlyItems = localData.filter((i) => i && i.id && !cloudIds.has(i.id));
+              const cloudKeys = new Set(remoteData.map((i) => getCanonicalKeyForCollection(key, i)).filter(Boolean));
+              const cloudIds = new Set(remoteData.map((i) => i && i.id).filter(Boolean));
+
+              const localOnlyItems = localData.filter((i) => {
+                if (!i) return false;
+                const cKey = getCanonicalKeyForCollection(key, i);
+                if (cKey && cloudKeys.has(cKey)) return false;
+                if (i.id && cloudIds.has(i.id)) return false;
+                return true;
+              });
+
               if (localOnlyItems.length > 0) {
                 // Keep local items intact
-                remoteData = [...localOnlyItems, ...remoteData];
+                remoteData = deduplicateCollection(key, [...localOnlyItems, ...remoteData]);
                 syncToFirestore(key, remoteData).catch(console.warn);
+              } else {
+                remoteData = deduplicateCollection(key, remoteData);
               }
+            } else if (Array.isArray(remoteData)) {
+              remoteData = deduplicateCollection(key, remoteData);
             }
 
             isApplyingRemoteUpdate = true;

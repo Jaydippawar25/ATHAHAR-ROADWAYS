@@ -1,4 +1,4 @@
-import { getStoredItem, setStoredItem, STORAGE_KEYS, seedInitialData } from './mockStorage';
+import { getStoredItem, setStoredItem, setStoredItemLocalOnly, STORAGE_KEYS, seedInitialData } from './mockStorage';
 import { STATUS } from '../utils/constants';
 
 seedInitialData();
@@ -30,12 +30,83 @@ export const getNextInwardNo = (inwardsList) => {
 };
 
 export const getAllInwardItems = () => {
-  return getStoredItem(STORAGE_KEYS.INWARD_ITEMS);
+  const rawList = getStoredItem(STORAGE_KEYS.INWARD_ITEMS, []);
+  if (!Array.isArray(rawList)) return [];
+
+  const seenMap = new Map();
+  let hasDuplicates = false;
+
+  for (const item of rawList) {
+    if (!item) continue;
+    const inwKey = String(item.inwardNo || item.inwardId || '').trim().toLowerCase();
+    const lrKey = String(item.lrNo ?? '').trim().toLowerCase();
+    const uniqueKey = inwKey && lrKey ? `${inwKey}__${lrKey}` : String(item.id || '').trim();
+
+    if (!uniqueKey) continue;
+
+    if (!seenMap.has(uniqueKey)) {
+      seenMap.set(uniqueKey, item);
+    } else {
+      hasDuplicates = true;
+      const existing = seenMap.get(uniqueKey);
+      const isDelivered =
+        existing.status === STATUS.DELIVERED ||
+        item.status === STATUS.DELIVERED ||
+        Boolean(item.outwardNo && item.outwardNo !== '-' && !item.outwardNo.toUpperCase().startsWith('STOCK-OUT'));
+
+      const resolvedOutNo =
+        item.outwardNo && item.outwardNo !== '-' ? item.outwardNo : existing.outwardNo;
+      const resolvedOutDate =
+        item.outwardDate && item.outwardDate !== '-' ? item.outwardDate : existing.outwardDate;
+
+      seenMap.set(uniqueKey, {
+        ...existing,
+        ...item,
+        status: isDelivered ? STATUS.DELIVERED : (existing.status || item.status || STATUS.PENDING),
+        outwardNo: resolvedOutNo || existing.outwardNo || item.outwardNo || '-',
+        outwardDate: resolvedOutDate || existing.outwardDate || item.outwardDate || '-',
+        pkg: Math.max(Number(existing.pkg) || 0, Number(item.pkg) || 0),
+        toPayAmount: Math.max(Number(existing.toPayAmount) || 0, Number(item.toPayAmount) || 0),
+        tbbAmount: Math.max(Number(existing.tbbAmount) || 0, Number(item.tbbAmount) || 0),
+        paidAmount: Math.max(Number(existing.paidAmount) || 0, Number(item.paidAmount) || 0),
+      });
+    }
+  }
+
+  const deduplicated = Array.from(seenMap.values());
+  if (hasDuplicates && deduplicated.length !== rawList.length) {
+    setStoredItemLocalOnly(STORAGE_KEYS.INWARD_ITEMS, deduplicated);
+  }
+  return deduplicated;
 };
 
 export const getPendingStockItems = () => {
   const items = getAllInwardItems();
-  return items.filter((item) => item.status === STATUS.PENDING);
+  const seenMap = new Map();
+
+  for (const item of items) {
+    if (!item) continue;
+    // Exclude delivered or already dispatched items
+    if (item.status === STATUS.DELIVERED) continue;
+    if (item.outwardNo && item.outwardNo !== '-' && !item.outwardNo.toUpperCase().startsWith('STOCK-OUT')) {
+      continue;
+    }
+    if (item.status !== STATUS.PENDING) continue;
+
+    const inwKey = String(item.inwardNo || item.inwardId || '').trim().toLowerCase();
+    const lrKey = String(item.lrNo ?? '').trim().toLowerCase();
+    const transKey = String(item.transporterName || '').trim().toLowerCase();
+    const uniqueKey = `${inwKey}__${transKey}__${lrKey}`;
+
+    if (!seenMap.has(uniqueKey)) {
+      seenMap.set(uniqueKey, item);
+    } else {
+      const existing = seenMap.get(uniqueKey);
+      seenMap.set(uniqueKey, { ...existing, ...item });
+    }
+  }
+
+  return Array.from(seenMap.values());
 };
 
 /**

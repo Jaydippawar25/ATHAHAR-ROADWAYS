@@ -141,7 +141,20 @@ export const Dashboard = () => {
     });
 
     // 2. Outward Items (both standard godown dispatches and cross stock-out)
-    (outwardItems || []).forEach((item) => {
+    // Pre-deduplicate outward items by (outwardNo + lrNo) to ensure zero double-counting
+    const uniqueOutwardItems = [];
+    const seenOutwardKeys = new Set();
+    for (const item of outwardItems || []) {
+      if (!item) continue;
+      const outKey = String(item.outwardNo || item.outwardId || '').trim().toLowerCase();
+      const lrKey = String(item.lrNo ?? '').trim().toLowerCase();
+      const key = `${outKey}__${lrKey}`;
+      if (seenOutwardKeys.has(key)) continue;
+      seenOutwardKeys.add(key);
+      uniqueOutwardItems.push(item);
+    }
+
+    uniqueOutwardItems.forEach((item) => {
       const parentOut = (outwards || []).find(
         (out) => out.id === item.outwardId || out.outwardNo === item.outwardNo
       );
@@ -175,13 +188,26 @@ export const Dashboard = () => {
         // Standard Outward delivered from Godown pending stock
         const inwKey = Array.from(allLREntriesMap.keys()).find((k) => {
           const val = allLREntriesMap.get(k);
-          return (
+          const lrMatch = String(val.lrNo ?? '').trim().toLowerCase() === String(item.lrNo ?? '').trim().toLowerCase();
+          const transMatch = !item.transporterName || !val.transporterName || String(item.transporterName).trim().toLowerCase() === String(val.transporterName).trim().toLowerCase();
+          const outMatch = val.outwardNo && item.outwardNo && String(val.outwardNo).trim().toLowerCase() === String(item.outwardNo).trim().toLowerCase();
+
+          // Match 1: Inward item waiting to be marked outward delivered
+          if (
             val.recordCategory === 'inward_item' &&
             ((item.inwardItemId && val.id === item.inwardItemId) ||
               val.id === item.id ||
-              (String(val.lrNo ?? '').trim().toLowerCase() === String(item.lrNo ?? '').trim().toLowerCase() &&
-                (!item.transporterName || !val.transporterName || String(item.transporterName).trim().toLowerCase() === String(val.transporterName).trim().toLowerCase())))
-          );
+              (lrMatch && transMatch))
+          ) {
+            return true;
+          }
+
+          // Match 2: Already matched outward entry for the SAME outward dispatch and LR
+          if (outMatch && lrMatch) {
+            return true;
+          }
+
+          return false;
         });
 
         if (inwKey) {
@@ -190,13 +216,13 @@ export const Dashboard = () => {
             ...existing,
             ...item,
             inwardDate: existing.inwardDate || item.inwardDate || item.date || '-',
-            inwardNo: existing.inwardNo || item.inwardNo || '-',
-            inwardVehicleNo: existing.inwardVehicleNo || existing.vehicleNo || '-',
-            inwardDriverName: existing.inwardDriverName || existing.driverName || '-',
-            outwardDate: item.outwardDate || item.date || parentOut?.date || '-',
-            outwardNo: item.outwardNo || parentOut?.outwardNo || '-',
-            outwardVehicleNo: item.vehicleNo || parentOut?.vehicleNo || '-',
-            outwardDriverName: item.driverName || parentOut?.driverName || '-',
+            inwardNo: existing.inwardNo && existing.inwardNo !== '-' ? existing.inwardNo : (item.inwardNo || '-'),
+            inwardVehicleNo: existing.inwardVehicleNo && existing.inwardVehicleNo !== '-' ? existing.inwardVehicleNo : (existing.vehicleNo || '-'),
+            inwardDriverName: existing.inwardDriverName && existing.inwardDriverName !== '-' ? existing.inwardDriverName : (existing.driverName || '-'),
+            outwardDate: item.outwardDate || item.date || parentOut?.date || existing.outwardDate || '-',
+            outwardNo: item.outwardNo || parentOut?.outwardNo || existing.outwardNo || '-',
+            outwardVehicleNo: item.vehicleNo || parentOut?.vehicleNo || existing.outwardVehicleNo || '-',
+            outwardDriverName: item.driverName || parentOut?.driverName || existing.outwardDriverName || '-',
             ownerName: item.ownerName || parentOut?.ownerName || existing.ownerName || '-',
             deliveryPersonName: item.deliveryPersonName || parentOut?.deliveryPersonName || existing.deliveryPersonName || '-',
             status: 'DELIVERED',
