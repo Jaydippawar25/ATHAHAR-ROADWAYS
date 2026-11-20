@@ -117,11 +117,12 @@ export const Dashboard = () => {
     const allLREntriesMap = new Map();
 
     // 1. Inward Items
-    (inwardItems || []).forEach((item) => {
+    (inwardItems || []).forEach((item, index) => {
       const parentInw = (inwards || []).find(
         (inw) => inw.id === item.inwardId || inw.inwardNo === item.inwardNo
       );
-      allLREntriesMap.set(item.id || item.lrNo, {
+      const itemKey = item.id ? String(item.id) : `inw-item-${item.inwardNo || 'inw'}-${item.lrNo}-${index}`;
+      allLREntriesMap.set(itemKey, {
         ...item,
         transporterName: item.transporterName || parentInw?.transporterName || '-',
         fromStation: item.from || item.fromStation || parentInw?.from || parentInw?.fromStation || '-',
@@ -141,20 +142,29 @@ export const Dashboard = () => {
     });
 
     // 2. Outward Items (both standard godown dispatches and cross stock-out)
-    // Pre-deduplicate outward items by (outwardNo + lrNo) to ensure zero double-counting
-    const uniqueOutwardItems = [];
-    const seenOutwardKeys = new Set();
+    // Pre-deduplicate outward items by (outwardNo + lrNo) to ensure zero double-counting,
+    // preserving inward linkage if available
+    const outwardByDispatchMap = new Map();
     for (const item of outwardItems || []) {
       if (!item) continue;
       const outKey = String(item.outwardNo || item.outwardId || '').trim().toLowerCase();
       const lrKey = String(item.lrNo ?? '').trim().toLowerCase();
       const key = `${outKey}__${lrKey}`;
-      if (seenOutwardKeys.has(key)) continue;
-      seenOutwardKeys.add(key);
-      uniqueOutwardItems.push(item);
-    }
 
-    uniqueOutwardItems.forEach((item) => {
+      if (!outwardByDispatchMap.has(key)) {
+        outwardByDispatchMap.set(key, item);
+      } else {
+        const existing = outwardByDispatchMap.get(key);
+        const existingHasInward = Boolean(existing.inwardItemId || (existing.inwardNo && existing.inwardNo !== '-'));
+        const currentHasInward = Boolean(item.inwardItemId || (item.inwardNo && item.inwardNo !== '-'));
+        if (!existingHasInward && currentHasInward) {
+          outwardByDispatchMap.set(key, { ...existing, ...item });
+        }
+      }
+    }
+    const uniqueOutwardItems = Array.from(outwardByDispatchMap.values());
+
+    uniqueOutwardItems.forEach((item, index) => {
       const parentOut = (outwards || []).find(
         (out) => out.id === item.outwardId || out.outwardNo === item.outwardNo
       );
@@ -166,7 +176,7 @@ export const Dashboard = () => {
 
       if (isStockOut) {
         // Cross Stock Out is a manual direct dispatch
-        allLREntriesMap.set(`stockout-${item.id}`, {
+        allLREntriesMap.set(`stockout-${item.id || index}`, {
           ...item,
           transporterName: item.transporterName || parentOut?.transporterName || '-',
           fromStation: item.from || parentOut?.from || '-',
@@ -186,27 +196,40 @@ export const Dashboard = () => {
         });
       } else {
         // Standard Outward delivered from Godown pending stock
+        // STRICT MATCHING: An outward item only matches an inward item if:
+        // 1. item.inwardItemId explicitly matches val.id (relational link)
+        // 2. OR val already records this exact outward dispatch (outwardNo + lrNo)
+        // 3. OR val is already marked DELIVERED with matching transporter/LR (with NO outwardNo conflict)
+        // NEVER match a PENDING inward item! A pending inward item is still in godown, so it must stay as a distinct pending row!
         const inwKey = Array.from(allLREntriesMap.keys()).find((k) => {
           const val = allLREntriesMap.get(k);
+          if (val.recordCategory !== 'inward_item') return false;
+
           const lrMatch = String(val.lrNo ?? '').trim().toLowerCase() === String(item.lrNo ?? '').trim().toLowerCase();
-          const transMatch = !item.transporterName || !val.transporterName || String(item.transporterName).trim().toLowerCase() === String(val.transporterName).trim().toLowerCase();
-          const outMatch = val.outwardNo && item.outwardNo && String(val.outwardNo).trim().toLowerCase() === String(item.outwardNo).trim().toLowerCase();
+          const outMatch = val.outwardNo && item.outwardNo &&
+            String(val.outwardNo).trim().toLowerCase() === String(item.outwardNo).trim().toLowerCase();
+          const inwIdMatch = item.inwardItemId && (val.id === item.inwardItemId || k === item.inwardItemId);
 
-          // Match 1: Inward item waiting to be marked outward delivered
-          if (
-            val.recordCategory === 'inward_item' &&
-            ((item.inwardItemId && val.id === item.inwardItemId) ||
-              val.id === item.id ||
-              (lrMatch && transMatch))
-          ) {
-            return true;
+          // 1. Explicit ID link
+          if (inwIdMatch) return true;
+
+          // 2. Both belong to the SAME outward dispatch and share the same LR
+          if (outMatch && lrMatch) return true;
+
+          // 3. If inward item already belongs to a DIFFERENT outward dispatch, they NEVER match!
+          const hasDifferentOutwardNo = val.outwardNo && item.outwardNo &&
+            val.outwardNo !== '-' && item.outwardNo !== '-' &&
+            String(val.outwardNo).trim().toLowerCase() !== String(item.outwardNo).trim().toLowerCase();
+          if (hasDifferentOutwardNo) return false;
+
+          // 4. If inward item is already marked DELIVERED without an assigned outwardNo, and matches LR + transporter
+          if (val.status === 'DELIVERED' && (!val.outwardNo || val.outwardNo === '-') && lrMatch) {
+            const transMatch = !item.transporterName || !val.transporterName ||
+              String(item.transporterName).trim().toLowerCase() === String(val.transporterName).trim().toLowerCase();
+            if (transMatch) return true;
           }
 
-          // Match 2: Already matched outward entry for the SAME outward dispatch and LR
-          if (outMatch && lrMatch) {
-            return true;
-          }
-
+          // If the inward item is PENDING or from another dispatch, NEVER match it to an outward item!
           return false;
         });
 
@@ -229,7 +252,7 @@ export const Dashboard = () => {
             recordCategory: 'outward_item',
           });
         } else {
-          allLREntriesMap.set(`outward-${item.id}`, {
+          allLREntriesMap.set(`outward-${item.id || index}`, {
             ...item,
             transporterName: item.transporterName || parentOut?.transporterName || '-',
             fromStation: item.from || parentOut?.from || '-',

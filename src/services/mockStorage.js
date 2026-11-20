@@ -36,13 +36,13 @@ export const deduplicateCollection = (key, list) => {
       const outNo = String(item.outwardNo || '').trim().toLowerCase();
       uniqueKey = outNo || String(item.id || '').trim();
     } else if (key === STORAGE_KEYS.INWARD_ITEMS) {
-      const inwNo = String(item.inwardNo || item.inwardId || '').trim().toLowerCase();
-      const lrNo = String(item.lrNo ?? '').trim().toLowerCase();
-      uniqueKey = inwNo && lrNo ? `${inwNo}__${lrNo}` : String(item.id || '').trim();
+      uniqueKey = item.id
+        ? String(item.id).trim()
+        : `${item.inwardNo || ''}_${item.lrNo}_${item.consigneeName || ''}_${item.pkg || ''}`;
     } else if (key === STORAGE_KEYS.OUTWARD_ITEMS) {
-      const outNo = String(item.outwardNo || item.outwardId || '').trim().toLowerCase();
-      const lrNo = String(item.lrNo ?? '').trim().toLowerCase();
-      uniqueKey = outNo && lrNo ? `${outNo}__${lrNo}` : String(item.id || '').trim();
+      uniqueKey = item.id
+        ? String(item.id).trim()
+        : `${item.outwardNo || ''}_${item.lrNo}_${item.consigneeName || ''}_${item.pkg || ''}`;
     } else {
       uniqueKey = String(item.id || JSON.stringify(item));
     }
@@ -85,14 +85,14 @@ export const getCanonicalKeyForCollection = (key, item) => {
   if (key === STORAGE_KEYS.INWARDS) return String(item.inwardNo || item.id || '').trim().toLowerCase();
   if (key === STORAGE_KEYS.OUTWARDS) return String(item.outwardNo || item.id || '').trim().toLowerCase();
   if (key === STORAGE_KEYS.INWARD_ITEMS) {
-    const inwNo = String(item.inwardNo || item.inwardId || '').trim().toLowerCase();
-    const lrNo = String(item.lrNo ?? '').trim().toLowerCase();
-    return inwNo && lrNo ? `${inwNo}__${lrNo}` : String(item.id || '').trim();
+    return item.id
+      ? String(item.id).trim()
+      : `${item.inwardNo || ''}_${item.lrNo}_${item.consigneeName || ''}_${item.pkg || ''}`;
   }
   if (key === STORAGE_KEYS.OUTWARD_ITEMS) {
-    const outNo = String(item.outwardNo || item.outwardId || '').trim().toLowerCase();
-    const lrNo = String(item.lrNo ?? '').trim().toLowerCase();
-    return outNo && lrNo ? `${outNo}__${lrNo}` : String(item.id || '').trim();
+    return item.id
+      ? String(item.id).trim()
+      : `${item.outwardNo || ''}_${item.lrNo}_${item.consigneeName || ''}_${item.pkg || ''}`;
   }
   return String(item.id || '').trim();
 };

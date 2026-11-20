@@ -40,7 +40,8 @@ export const getAllInwardItems = () => {
     if (!item) continue;
     const inwKey = String(item.inwardNo || item.inwardId || '').trim().toLowerCase();
     const lrKey = String(item.lrNo ?? '').trim().toLowerCase();
-    const uniqueKey = inwKey && lrKey ? `${inwKey}__${lrKey}` : String(item.id || '').trim();
+    // Unique key respects distinct items (item.id), preventing deletion of multiple LRs
+    const uniqueKey = item.id ? String(item.id).trim() : `${inwKey}__${lrKey}__${item.consigneeName || ''}__${item.pkg || ''}`;
 
     if (!uniqueKey) continue;
 
@@ -93,10 +94,9 @@ export const getPendingStockItems = () => {
     }
     if (item.status !== STATUS.PENDING) continue;
 
-    const inwKey = String(item.inwardNo || item.inwardId || '').trim().toLowerCase();
-    const lrKey = String(item.lrNo ?? '').trim().toLowerCase();
-    const transKey = String(item.transporterName || '').trim().toLowerCase();
-    const uniqueKey = `${inwKey}__${transKey}__${lrKey}`;
+    const uniqueKey = item.id
+      ? String(item.id).trim()
+      : `${item.inwardNo || ''}_${item.lrNo}_${item.consigneeName || ''}_${item.pkg || ''}`;
 
     if (!seenMap.has(uniqueKey)) {
       seenMap.set(uniqueKey, item);
@@ -461,11 +461,12 @@ export const updateInwardItem = (itemId, updatedFields) => {
   if (targetItem && outwardItems.length > 0) {
     let outwardChanged = false;
     outwardItems = outwardItems.map((outItem) => {
-      if (
-        outItem.inwardItemId === targetItem.id ||
-        outItem.id === targetItem.id ||
-        (oldItem && String(outItem.lrNo).trim().toLowerCase() === String(oldItem.lrNo).trim().toLowerCase())
-      ) {
+      const isIdMatch = outItem.inwardItemId === targetItem.id || outItem.id === targetItem.id;
+      const isLinkedOutward = targetItem.outwardNo && outItem.outwardNo &&
+        String(outItem.outwardNo).trim().toLowerCase() === String(targetItem.outwardNo).trim().toLowerCase() &&
+        (oldItem && String(outItem.lrNo).trim().toLowerCase() === String(oldItem.lrNo).trim().toLowerCase());
+
+      if (isIdMatch || isLinkedOutward) {
         outwardChanged = true;
         return {
           ...outItem,
@@ -712,11 +713,14 @@ export const updateFullInward = (inwardId, headerData, lrItems, currentUser = 'O
     outwardItems = outwardItems.map((outItem) => {
       const matchedInward = rebuiltItems.find((reb) => {
         const oldLr = oldLrByItemId.get(reb.id);
+        const isIdMatch = (outItem.inwardItemId && outItem.inwardItemId === reb.id) || outItem.id === reb.id;
+        const isSameInward = outItem.inwardNo && (existingHeader?.inwardNo || headerData.inwardNo) &&
+          String(outItem.inwardNo).trim().toLowerCase() === String(existingHeader?.inwardNo || headerData.inwardNo).trim().toLowerCase();
+
         return (
-          (outItem.inwardItemId && outItem.inwardItemId === reb.id) ||
-          outItem.id === reb.id ||
-          (oldLr && String(outItem.lrNo ?? '').trim().toLowerCase() === String(oldLr).trim().toLowerCase()) ||
-          String(outItem.lrNo ?? '').trim().toLowerCase() === String(reb.lrNo).trim().toLowerCase()
+          isIdMatch ||
+          (isSameInward && oldLr && String(outItem.lrNo ?? '').trim().toLowerCase() === String(oldLr).trim().toLowerCase()) ||
+          (isSameInward && String(outItem.lrNo ?? '').trim().toLowerCase() === String(reb.lrNo).trim().toLowerCase())
         );
       });
 

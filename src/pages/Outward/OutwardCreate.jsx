@@ -90,10 +90,10 @@ export const OutwardCreate = () => {
     const seen = new Map();
     for (const item of rawList) {
       if (!item) continue;
-      const cleanLR = String(item.lrNo ?? '').trim().toLowerCase();
-      const inwKey = String(item.inwardNo || item.inwardId || '').trim().toLowerCase();
-      const transKey = String(item.transporterName || '').trim().toLowerCase();
-      const uniqueKey = inwKey && cleanLR ? `${inwKey}__${transKey}__${cleanLR}` : String(item.id || '').trim();
+      // Keyed by item.id so each distinct consignment in pending stock is preserved and selectable
+      const uniqueKey = item.id
+        ? String(item.id)
+        : `${item.inwardNo || ''}_${item.lrNo}_${item.consigneeName || ''}_${item.pkg || ''}`;
 
       if (!seen.has(uniqueKey)) {
         seen.set(uniqueKey, item);

@@ -160,7 +160,12 @@ export const getAllOutwardItems = () => {
     if (!item) continue;
     const outKey = String(item.outwardNo || item.outwardId || '').trim().toLowerCase();
     const lrKey = String(item.lrNo ?? '').trim().toLowerCase();
-    const uniqueKey = outKey && lrKey ? `${outKey}__${lrKey}` : String(item.id || '').trim();
+    const uniqueKey =
+      item.inwardItemId && outKey
+        ? `${outKey}__${item.inwardItemId}`
+        : item.id
+        ? String(item.id).trim()
+        : `${outKey}__${lrKey}__${item.consigneeName || ''}`;
 
     if (!uniqueKey) continue;
 
@@ -199,7 +204,7 @@ export const getAllOutwardItems = () => {
       const outNo = String(inwItem.outwardNo || '').trim();
       if (!outNo || outNo === '-' || outNo.toUpperCase().startsWith('STOCK-OUT')) continue;
       const lrKey = String(inwItem.lrNo ?? '').trim().toLowerCase();
-      const uniqueKey = `${outNo.toLowerCase()}__${lrKey}`;
+      const uniqueKey = inwItem.id && outNo ? `${outNo.toLowerCase()}__${inwItem.id}` : `${outNo.toLowerCase()}__${lrKey}`;
 
       if (seenMap.has(uniqueKey)) continue;
 

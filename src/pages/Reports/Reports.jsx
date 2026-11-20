@@ -110,6 +110,7 @@ export const Reports = () => {
       (inwItem) =>
         inwItem.id === item.inwardItemId ||
         (inwItem.lrNo === item.lrNo &&
+          (!item.outwardNo || !inwItem.outwardNo || item.outwardNo === inwItem.outwardNo) &&
           (!item.transporterName || !inwItem.transporterName || inwItem.transporterName === item.transporterName))
     );
     return {
