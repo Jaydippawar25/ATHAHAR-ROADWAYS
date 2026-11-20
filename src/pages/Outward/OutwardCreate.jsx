@@ -72,18 +72,82 @@ export const OutwardCreate = () => {
     return [...extraEditedItems, ...pendingStock];
   }, [pendingStock, editOutwardData]);
 
-  const filteredPendingStock = availableStock.filter((item) => {
-    if (!searchTerm.trim()) return true;
-    const term = searchTerm.toLowerCase().trim();
-    // Only search by Consignor, Consignee, and L.R. No.
-    return (
-      (item.lrNo && String(item.lrNo).toLowerCase().includes(term)) ||
-      (item.consignorName && String(item.consignorName).toLowerCase().includes(term)) ||
-      (item.consignor && String(item.consignor).toLowerCase().includes(term)) ||
-      (item.consigneeName && String(item.consigneeName).toLowerCase().includes(term)) ||
-      (item.consignee && String(item.consignee).toLowerCase().includes(term))
-    );
-  });
+  const filteredPendingStock = React.useMemo(() => {
+    const rawInput = searchTerm.trim();
+    if (!rawInput) return availableStock;
+
+    const term = rawInput.toLowerCase();
+    // Strip common LR prefixes like "lr", "lr no", "lrno", "#"
+    const cleanLRTerm = term.replace(/^(lr|lrno|lr\s*no\.?|#)[\s:-]*/i, '').trim();
+
+    const matches = [];
+
+    for (const item of availableStock) {
+      const lrStr = String(item.lrNo || '').trim().toLowerCase();
+      const consignorStr = String(item.consignorName || item.consignor || '').trim().toLowerCase();
+      const consigneeStr = String(item.consigneeName || item.consignee || '').trim().toLowerCase();
+
+      // Check match conditions
+      const isExactLR = lrStr === term || (cleanLRTerm && lrStr === cleanLRTerm);
+      const isPrefixLR = !isExactLR && (lrStr.startsWith(term) || (cleanLRTerm && lrStr.startsWith(cleanLRTerm)));
+      const isIncludesLR = !isExactLR && !isPrefixLR && (lrStr.includes(term) || (cleanLRTerm && lrStr.includes(cleanLRTerm)));
+      const isConsignorPrefix = consignorStr.startsWith(term);
+      const isConsigneePrefix = consigneeStr.startsWith(term);
+      const isConsignorIncludes = !isConsignorPrefix && consignorStr.includes(term);
+      const isConsigneeIncludes = !isConsigneePrefix && consigneeStr.includes(term);
+
+      if (
+        !isExactLR &&
+        !isPrefixLR &&
+        !isIncludesLR &&
+        !isConsignorPrefix &&
+        !isConsigneePrefix &&
+        !isConsignorIncludes &&
+        !isConsigneeIncludes
+      ) {
+        continue;
+      }
+
+      // Priority Rank:
+      // 1: Exact LR match (e.g. searching '312' -> LR '312' ALWAYS shows first)
+      // 2: LR starts with search term (e.g. '3120', '3121', '31245')
+      // 3: LR contains search term (e.g. '1312', '0312')
+      // 4: Consignor or Consignee starts with search term
+      // 5: Consignor or Consignee contains search term
+      let rank = 5;
+      if (isExactLR) {
+        rank = 1;
+      } else if (isPrefixLR) {
+        rank = 2;
+      } else if (isIncludesLR) {
+        rank = 3;
+      } else if (isConsignorPrefix || isConsigneePrefix) {
+        rank = 4;
+      }
+
+      matches.push({
+        item,
+        rank,
+        isExactLR,
+        lrLen: lrStr.length,
+        lrStr,
+      });
+    }
+
+    // Sort: Rank 1 (exact LR) always top, then rank 2 (prefix), then rank 3 (includes), etc.
+    matches.sort((a, b) => {
+      if (a.rank !== b.rank) {
+        return a.rank - b.rank;
+      }
+      // For prefix matches, shorter numbers appear first (e.g. 3120 before 31200)
+      if (a.rank === 2 && a.lrLen !== b.lrLen) {
+        return a.lrLen - b.lrLen;
+      }
+      return a.lrStr.localeCompare(b.lrStr, undefined, { numeric: true });
+    });
+
+    return matches.map((m) => m.item);
+  }, [availableStock, searchTerm]);
 
   const handleSelectAllFiltered = () => {
     const unselectedFiltered = filteredPendingStock.filter(
@@ -694,6 +758,14 @@ export const OutwardCreate = () => {
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  if (filteredPendingStock.length > 0) {
+                    toggleSelectPendingLR(filteredPendingStock[0]);
+                  }
+                }
+              }}
               placeholder="Search Consignor, Consignee or L.R. No. to select..."
               className="w-full pl-10 pr-8 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#1d4ed8] focus:bg-white focus:ring-2 focus:ring-blue-100 rounded-xl text-xs font-semibold text-slate-800 placeholder-slate-400 transition-all outline-none"
             />
@@ -754,6 +826,14 @@ export const OutwardCreate = () => {
                       <span className="font-extrabold text-[#1d4ed8] text-xs sm:text-sm tracking-tight">
                         {item.lrNo}
                       </span>
+                      {searchTerm.trim() &&
+                        (String(item.lrNo || '').trim().toLowerCase() === searchTerm.trim().toLowerCase() ||
+                          String(item.lrNo || '').trim().toLowerCase() ===
+                            searchTerm.trim().toLowerCase().replace(/^(lr|lrno|lr\s*no\.?|#)[\s:-]*/i, '')) && (
+                        <span className="bg-emerald-50 text-emerald-700 border border-emerald-300 font-extrabold text-[9px] px-1.5 py-0.5 rounded uppercase tracking-wider">
+                          Exact Match
+                        </span>
+                      )}
                       {item.transporterName && item.transporterName !== '-' && (
                         <span className="bg-blue-50 text-blue-700 border border-blue-200 font-extrabold text-[10px] px-2 py-0.5 rounded uppercase tracking-wider">
                           {item.transporterName}
