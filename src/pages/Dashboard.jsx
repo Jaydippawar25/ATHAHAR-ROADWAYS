@@ -235,23 +235,32 @@ export const Dashboard = () => {
 
         if (inwKey) {
           const existing = allLREntriesMap.get(inwKey);
+          const outVeh = parentOut?.vehicleNo || item.outwardVehicleNo || item.vehicleNo || existing.outwardVehicleNo || '-';
+          const outDrv = parentOut?.driverName || item.outwardDriverName || item.driverName || existing.outwardDriverName || '-';
+          const inwVeh = existing.inwardVehicleNo && existing.inwardVehicleNo !== '-' ? existing.inwardVehicleNo : (existing.vehicleNo || '-');
+          const inwDrv = existing.inwardDriverName && existing.inwardDriverName !== '-' ? existing.inwardDriverName : (existing.driverName || '-');
+
           allLREntriesMap.set(inwKey, {
             ...existing,
             ...item,
             inwardDate: existing.inwardDate || item.inwardDate || item.date || '-',
             inwardNo: existing.inwardNo && existing.inwardNo !== '-' ? existing.inwardNo : (item.inwardNo || '-'),
-            inwardVehicleNo: existing.inwardVehicleNo && existing.inwardVehicleNo !== '-' ? existing.inwardVehicleNo : (existing.vehicleNo || '-'),
-            inwardDriverName: existing.inwardDriverName && existing.inwardDriverName !== '-' ? existing.inwardDriverName : (existing.driverName || '-'),
+            inwardVehicleNo: inwVeh,
+            inwardDriverName: inwDrv,
             outwardDate: item.outwardDate || item.date || parentOut?.date || existing.outwardDate || '-',
             outwardNo: item.outwardNo || parentOut?.outwardNo || existing.outwardNo || '-',
-            outwardVehicleNo: item.vehicleNo || parentOut?.vehicleNo || existing.outwardVehicleNo || '-',
-            outwardDriverName: item.driverName || parentOut?.driverName || existing.outwardDriverName || '-',
-            ownerName: item.ownerName || parentOut?.ownerName || existing.ownerName || '-',
+            outwardVehicleNo: outVeh,
+            outwardDriverName: outDrv,
+            vehicleNo: outVeh !== '-' ? outVeh : inwVeh,
+            driverName: outDrv !== '-' ? outDrv : inwDrv,
+            ownerName: existing.ownerName || parentOut?.ownerName || item.ownerName || '-',
             deliveryPersonName: item.deliveryPersonName || parentOut?.deliveryPersonName || existing.deliveryPersonName || '-',
             status: 'DELIVERED',
             recordCategory: 'outward_item',
           });
         } else {
+          const outVeh = parentOut?.vehicleNo || item.outwardVehicleNo || item.vehicleNo || '-';
+          const outDrv = parentOut?.driverName || item.outwardDriverName || item.driverName || '-';
           allLREntriesMap.set(`outward-${item.id || index}`, {
             ...item,
             transporterName: item.transporterName || parentOut?.transporterName || '-',
@@ -263,9 +272,11 @@ export const Dashboard = () => {
             inwardNo: '-',
             outwardDate: item.outwardDate || item.date || parentOut?.date || '-',
             outwardNo: item.outwardNo || parentOut?.outwardNo || '-',
-            outwardVehicleNo: item.vehicleNo || parentOut?.vehicleNo || '-',
-            outwardDriverName: item.driverName || parentOut?.driverName || '-',
-            ownerName: item.ownerName || parentOut?.ownerName || '-',
+            outwardVehicleNo: outVeh,
+            outwardDriverName: outDrv,
+            vehicleNo: outVeh,
+            driverName: outDrv,
+            ownerName: parentOut?.ownerName || item.ownerName || '-',
             deliveryPersonName: item.deliveryPersonName || parentOut?.deliveryPersonName || '-',
             status: 'DELIVERED',
             recordCategory: 'outward_item',
@@ -2447,16 +2458,22 @@ export const Dashboard = () => {
                     </div>
                     <div>
                       <span className="text-[10px] text-slate-400 font-bold block uppercase">Incoming Vehicle</span>
-                      <span className="font-mono font-bold text-slate-900">{item.inwardVehicleNo || item.vehicleNo || '-'}</span>
+                      <span className="font-mono font-bold text-slate-900">{item.inwardVehicleNo && item.inwardVehicleNo !== '-' ? item.inwardVehicleNo : (item.vehicleNo || '-')}</span>
                     </div>
                     <div>
                       <span className="text-[10px] text-slate-400 font-bold block uppercase">Inward Driver</span>
-                      <span className="font-bold text-slate-800 truncate block">{item.inwardDriverName || item.driverName || '-'}</span>
+                      <span className="font-bold text-slate-800 truncate block">{item.inwardDriverName && item.inwardDriverName !== '-' ? item.inwardDriverName : (item.driverName || '-')}</span>
                     </div>
                     <div className="col-span-2">
                       <span className="text-[10px] text-slate-400 font-bold block uppercase">Transporter Agency</span>
                       <span className="font-bold text-slate-800 truncate block">{item.transporterName || '-'}</span>
                     </div>
+                    {item.ownerName && item.ownerName !== '-' && (
+                      <div className="col-span-2">
+                        <span className="text-[10px] text-slate-400 font-bold block uppercase">Vehicle Owner</span>
+                        <span className="font-bold text-slate-800 truncate block">{item.ownerName}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -2481,18 +2498,12 @@ export const Dashboard = () => {
                     </div>
                     <div>
                       <span className="text-[10px] text-slate-400 font-bold block uppercase">Delivery Vehicle</span>
-                      <span className="font-mono font-bold text-slate-900">{item.outwardVehicleNo || '-'}</span>
+                      <span className="font-mono font-bold text-slate-900">{item.outwardVehicleNo && item.outwardVehicleNo !== '-' ? item.outwardVehicleNo : '-'}</span>
                     </div>
                     <div>
                       <span className="text-[10px] text-slate-400 font-bold block uppercase">Delivery Driver / Agent</span>
-                      <span className="font-bold text-slate-800 truncate block">{item.deliveryPersonName || item.outwardDriverName || '-'}</span>
+                      <span className="font-bold text-slate-800 truncate block">{item.deliveryPersonName && item.deliveryPersonName !== '-' ? item.deliveryPersonName : (item.outwardDriverName || '-')}</span>
                     </div>
-                    {item.ownerName && item.ownerName !== '-' && (
-                      <div className="col-span-2">
-                        <span className="text-[10px] text-slate-400 font-bold block uppercase">Vehicle Owner</span>
-                        <span className="font-bold text-slate-800 truncate block">{item.ownerName}</span>
-                      </div>
-                    )}
                   </div>
                 </div>
 

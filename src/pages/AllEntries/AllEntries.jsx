@@ -117,14 +117,16 @@ export const AllEntries = () => {
               value: row.inwardNo || row.outwardNo,
             },
             { label: 'Date', value: formatDate(row.date) },
-            { label: 'Vehicle No.', value: row.vehicleNo || '-' },
             {
-              label: isInward ? 'Vehicle Owner' : 'Driver Name',
-              value: isInward ? row.ownerName || '-' : row.driverName || row.ownerName || '-',
+              label: isInward ? 'Inward Vehicle No.' : isStockOut ? 'Stock-Out Vehicle No.' : 'Outward Vehicle No.',
+              value: row.vehicleNo || '-',
             },
-            ...(isStockOut && row.ownerName
-              ? [{ label: 'Vehicle Owner', value: row.ownerName }]
-              : []),
+            {
+              label: isInward ? 'Driver Name' : isStockOut ? 'Driver Name' : 'Outward Driver',
+              value: row.driverName || '-',
+            },
+            ...(isInward && row.ownerName ? [{ label: 'Vehicle Owner', value: row.ownerName }] : []),
+            ...(isOutward && row.deliveryPersonName ? [{ label: 'Delivery Person', value: row.deliveryPersonName }] : []),
             { label: 'From Station', value: row.from || '-' },
             ...(!isOutward ? [{ label: 'Memo No.', value: row.memoNo || '-' }] : []),
             { label: 'Total PKG', value: `${row.totalQty || 0} Pkgs` },
@@ -133,6 +135,11 @@ export const AllEntries = () => {
           items,
         });
       } else {
+        const inwVeh = row.inwardVehicleNo && row.inwardVehicleNo !== '-' ? row.inwardVehicleNo : (row.inwardNo && row.inwardNo !== '-' ? row.vehicleNo : '-');
+        const outVeh = row.outwardVehicleNo && row.outwardVehicleNo !== '-' ? row.outwardVehicleNo : (row.outwardNo && row.outwardNo !== '-' ? row.vehicleNo : '-');
+        const inwDrv = row.inwardDriverName && row.inwardDriverName !== '-' ? row.inwardDriverName : (row.inwardNo && row.inwardNo !== '-' ? row.driverName : '-');
+        const outDrv = row.outwardDriverName && row.outwardDriverName !== '-' ? row.outwardDriverName : (row.outwardNo && row.outwardNo !== '-' ? row.driverName : '-');
+
         printRecordDetails({
           title: `LR Entry Details #${row.lrNo}`,
           fields: [
@@ -141,8 +148,13 @@ export const AllEntries = () => {
             { label: 'Packages', value: `${row.pkg || 0} Pkgs` },
             { label: 'Inward No.', value: row.inwardNo || '-' },
             { label: 'Inward Date', value: formatDate(row.inwardDate) },
+            { label: 'Incoming Vehicle', value: inwVeh || '-' },
+            { label: 'Inward Driver', value: inwDrv || '-' },
+            { label: 'Vehicle Owner', value: row.inwardOwnerName || row.ownerName || '-' },
             { label: 'Outward No.', value: row.outwardNo || '-' },
             { label: 'Outward Date', value: formatDate(row.outwardDate) },
+            { label: 'Delivery Vehicle', value: outVeh || '-' },
+            { label: 'Delivery Driver', value: outDrv || '-' },
             { label: 'Delivery Person', value: row.deliveryPersonName || '-' },
             { label: 'CT To', value: row.ctTo || '-' },
             { label: 'Consigner', value: row.consignorName || '-' },
@@ -336,8 +348,13 @@ export const AllEntries = () => {
     const itemKey = item.id ? String(item.id) : `inw-item-${item.inwardNo || 'inw'}-${item.lrNo}-${index}`;
     allLREntriesMap.set(itemKey, {
       ...item,
+      inwardVehicleNo: item.vehicleNo || parentInw?.vehicleNo || '-',
+      inwardDriverName: item.driverName || parentInw?.driverName || '-',
+      inwardOwnerName: item.ownerName || parentInw?.ownerName || '-',
+      outwardVehicleNo: '-',
+      outwardDriverName: '-',
       memoNo: item.memoNo || parentInw?.memoNo || '-',
-      inwardDate: item.date || item.inwardDate || '-',
+      inwardDate: item.date || item.inwardDate || parentInw?.date || '-',
       outwardDate: '-',
       outwardNo: '-',
       deliveryPersonName: '-',
@@ -369,21 +386,37 @@ export const AllEntries = () => {
   const uniqueOutwardItems = Array.from(outwardByDispatchMap.values());
 
   uniqueOutwardItems.forEach((item, index) => {
+    const parentOut = outwards.find(
+      (out) => out.id === item.outwardId || out.outwardNo === item.outwardNo
+    );
     const isStockOut = Boolean(
       item.isCrossOutward ||
-      String(item.outwardNo || '').toUpperCase().startsWith('STOCK-OUT')
+      parentOut?.isCrossOutward ||
+      String(item.outwardNo || parentOut?.outwardNo || '').toUpperCase().startsWith('STOCK-OUT')
     );
+
+    const outVeh = parentOut?.vehicleNo || item.outwardVehicleNo || item.vehicleNo || '-';
+    const outDrv = parentOut?.driverName || item.outwardDriverName || item.driverName || '-';
 
     if (isStockOut) {
       // Cross Stock Out is a manual direct dispatch with NO connection to Pending Stock or Inward
       allLREntriesMap.set(`stockout-${item.id || index}`, {
         ...item,
-        memoNo: item.memoNo || '-',
+        transporterName: item.transporterName || parentOut?.transporterName || '-',
+        fromStation: item.from || parentOut?.from || '-',
+        inwardVehicleNo: '-',
+        inwardDriverName: '-',
+        memoNo: item.memoNo || parentOut?.memoNo || '-',
         inwardDate: '-',
         inwardNo: '-',
-        outwardDate: item.outwardDate || item.date || '-',
-        outwardNo: item.outwardNo || '-',
-        deliveryPersonName: item.deliveryPersonName || '-',
+        outwardDate: item.outwardDate || item.date || parentOut?.date || '-',
+        outwardNo: item.outwardNo || parentOut?.outwardNo || '-',
+        outwardVehicleNo: outVeh,
+        outwardDriverName: outDrv,
+        vehicleNo: outVeh,
+        driverName: outDrv,
+        ownerName: item.ownerName || parentOut?.ownerName || '-',
+        deliveryPersonName: item.deliveryPersonName || parentOut?.deliveryPersonName || '-',
         status: 'DISPATCHED',
         recordCategory: 'stock_out_item',
       });
@@ -428,26 +461,45 @@ export const AllEntries = () => {
 
       if (inwKey) {
         const existing = allLREntriesMap.get(inwKey);
+        const inwVeh = existing.inwardVehicleNo && existing.inwardVehicleNo !== '-' ? existing.inwardVehicleNo : (existing.vehicleNo || '-');
+        const inwDrv = existing.inwardDriverName && existing.inwardDriverName !== '-' ? existing.inwardDriverName : (existing.driverName || '-');
+
         allLREntriesMap.set(inwKey, {
           ...existing,
           ...item,
           inwardDate: existing.inwardDate || item.inwardDate || item.date || '-',
           inwardNo: existing.inwardNo && existing.inwardNo !== '-' ? existing.inwardNo : (item.inwardNo || '-'),
-          outwardDate: item.outwardDate || item.date || existing.outwardDate || '-',
-          outwardNo: item.outwardNo || existing.outwardNo || '-',
-          deliveryPersonName: item.deliveryPersonName || existing.deliveryPersonName || '-',
+          inwardVehicleNo: inwVeh,
+          inwardDriverName: inwDrv,
+          outwardDate: item.outwardDate || item.date || parentOut?.date || existing.outwardDate || '-',
+          outwardNo: item.outwardNo || parentOut?.outwardNo || existing.outwardNo || '-',
+          outwardVehicleNo: outVeh,
+          outwardDriverName: outDrv,
+          vehicleNo: outVeh !== '-' ? outVeh : inwVeh,
+          driverName: outDrv !== '-' ? outDrv : inwDrv,
+          ownerName: existing.ownerName || parentOut?.ownerName || item.ownerName || '-',
+          deliveryPersonName: item.deliveryPersonName || parentOut?.deliveryPersonName || existing.deliveryPersonName || '-',
           status: 'DELIVERED',
           recordCategory: 'outward_item',
         });
       } else {
         allLREntriesMap.set(`out-${item.id || index}`, {
           ...item,
-          memoNo: item.memoNo || '-',
+          transporterName: item.transporterName || parentOut?.transporterName || '-',
+          fromStation: item.from || parentOut?.from || '-',
+          inwardVehicleNo: '-',
+          inwardDriverName: '-',
+          memoNo: item.memoNo || parentOut?.memoNo || '-',
           inwardDate: '-',
           inwardNo: '-',
-          outwardDate: item.outwardDate || item.date || '-',
-          outwardNo: item.outwardNo || '-',
-          deliveryPersonName: item.deliveryPersonName || '-',
+          outwardDate: item.outwardDate || item.date || parentOut?.date || '-',
+          outwardNo: item.outwardNo || parentOut?.outwardNo || '-',
+          outwardVehicleNo: outVeh,
+          outwardDriverName: outDrv,
+          vehicleNo: outVeh,
+          driverName: outDrv,
+          ownerName: parentOut?.ownerName || item.ownerName || '-',
+          deliveryPersonName: item.deliveryPersonName || parentOut?.deliveryPersonName || '-',
           status: 'DELIVERED',
           recordCategory: 'outward_item',
         });
@@ -1025,19 +1077,28 @@ export const AllEntries = () => {
                     <span className="font-bold text-slate-800">{formatDate(viewingRecord.date)}</span>
                   </div>
                   <div>
-                    <span className="text-slate-400 font-bold uppercase block text-[10px]">Vehicle No.</span>
+                    <span className="text-slate-400 font-bold uppercase block text-[10px]">
+                      {viewCategory === 'inward_header' ? 'Inward Vehicle No.' : 'Outward Vehicle No.'}
+                    </span>
                     <span className="font-black text-sky-700">{viewingRecord.vehicleNo || '-'}</span>
                   </div>
                   <div>
-                    <span className="text-slate-400 font-bold uppercase block text-[10px]">
-                      {viewCategory === 'inward_header' ? 'Vehicle Owner' : 'Driver Name'}
-                    </span>
+                    <span className="text-slate-400 font-bold uppercase block text-[10px]">Driver Name</span>
                     <span className="font-bold text-slate-800">
-                      {viewCategory === 'inward_header'
-                        ? viewingRecord.ownerName || '-'
-                        : viewingRecord.driverName || viewingRecord.ownerName || '-'}
+                      {viewingRecord.driverName || '-'}
                     </span>
                   </div>
+                  {viewCategory === 'inward_header' ? (
+                    <div>
+                      <span className="text-slate-400 font-bold uppercase block text-[10px]">Vehicle Owner</span>
+                      <span className="font-bold text-slate-800">{viewingRecord.ownerName || '-'}</span>
+                    </div>
+                  ) : viewingRecord.deliveryPersonName ? (
+                    <div>
+                      <span className="text-slate-400 font-bold uppercase block text-[10px]">Delivery Person</span>
+                      <span className="font-bold text-emerald-800">{viewingRecord.deliveryPersonName}</span>
+                    </div>
+                  ) : null}
                   <div>
                     <span className="text-slate-400 font-bold uppercase block text-[10px]">From Station</span>
                     <span className="font-bold text-slate-800">{viewingRecord.from || '-'}</span>
@@ -1199,12 +1260,60 @@ export const AllEntries = () => {
                   <span className="font-bold text-slate-800">{formatDate(viewingRecord.inwardDate)}</span>
                 </div>
                 <div>
+                  <span className="text-slate-400 font-bold uppercase block text-[10px]">Incoming Vehicle</span>
+                  <span className="font-bold text-indigo-700">
+                    {viewingRecord.inwardVehicleNo && viewingRecord.inwardVehicleNo !== '-'
+                      ? viewingRecord.inwardVehicleNo
+                      : viewingRecord.inwardNo && viewingRecord.inwardNo !== '-'
+                      ? viewingRecord.vehicleNo
+                      : '-'}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-slate-400 font-bold uppercase block text-[10px]">Inward Driver</span>
+                  <span className="font-bold text-slate-800">
+                    {viewingRecord.inwardDriverName && viewingRecord.inwardDriverName !== '-'
+                      ? viewingRecord.inwardDriverName
+                      : '-'}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-slate-400 font-bold uppercase block text-[10px]">Vehicle Owner</span>
+                  <span className="font-bold text-slate-800">
+                    {viewingRecord.inwardOwnerName || viewingRecord.ownerName || '-'}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-slate-400 font-bold uppercase block text-[10px]">Memo No.</span>
+                  <span className="font-bold text-slate-800">{viewingRecord.memoNo || '-'}</span>
+                </div>
+                <div>
                   <span className="text-slate-400 font-bold uppercase block text-[10px]">Outward No.</span>
                   <span className="font-bold text-slate-800">{viewingRecord.outwardNo || '-'}</span>
                 </div>
                 <div>
                   <span className="text-slate-400 font-bold uppercase block text-[10px]">Outward Date</span>
                   <span className="font-bold text-slate-800">{formatDate(viewingRecord.outwardDate)}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 font-bold uppercase block text-[10px]">Delivery Vehicle</span>
+                  <span className="font-bold text-emerald-700">
+                    {viewingRecord.outwardVehicleNo && viewingRecord.outwardVehicleNo !== '-'
+                      ? viewingRecord.outwardVehicleNo
+                      : viewingRecord.outwardNo && viewingRecord.outwardNo !== '-'
+                      ? viewingRecord.vehicleNo
+                      : '-'}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-slate-400 font-bold uppercase block text-[10px]">Delivery Driver</span>
+                  <span className="font-bold text-slate-800">
+                    {viewingRecord.outwardDriverName && viewingRecord.outwardDriverName !== '-'
+                      ? viewingRecord.outwardDriverName
+                      : viewingRecord.outwardNo && viewingRecord.outwardNo !== '-'
+                      ? viewingRecord.driverName
+                      : '-'}
+                  </span>
                 </div>
                 <div>
                   <span className="text-slate-400 font-bold uppercase block text-[10px]">Delivery Person</span>
@@ -1328,16 +1437,49 @@ export const AllEntries = () => {
                     />
                   </div>
                 )}
+                {editCategory === 'inward_header' && (
+                  <>
+                    <div>
+                      <label className="block text-slate-600 mb-1 uppercase font-bold">Driver Name</label>
+                      <input
+                        type="text"
+                        value={editFormData.driverName || ''}
+                        onChange={(e) => setEditFormData({ ...editFormData, driverName: e.target.value })}
+                        className="w-full p-2 border border-slate-300 rounded focus:ring-1 focus:ring-sky-500 uppercase"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-slate-600 mb-1 uppercase font-bold">Vehicle Owner Name</label>
+                      <input
+                        type="text"
+                        value={editFormData.ownerName || ''}
+                        onChange={(e) => setEditFormData({ ...editFormData, ownerName: e.target.value })}
+                        className="w-full p-2 border border-slate-300 rounded focus:ring-1 focus:ring-sky-500 uppercase"
+                      />
+                    </div>
+                  </>
+                )}
                 {editCategory === 'outward_header' && (
-                  <div>
-                    <label className="block text-slate-600 mb-1 uppercase font-bold">Driver Name</label>
-                    <input
-                      type="text"
-                      value={editFormData.driverName || ''}
-                      onChange={(e) => setEditFormData({ ...editFormData, driverName: e.target.value })}
-                      className="w-full p-2 border border-slate-300 rounded focus:ring-1 focus:ring-sky-500"
-                    />
-                  </div>
+                  <>
+                    <div>
+                      <label className="block text-slate-600 mb-1 uppercase font-bold">Driver Name</label>
+                      <input
+                        type="text"
+                        value={editFormData.driverName || ''}
+                        onChange={(e) => setEditFormData({ ...editFormData, driverName: e.target.value })}
+                        className="w-full p-2 border border-slate-300 rounded focus:ring-1 focus:ring-sky-500 uppercase"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-slate-600 mb-1 uppercase font-bold">Delivery Person</label>
+                      <input
+                        type="text"
+                        value={editFormData.deliveryPersonName || ''}
+                        onChange={(e) => setEditFormData({ ...editFormData, deliveryPersonName: e.target.value })}
+                        className="w-full p-2 border border-slate-300 rounded focus:ring-1 focus:ring-sky-500 uppercase"
+                      />
+                    </div>
+                  </>
                 )}
               </div>
             ) : (

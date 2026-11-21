@@ -393,6 +393,11 @@ export const updateInwardHeader = (inwardId, updatedFields) => {
       return {
         ...item,
         vehicleNo: updatedFields.vehicleNo ?? item.vehicleNo,
+        inwardVehicleNo: updatedFields.vehicleNo ?? item.inwardVehicleNo ?? item.vehicleNo,
+        driverName: updatedFields.driverName ?? item.driverName,
+        inwardDriverName: updatedFields.driverName ?? item.inwardDriverName ?? item.driverName,
+        ownerName: updatedFields.ownerName ?? item.ownerName,
+        inwardOwnerName: updatedFields.ownerName ?? item.inwardOwnerName ?? item.ownerName,
         memoNo: updatedFields.memoNo ?? item.memoNo,
         from: updatedFields.from ?? item.from,
         date: updatedFields.date ?? item.date,
