@@ -462,6 +462,7 @@ export const createOutward = (headerData, selectedPendingItems, currentUser = 'O
   const totalToPay = selectedPendingItems.reduce((acc, curr) => acc + (Number(curr.toPayAmount) || 0), 0);
   const totalTbb = selectedPendingItems.reduce((acc, curr) => acc + (Number(curr.tbbAmount) || 0), 0);
   const totalPaid = selectedPendingItems.reduce((acc, curr) => acc + (Number(curr.paidAmount) || 0), 0);
+  const totalCrossingFreight = selectedPendingItems.reduce((acc, curr) => acc + (Number(curr.crossingFreight) || 0), 0);
 
   const consignorName = Array.from(new Set(selectedPendingItems.map((i) => i.consignorName).filter(Boolean))).join(', ');
   const consigneeName = Array.from(new Set(selectedPendingItems.map((i) => i.consigneeName).filter(Boolean))).join(', ');
@@ -471,6 +472,7 @@ export const createOutward = (headerData, selectedPendingItems, currentUser = 'O
   const outwardDriver = headerData.driverName || '';
   const outwardDelPerson = headerData.deliveryPersonName || '';
   const outwardFrom = headerData.from || headerData.fromStation || 'SANGLI';
+  const outwardTo = headerData.toStation || headerData.to || '';
 
   const newOutwardHeader = {
     id: outwardId,
@@ -481,11 +483,12 @@ export const createOutward = (headerData, selectedPendingItems, currentUser = 'O
     transporterName: outwardTransporter,
     vehicleNo: outwardVehicle,
     driverName: outwardDriver,
-    ownerName: '',
+    ownerName: isCrossOutward ? (headerData.ownerName || '') : '',
     deliveryPersonName: outwardDelPerson,
     from: outwardFrom,
     fromStation: outwardFrom,
-    memoNo: '',
+    toStation: outwardTo,
+    memoNo: isCrossOutward ? (headerData.memoNo || '') : '',
     consignorName,
     consigneeName,
     isCrossOutward,
@@ -493,6 +496,7 @@ export const createOutward = (headerData, selectedPendingItems, currentUser = 'O
     totalToPay,
     totalTbb,
     totalPaid,
+    totalCrossingFreight,
     createdAt: new Date().toISOString(),
     createdBy: currentUser,
   };
@@ -520,25 +524,27 @@ export const createOutward = (headerData, selectedPendingItems, currentUser = 'O
       from: outwardFrom,
       fromStation: outwardFrom,
       outwardFromStation: outwardFrom,
+      toStation: outwardTo || item.ctTo || '',
       inwardVehicleNo: origInwardVeh,
       inwardDriverName: origInwardDrv,
       inwardOwnerName: origInwardOwn,
       inwardTransporterName: origInwardTrans,
       inwardFromStation: origInwardFrom,
-      ownerName: '',
-      memoNo: '',
+      ownerName: isCrossOutward ? (headerData.ownerName || item.ownerName || '') : '',
+      memoNo: isCrossOutward ? (headerData.memoNo || item.memoNo || '') : '',
       isCrossOutward,
       inwardItemId: isCrossOutward ? null : item.id,
       lrNo: String(item.lrNo ?? '').trim(),
       inwardDate: isCrossOutward ? '-' : (item.date || item.inwardDate || headerData.date),
       pkg: Number(item.pkg) || 0,
       invoiceNo: item.invoiceNo || '',
-      ctTo: item.ctTo || '',
+      ctTo: item.ctTo || outwardTo || '',
       consignorName: item.consignorName || '',
       consigneeName: item.consigneeName || '',
       toPayAmount: Number(item.toPayAmount) || 0,
       tbbAmount: Number(item.tbbAmount) || 0,
       paidAmount: Number(item.paidAmount) || 0,
+      crossingFreight: Number(item.crossingFreight) || 0,
       status: isCrossOutward ? (STATUS.DISPATCHED || 'DISPATCHED') : STATUS.DELIVERED,
       deliveredAt: new Date().toISOString(),
       deliveredBy: currentUser,
@@ -831,6 +837,7 @@ export const updateOutwardItem = (itemId, updatedFields) => {
         toPayAmount: updatedFields.toPayAmount !== undefined ? Number(updatedFields.toPayAmount) : item.toPayAmount,
         tbbAmount: updatedFields.tbbAmount !== undefined ? Number(updatedFields.tbbAmount) : item.tbbAmount,
         paidAmount: updatedFields.paidAmount !== undefined ? Number(updatedFields.paidAmount) : item.paidAmount,
+        crossingFreight: updatedFields.crossingFreight !== undefined ? Number(updatedFields.crossingFreight) : (item.crossingFreight || 0),
       };
     }
     return item;
@@ -987,6 +994,7 @@ export const updateFullOutward = (outwardId, headerData, selectedPendingItems, c
   const totalToPay = selectedPendingItems.reduce((acc, curr) => acc + (Number(curr.toPayAmount) || 0), 0);
   const totalTbb = selectedPendingItems.reduce((acc, curr) => acc + (Number(curr.tbbAmount) || 0), 0);
   const totalPaid = selectedPendingItems.reduce((acc, curr) => acc + (Number(curr.paidAmount) || 0), 0);
+  const totalCrossingFreight = selectedPendingItems.reduce((acc, curr) => acc + (Number(curr.crossingFreight) || 0), 0);
 
   const consignorName = Array.from(new Set(selectedPendingItems.map((i) => i.consignorName).filter(Boolean))).join(', ');
   const consigneeName = Array.from(new Set(selectedPendingItems.map((i) => i.consigneeName).filter(Boolean))).join(', ');
@@ -996,6 +1004,7 @@ export const updateFullOutward = (outwardId, headerData, selectedPendingItems, c
   const outwardDriver = headerData.driverName || existingHeader?.driverName || '';
   const outwardDelPerson = headerData.deliveryPersonName || existingHeader?.deliveryPersonName || '';
   const outwardFrom = headerData.from || headerData.fromStation || existingHeader?.from || existingHeader?.fromStation || 'SANGLI';
+  const outwardTo = headerData.toStation || headerData.to || existingHeader?.toStation || '';
 
   const updatedHeaderFields = {
     ...(existingHeader || {}),
@@ -1005,11 +1014,12 @@ export const updateFullOutward = (outwardId, headerData, selectedPendingItems, c
     transporterName: outwardTransporter,
     vehicleNo: outwardVehicle,
     driverName: outwardDriver,
-    ownerName: '',
+    ownerName: isCrossOutward ? (headerData.ownerName || existingHeader?.ownerName || '') : '',
     deliveryPersonName: outwardDelPerson,
     from: outwardFrom,
     fromStation: outwardFrom,
-    memoNo: '',
+    toStation: outwardTo,
+    memoNo: isCrossOutward ? (headerData.memoNo || existingHeader?.memoNo || '') : '',
     consignorName,
     consigneeName,
     isCrossOutward,
@@ -1017,6 +1027,7 @@ export const updateFullOutward = (outwardId, headerData, selectedPendingItems, c
     totalToPay,
     totalTbb,
     totalPaid,
+    totalCrossingFreight,
     updatedAt: new Date().toISOString(),
     updatedBy: currentUser,
   };
@@ -1063,20 +1074,21 @@ export const updateFullOutward = (outwardId, headerData, selectedPendingItems, c
       from: outwardFrom,
       fromStation: outwardFrom,
       outwardFromStation: outwardFrom,
+      toStation: outwardTo || item.ctTo || matchedOld?.ctTo || '',
       inwardVehicleNo: origInwardVeh,
       inwardDriverName: origInwardDrv,
       inwardOwnerName: origInwardOwn,
       inwardTransporterName: origInwardTrans,
       inwardFromStation: origInwardFrom,
-      ownerName: '',
-      memoNo: '',
+      ownerName: isCrossOutward ? (headerData.ownerName || item.ownerName || matchedOld?.ownerName || '') : '',
+      memoNo: isCrossOutward ? (headerData.memoNo || item.memoNo || matchedOld?.memoNo || '') : '',
       isCrossOutward,
       inwardItemId: isCrossOutward ? null : (item.inwardItemId || matchedOld?.inwardItemId || item.id),
       lrNo: String(item.lrNo ?? '').trim(),
       inwardDate: isCrossOutward ? '-' : (matchedOld?.inwardDate || item.inwardDate || item.date || headerData.date),
       pkg: Number(item.pkg) || 0,
       invoiceNo: item.invoiceNo ?? matchedOld?.invoiceNo ?? '',
-      ctTo: item.ctTo ?? matchedOld?.ctTo ?? '',
+      ctTo: item.ctTo ?? matchedOld?.ctTo ?? outwardTo ?? '',
       deliveryPersonName:
         outwardDelPerson ||
         item.deliveryPersonName ||
@@ -1087,6 +1099,7 @@ export const updateFullOutward = (outwardId, headerData, selectedPendingItems, c
       toPayAmount: Number(item.toPayAmount) || 0,
       tbbAmount: Number(item.tbbAmount) || 0,
       paidAmount: Number(item.paidAmount) || 0,
+      crossingFreight: item.crossingFreight !== undefined ? Number(item.crossingFreight) : Number(matchedOld?.crossingFreight) || 0,
       status: isCrossOutward ? (STATUS.DISPATCHED || 'DISPATCHED') : STATUS.DELIVERED,
       deliveredAt: matchedOld?.deliveredAt || new Date().toISOString(),
       deliveredBy: currentUser,

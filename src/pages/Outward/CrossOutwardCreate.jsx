@@ -32,6 +32,7 @@ export const CrossOutwardCreate = () => {
     date: getTodayDateString(),
     transporterName: '',
     fromStation: '',
+    toStation: '',
     vehicleNo: '',
     memoNo: '',
     driverName: '',
@@ -44,7 +45,6 @@ export const CrossOutwardCreate = () => {
     srNo: 1,
     lrNo: '',
     date: getTodayDateString(),
-    invoiceNo: '',
     consignorName: '',
     consigneeName: '',
     ctTo: '',
@@ -52,6 +52,7 @@ export const CrossOutwardCreate = () => {
     toPayAmount: '',
     tbbAmount: '',
     paidAmount: '',
+    crossingFreight: '',
   });
 
   const fieldRefs = useRef([]);
@@ -101,7 +102,7 @@ export const CrossOutwardCreate = () => {
     // Enter or forward Tab
     if (e.key === 'Enter' || (e.key === 'Tab' && !e.shiftKey)) {
       e.preventDefault();
-      // Index 9 is paidAmount (the last input)
+      // Index 9 is crossingFreight (the last input)
       if (index >= 9) {
         handleAddOrUpdateLR();
       } else {
@@ -125,6 +126,7 @@ export const CrossOutwardCreate = () => {
         date: edit.date || edit.outwardDate || getTodayDateString(),
         transporterName: edit.transporterName || masters.transporters[0]?.name || '',
         fromStation: edit.from || edit.fromStation || masters.stations[0]?.name || 'SANGLI',
+        toStation: edit.toStation || edit.to || masters.stations[1]?.name || '',
         vehicleNo: edit.vehicleNo || masters.vehicles[0]?.vehicleNo || '',
         memoNo: edit.memoNo || '',
         driverName: edit.driverName || masters.drivers[0]?.name || '',
@@ -138,13 +140,13 @@ export const CrossOutwardCreate = () => {
         lrNo: String(item.lrNo ?? ''),
         date: item.inwardDate || item.date || edit.date || getTodayDateString(),
         pkg: Number(item.pkg) || 0,
-        invoiceNo: item.invoiceNo || '',
         ctTo: item.ctTo || '',
         consignorName: item.consignorName || '',
         consigneeName: item.consigneeName || '',
         toPayAmount: Number(item.toPayAmount) || 0,
         tbbAmount: Number(item.tbbAmount) || 0,
         paidAmount: Number(item.paidAmount) || 0,
+        crossingFreight: Number(item.crossingFreight) || 0,
       }));
       setLrItems(items);
 
@@ -154,7 +156,6 @@ export const CrossOutwardCreate = () => {
           srNo: 1,
           lrNo: first.lrNo,
           date: first.date,
-          invoiceNo: first.invoiceNo,
           consignorName: first.consignorName,
           consigneeName: first.consigneeName,
           ctTo: first.ctTo,
@@ -162,6 +163,7 @@ export const CrossOutwardCreate = () => {
           toPayAmount: String(first.toPayAmount || ''),
           tbbAmount: String(first.tbbAmount || ''),
           paidAmount: String(first.paidAmount || ''),
+          crossingFreight: String(first.crossingFreight || ''),
         });
         setEditingIndex(0);
       }
@@ -231,6 +233,9 @@ export const CrossOutwardCreate = () => {
     if (header?.fromStation) {
       entries.push({ category: 'stations', value: header.fromStation });
     }
+    if (header?.toStation) {
+      entries.push({ category: 'stations', value: header.toStation });
+    }
     if (header?.vehicleNo) {
       entries.push({
         category: 'vehicles',
@@ -278,14 +283,14 @@ export const CrossOutwardCreate = () => {
       srNo: editingIndex !== null ? lrItems[editingIndex]?.srNo || editingIndex + 1 : lrItems.length + 1,
       lrNo: cleanLR,
       date: itemForm.date || getTodayDateString(),
-      invoiceNo: itemForm.invoiceNo || '',
       consignorName: itemForm.consignorName || '',
       consigneeName: itemForm.consigneeName || '',
-      ctTo: itemForm.ctTo || '',
+      ctTo: itemForm.ctTo || headerData.toStation || '',
       pkg: Number(itemForm.pkg) || 0,
       toPayAmount: Number(itemForm.toPayAmount) || 0,
       tbbAmount: Number(itemForm.tbbAmount) || 0,
       paidAmount: Number(itemForm.paidAmount) || 0,
+      crossingFreight: Number(itemForm.crossingFreight) || 0,
     };
 
     // Auto-save manually filled inputs to Master page immediately
@@ -307,14 +312,14 @@ export const CrossOutwardCreate = () => {
       srNo: (editingIndex !== null ? lrItems.length : lrItems.length + 1) + 1,
       lrNo: '',
       date: getTodayDateString(),
-      invoiceNo: '',
       consignorName: '',
       consigneeName: '',
-      ctTo: '',
+      ctTo: headerData.toStation || '',
       pkg: '',
       toPayAmount: '',
       tbbAmount: '',
       paidAmount: '',
+      crossingFreight: '',
     });
     focusLRNoInput();
   };
@@ -326,7 +331,6 @@ export const CrossOutwardCreate = () => {
       srNo: item.srNo,
       lrNo: item.lrNo,
       date: item.date,
-      invoiceNo: item.invoiceNo,
       consignorName: item.consignorName,
       consigneeName: item.consigneeName,
       ctTo: item.ctTo,
@@ -334,6 +338,7 @@ export const CrossOutwardCreate = () => {
       toPayAmount: String(item.toPayAmount || ''),
       tbbAmount: String(item.tbbAmount || ''),
       paidAmount: String(item.paidAmount || ''),
+      crossingFreight: String(item.crossingFreight || ''),
     });
     setEditingIndex(idx);
     focusLRNoInput();
@@ -350,14 +355,14 @@ export const CrossOutwardCreate = () => {
         srNo: lrItems.length,
         lrNo: '',
         date: getTodayDateString(),
-        invoiceNo: '',
         consignorName: '',
         consigneeName: '',
-        ctTo: '',
+        ctTo: headerData.toStation || '',
         pkg: '',
         toPayAmount: '',
         tbbAmount: '',
         paidAmount: '',
+        crossingFreight: '',
       });
     }
     focusLRNoInput();
@@ -368,12 +373,12 @@ export const CrossOutwardCreate = () => {
   const hasFormDraft = Boolean(
     currentLrNo ||
       itemForm?.pkg ||
-      itemForm?.invoiceNo ||
       String(itemForm?.consignorName ?? '').trim() ||
       String(itemForm?.consigneeName ?? '').trim() ||
       itemForm?.toPayAmount ||
       itemForm?.tbbAmount ||
-      itemForm?.paidAmount
+      itemForm?.paidAmount ||
+      itemForm?.crossingFreight
   );
   const existingPreviewBase = editingIndex !== null && lrItems[editingIndex] ? lrItems[editingIndex] : {};
   const currentFormPreviewItem = {
@@ -381,14 +386,14 @@ export const CrossOutwardCreate = () => {
     srNo: editingIndex !== null && lrItems[editingIndex] ? lrItems[editingIndex].srNo : lrItems.length + 1,
     lrNo: currentLrNo || '...',
     date: itemForm?.date || getTodayDateString(),
-    invoiceNo: itemForm?.invoiceNo || '',
     consignorName: itemForm?.consignorName || '',
     consigneeName: itemForm?.consigneeName || '',
-    ctTo: itemForm?.ctTo || masters.stations[0]?.name || '',
+    ctTo: itemForm?.ctTo || headerData.toStation || masters.stations[0]?.name || '',
     pkg: Number(itemForm?.pkg) || 0,
     toPayAmount: Number(itemForm?.toPayAmount) || 0,
     tbbAmount: Number(itemForm?.tbbAmount) || 0,
     paidAmount: Number(itemForm?.paidAmount) || 0,
+    crossingFreight: Number(itemForm?.crossingFreight) || 0,
     isDraftPreview: true,
   };
 
@@ -440,14 +445,16 @@ export const CrossOutwardCreate = () => {
       toPay: acc.toPay + (Number(curr.toPayAmount) || 0),
       tbb: acc.tbb + (Number(curr.tbbAmount) || 0),
       paid: acc.paid + (Number(curr.paidAmount) || 0),
+      crossingFreight: acc.crossingFreight + (Number(curr.crossingFreight) || 0),
     }),
-    { pkg: 0, toPay: 0, tbb: 0, paid: 0 }
+    { pkg: 0, toPay: 0, tbb: 0, paid: 0, crossingFreight: 0 }
   );
 
   const itemTotal =
     (Number(itemForm.toPayAmount) || 0) +
     (Number(itemForm.tbbAmount) || 0) +
-    (Number(itemForm.paidAmount) || 0);
+    (Number(itemForm.paidAmount) || 0) +
+    (Number(itemForm.crossingFreight) || 0);
 
   // Save Stock-Out Transaction
   const handleSaveCrossOutward = () => {
@@ -657,6 +664,31 @@ export const CrossOutwardCreate = () => {
 
           <div>
             <label className="block text-[10px] sm:text-[11px] font-extrabold text-slate-600 uppercase mb-1 truncate">
+              To (Destination Station) *
+            </label>
+            <div className="flex items-center space-x-1 min-w-0">
+              <EditableCombobox
+                name="toStation"
+                value={headerData.toStation}
+                onChange={(e, val) => handleHeaderChange('toStation', val)}
+                options={masters.stations}
+                masterCategory="stations"
+                placeholder=""
+                className="px-2.5 py-1.5 sm:px-3 sm:py-2 border border-slate-200 bg-white rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-[#1d4ed8]"
+              />
+              <button
+                type="button"
+                onClick={() => openQuickAdd('stations', 'Add Destination Station / City', 'toStation', true)}
+                className="px-2 py-1.5 sm:px-2.5 sm:py-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl font-black text-xs text-slate-700 transition-colors shadow-2xs flex-shrink-0 cursor-pointer"
+                title="Add Station"
+              >
+                +
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-[10px] sm:text-[11px] font-extrabold text-slate-600 uppercase mb-1 truncate">
               Vehicle No. *
             </label>
             <div className="flex items-center space-x-1 min-w-0">
@@ -705,7 +737,7 @@ export const CrossOutwardCreate = () => {
             </div>
           </div>
 
-          <div className="col-span-2 sm:col-span-1 md:col-span-2">
+          <div>
             <label className="block text-[10px] sm:text-[11px] font-extrabold text-slate-600 uppercase mb-1 truncate">
               Vehicle Owner Name
             </label>
@@ -773,8 +805,8 @@ export const CrossOutwardCreate = () => {
 
         <form onSubmit={handleAddOrUpdateLR} className="space-y-3.5">
           {/* Row 1 */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-3.5 items-end">
-            <div>
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-2.5 sm:gap-3.5 items-end">
+            <div className="sm:col-span-1">
               <label className="block text-[10px] sm:text-[11px] font-extrabold text-slate-600 uppercase mb-1 truncate">
                 SR NO.
               </label>
@@ -786,7 +818,7 @@ export const CrossOutwardCreate = () => {
               />
             </div>
 
-            <div>
+            <div className="sm:col-span-2">
               <label className="block text-[10px] sm:text-[11px] font-extrabold text-[#1d4ed8] uppercase mb-1 truncate">
                 LR NO. *
               </label>
@@ -805,7 +837,7 @@ export const CrossOutwardCreate = () => {
               />
             </div>
 
-            <div>
+            <div className="sm:col-span-1">
               <label className="block text-[10px] sm:text-[11px] font-extrabold text-slate-600 uppercase mb-1 truncate">
                 DATE
               </label>
@@ -819,25 +851,6 @@ export const CrossOutwardCreate = () => {
                 className="w-full px-2.5 py-1.5 sm:px-3 sm:py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-[#1d4ed8] outline-none"
               />
             </div>
-
-            <div>
-              <label className="block text-[10px] sm:text-[11px] font-extrabold text-slate-600 uppercase mb-1 truncate">
-                INVOICE NO.
-              </label>
-              <input
-                ref={(el) => (fieldRefs.current[2] = el)}
-                type="text"
-                autoComplete="off"
-                autoCorrect="off"
-                spellCheck={false}
-                data-lpignore="true"
-                value={itemForm.invoiceNo}
-                onChange={(e) => handleItemChange('invoiceNo', e.target.value)}
-                onKeyDown={(e) => handleKeyDown(e, 2)}
-                placeholder="Invoice No."
-                className="w-full px-2.5 py-1.5 sm:px-3 sm:py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 uppercase focus:ring-2 focus:ring-[#1d4ed8] outline-none placeholder-slate-400"
-              />
-            </div>
           </div>
 
           {/* Row 2 */}
@@ -848,12 +861,12 @@ export const CrossOutwardCreate = () => {
               </label>
               <div className="flex items-center space-x-1 min-w-0">
                 <EditableCombobox
-                  ref={(el) => (fieldRefs.current[3] = el)}
-                  inputRef={(el) => (fieldRefs.current[3] = el)}
+                  ref={(el) => (fieldRefs.current[2] = el)}
+                  inputRef={(el) => (fieldRefs.current[2] = el)}
                   name="consignorName"
                   value={itemForm.consignorName}
                   onChange={(e, val) => handleItemChange('consignorName', val)}
-                  onKeyDown={(e) => handleKeyDown(e, 3)}
+                  onKeyDown={(e) => handleKeyDown(e, 2)}
                   options={masters.consignors}
                   masterCategory="consignors"
                   placeholder=""
@@ -875,12 +888,12 @@ export const CrossOutwardCreate = () => {
               </label>
               <div className="flex items-center space-x-1 min-w-0">
                 <EditableCombobox
-                  ref={(el) => (fieldRefs.current[4] = el)}
-                  inputRef={(el) => (fieldRefs.current[4] = el)}
+                  ref={(el) => (fieldRefs.current[3] = el)}
+                  inputRef={(el) => (fieldRefs.current[3] = el)}
                   name="consigneeName"
                   value={itemForm.consigneeName}
                   onChange={(e, val) => handleItemChange('consigneeName', val)}
-                  onKeyDown={(e) => handleKeyDown(e, 4)}
+                  onKeyDown={(e) => handleKeyDown(e, 3)}
                   options={masters.consignees}
                   masterCategory="consignees"
                   placeholder=""
@@ -902,12 +915,12 @@ export const CrossOutwardCreate = () => {
               </label>
               <div className="flex items-center space-x-1 min-w-0">
                 <EditableCombobox
-                  ref={(el) => (fieldRefs.current[5] = el)}
-                  inputRef={(el) => (fieldRefs.current[5] = el)}
+                  ref={(el) => (fieldRefs.current[4] = el)}
+                  inputRef={(el) => (fieldRefs.current[4] = el)}
                   name="ctTo"
                   value={itemForm.ctTo}
                   onChange={(e, val) => handleItemChange('ctTo', val)}
-                  onKeyDown={(e) => handleKeyDown(e, 5)}
+                  onKeyDown={(e) => handleKeyDown(e, 4)}
                   options={masters.stations}
                   masterCategory="stations"
                   placeholder=""
@@ -928,7 +941,7 @@ export const CrossOutwardCreate = () => {
                 PACKAGES (PKG)
               </label>
               <input
-                ref={(el) => (fieldRefs.current[6] = el)}
+                ref={(el) => (fieldRefs.current[5] = el)}
                 type="number"
                 min="1"
                 autoComplete="off"
@@ -937,7 +950,7 @@ export const CrossOutwardCreate = () => {
                 data-lpignore="true"
                 value={itemForm.pkg}
                 onChange={(e) => handleItemChange('pkg', e.target.value)}
-                onKeyDown={(e) => handleKeyDown(e, 6)}
+                onKeyDown={(e) => handleKeyDown(e, 5)}
                 placeholder="1"
                 className="w-full px-2.5 py-1.5 sm:px-3 sm:py-2 bg-white border border-slate-200 rounded-xl text-xs font-black text-slate-900 focus:ring-2 focus:ring-[#1d4ed8] outline-none"
               />
@@ -945,13 +958,13 @@ export const CrossOutwardCreate = () => {
           </div>
 
           {/* Row 3 */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-3.5 items-end pt-1">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2.5 sm:gap-3.5 items-end pt-1">
             <div>
               <label className="block text-[10px] sm:text-[11px] font-extrabold text-amber-700 uppercase mb-1 truncate">
                 TO PAY
               </label>
               <input
-                ref={(el) => (fieldRefs.current[7] = el)}
+                ref={(el) => (fieldRefs.current[6] = el)}
                 type="number"
                 min="0"
                 step="0.01"
@@ -961,7 +974,7 @@ export const CrossOutwardCreate = () => {
                 data-lpignore="true"
                 value={itemForm.toPayAmount}
                 onChange={(e) => handleItemChange('toPayAmount', e.target.value)}
-                onKeyDown={(e) => handleKeyDown(e, 7)}
+                onKeyDown={(e) => handleKeyDown(e, 6)}
                 placeholder="0.00"
                 className="w-full px-2.5 py-1.5 sm:px-3 sm:py-2 bg-amber-50/60 border border-amber-200 rounded-xl text-xs font-black text-amber-900 focus:ring-2 focus:ring-amber-500 outline-none"
               />
@@ -972,7 +985,7 @@ export const CrossOutwardCreate = () => {
                 T.B.B.
               </label>
               <input
-                ref={(el) => (fieldRefs.current[8] = el)}
+                ref={(el) => (fieldRefs.current[7] = el)}
                 type="number"
                 min="0"
                 step="0.01"
@@ -982,7 +995,7 @@ export const CrossOutwardCreate = () => {
                 data-lpignore="true"
                 value={itemForm.tbbAmount}
                 onChange={(e) => handleItemChange('tbbAmount', e.target.value)}
-                onKeyDown={(e) => handleKeyDown(e, 8)}
+                onKeyDown={(e) => handleKeyDown(e, 7)}
                 placeholder="0.00"
                 className="w-full px-2.5 py-1.5 sm:px-3 sm:py-2 bg-sky-50/60 border border-sky-200 rounded-xl text-xs font-black text-sky-900 focus:ring-2 focus:ring-sky-500 outline-none"
               />
@@ -993,7 +1006,7 @@ export const CrossOutwardCreate = () => {
                 PAID
               </label>
               <input
-                ref={(el) => (fieldRefs.current[9] = el)}
+                ref={(el) => (fieldRefs.current[8] = el)}
                 type="number"
                 min="0"
                 step="0.01"
@@ -1003,9 +1016,30 @@ export const CrossOutwardCreate = () => {
                 data-lpignore="true"
                 value={itemForm.paidAmount}
                 onChange={(e) => handleItemChange('paidAmount', e.target.value)}
-                onKeyDown={(e) => handleKeyDown(e, 9)}
+                onKeyDown={(e) => handleKeyDown(e, 8)}
                 placeholder="0.00"
                 className="w-full px-2.5 py-1.5 sm:px-3 sm:py-2 bg-emerald-50/60 border border-emerald-200 rounded-xl text-xs font-black text-emerald-900 focus:ring-2 focus:ring-emerald-500 outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="block text-[10px] sm:text-[11px] font-extrabold text-purple-700 uppercase mb-1 truncate">
+                CROSSING FREIGHT
+              </label>
+              <input
+                ref={(el) => (fieldRefs.current[9] = el)}
+                type="number"
+                min="0"
+                step="0.01"
+                autoComplete="off"
+                autoCorrect="off"
+                spellCheck={false}
+                data-lpignore="true"
+                value={itemForm.crossingFreight}
+                onChange={(e) => handleItemChange('crossingFreight', e.target.value)}
+                onKeyDown={(e) => handleKeyDown(e, 9)}
+                placeholder="0.00"
+                className="w-full px-2.5 py-1.5 sm:px-3 sm:py-2 bg-purple-50/60 border border-purple-200 rounded-xl text-xs font-black text-purple-900 focus:ring-2 focus:ring-purple-500 outline-none"
               />
             </div>
 
@@ -1050,6 +1084,7 @@ export const CrossOutwardCreate = () => {
               const toPay = Number(item.toPayAmount) || 0;
               const paid = Number(item.paidAmount) || 0;
               const tbb = Number(item.tbbAmount) || 0;
+              const crossing = Number(item.crossingFreight) || 0;
 
               return (
                 <div key={idx} className="p-3.5 space-y-2 bg-white">
@@ -1063,21 +1098,31 @@ export const CrossOutwardCreate = () => {
                         </span>
                       )}
                     </div>
-                    {toPay > 0 ? (
-                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-black uppercase bg-rose-50 border border-rose-200 text-rose-700">
-                        TO PAY ₹{toPay.toFixed(2)}
-                      </span>
-                    ) : paid > 0 ? (
-                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-black uppercase bg-sky-50 border border-sky-200 text-sky-700">
-                        PAID ₹{paid.toFixed(2)}
-                      </span>
-                    ) : tbb > 0 ? (
-                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-black uppercase bg-indigo-50 border border-indigo-200 text-indigo-700">
-                        T.B.B. ₹{tbb.toFixed(2)}
-                      </span>
-                    ) : (
-                      <span className="text-[10px] text-slate-400 font-medium">{formatDate(item.date)}</span>
-                    )}
+                    <div className="flex items-center gap-1 flex-wrap justify-end">
+                      {toPay > 0 && (
+                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-black uppercase bg-rose-50 border border-rose-200 text-rose-700">
+                          TO PAY ₹{toPay.toFixed(2)}
+                        </span>
+                      )}
+                      {paid > 0 && (
+                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-black uppercase bg-sky-50 border border-sky-200 text-sky-700">
+                          PAID ₹{paid.toFixed(2)}
+                        </span>
+                      )}
+                      {tbb > 0 && (
+                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-black uppercase bg-indigo-50 border border-indigo-200 text-indigo-700">
+                          T.B.B. ₹{tbb.toFixed(2)}
+                        </span>
+                      )}
+                      {crossing > 0 && (
+                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-black uppercase bg-purple-50 border border-purple-200 text-purple-700">
+                          CROSSING ₹{crossing.toFixed(2)}
+                        </span>
+                      )}
+                      {toPay === 0 && paid === 0 && tbb === 0 && crossing === 0 && (
+                        <span className="text-[10px] text-slate-400 font-medium">{formatDate(item.date)}</span>
+                      )}
+                    </div>
                   </div>
 
                   <div className="text-xs text-slate-700">
@@ -1132,13 +1177,13 @@ export const CrossOutwardCreate = () => {
                 <th className="py-2.5 px-3 border-r border-blue-900/60">LR NO.</th>
                 <th className="py-2.5 px-3 border-r border-blue-900/60">DATE</th>
                 <th className="py-2.5 px-3 border-r border-blue-900/60 text-right">PKG</th>
-                <th className="py-2.5 px-3 border-r border-blue-900/60">INV NO.</th>
                 <th className="py-2.5 px-3 border-r border-blue-900/60">DESTINATION</th>
                 <th className="py-2.5 px-3 border-r border-blue-900/60">CONSIGNOR</th>
                 <th className="py-2.5 px-3 border-r border-blue-900/60">CONSIGNEE</th>
                 <th className="py-2.5 px-3 border-r border-blue-900/60 text-right">TO PAY</th>
                 <th className="py-2.5 px-3 border-r border-blue-900/60 text-right">T.B.B.</th>
                 <th className="py-2.5 px-3 border-r border-blue-900/60 text-right">PAID</th>
+                <th className="py-2.5 px-3 border-r border-blue-900/60 text-right">CROSSING</th>
                 <th className="py-2.5 px-3 text-center w-20">ACTIONS</th>
               </tr>
             </thead>
@@ -1180,9 +1225,6 @@ export const CrossOutwardCreate = () => {
                     <td className="py-2 px-3 border-r border-slate-100 text-right font-black text-slate-900">
                       {item.pkg}
                     </td>
-                    <td className="py-2 px-3 border-r border-slate-100 text-slate-600">
-                      {item.invoiceNo || '-'}
-                    </td>
                     <td className="py-2 px-3 border-r border-slate-100 font-semibold text-slate-800">
                       {item.ctTo || '-'}
                     </td>
@@ -1200,6 +1242,9 @@ export const CrossOutwardCreate = () => {
                     </td>
                     <td className="py-2 px-3 border-r border-slate-100 text-right font-extrabold text-emerald-700">
                       {Number(item.paidAmount) > 0 ? Number(item.paidAmount).toFixed(2) : '-'}
+                    </td>
+                    <td className="py-2 px-3 border-r border-slate-100 text-right font-extrabold text-purple-700">
+                      {Number(item.crossingFreight) > 0 ? Number(item.crossingFreight).toFixed(2) : '-'}
                     </td>
                     <td className="py-2 px-3 text-center">
                       {item.isDraftPreview ? (
@@ -1251,7 +1296,10 @@ export const CrossOutwardCreate = () => {
             onClick={() => {
               const itemsToPrint = displayLrItems.filter((i) => !i.isDraftPreview || String(i.lrNo ?? '').trim() !== '...');
               const totalFreight =
-                (Number(summary.toPay) || 0) + (Number(summary.tbb) || 0) + (Number(summary.paid) || 0);
+                (Number(summary.toPay) || 0) +
+                (Number(summary.tbb) || 0) +
+                (Number(summary.paid) || 0) +
+                (Number(summary.crossingFreight) || 0);
               printRecordDetails({
                 title: `Cross Stock Out Receipt Details #${headerData.outwardNo}`,
                 fields: [
@@ -1259,6 +1307,7 @@ export const CrossOutwardCreate = () => {
                   { label: 'Date', value: formatDate(headerData.date) },
                   { label: 'Transporter', value: headerData.transporterName || '-' },
                   { label: 'From Station', value: headerData.fromStation || '-' },
+                  { label: 'To Station', value: headerData.toStation || '-' },
                   { label: 'Vehicle No.', value: headerData.vehicleNo || '-' },
                   { label: 'Driver Name', value: headerData.driverName || '-' },
                   { label: 'Vehicle Owner', value: headerData.ownerName || '-' },
@@ -1276,7 +1325,7 @@ export const CrossOutwardCreate = () => {
         </div>
 
         {/* Right Summary Totals */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:flex items-center gap-2 sm:gap-2.5 text-xs font-black text-slate-800 w-full lg:w-auto">
+        <div className="grid grid-cols-2 sm:grid-cols-5 lg:flex items-center gap-2 sm:gap-2.5 text-xs font-black text-slate-800 w-full lg:w-auto">
           <div className="flex items-center justify-between space-x-2 bg-slate-100 px-3 py-2 rounded-xl border border-slate-200">
             <span className="text-slate-500 uppercase text-[10px] tracking-wider font-extrabold">TOTAL PKG</span>
             <span className="text-slate-900 font-black text-sm">{summary.pkg}</span>
@@ -1295,6 +1344,11 @@ export const CrossOutwardCreate = () => {
           <div className="flex items-center justify-between space-x-2 bg-emerald-50 px-3 py-2 rounded-xl border border-emerald-200 text-emerald-900">
             <span className="text-emerald-700 uppercase text-[10px] tracking-wider font-extrabold">PAID</span>
             <span className="font-black text-sm">{summary.paid.toFixed(2)}</span>
+          </div>
+
+          <div className="flex items-center justify-between space-x-2 bg-purple-50 px-3 py-2 rounded-xl border border-purple-200 text-purple-900">
+            <span className="text-purple-700 uppercase text-[10px] tracking-wider font-extrabold">CROSSING</span>
+            <span className="font-black text-sm">{summary.crossingFreight.toFixed(2)}</span>
           </div>
         </div>
       </div>

@@ -353,6 +353,7 @@ export const AllEntries = () => {
       from: resolvedFrom,
       fromStation: resolvedFrom,
       outwardFromStation: resolvedFrom,
+      toStation: out.toStation || items.find((i) => i.toStation)?.toStation || items.find((i) => i.ctTo)?.ctTo || '',
       ownerName: isCross ? (out.ownerName || '') : '',
       memoNo: isCross ? (out.memoNo || '') : '',
       consignorName: consignors || out.consignorName || '-',
@@ -361,6 +362,7 @@ export const AllEntries = () => {
       totalToPay: items.length > 0 ? items.reduce((acc, curr) => acc + (Number(curr.toPayAmount) || 0), 0) : out.totalToPay,
       totalTbb: items.length > 0 ? items.reduce((acc, curr) => acc + (Number(curr.tbbAmount) || 0), 0) : out.totalTbb,
       totalPaid: items.length > 0 ? items.reduce((acc, curr) => acc + (Number(curr.paidAmount) || 0), 0) : out.totalPaid,
+      totalCrossingFreight: items.length > 0 ? items.reduce((acc, curr) => acc + (Number(curr.crossingFreight) || 0), 0) : (Number(out.totalCrossingFreight) || 0),
     };
   });
 
@@ -453,6 +455,8 @@ export const AllEntries = () => {
         ...item,
         transporterName: item.transporterName || parentOut?.transporterName || '-',
         fromStation: item.from || parentOut?.from || '-',
+        toStation: item.toStation || parentOut?.toStation || item.ctTo || '-',
+        crossingFreight: Number(item.crossingFreight) || 0,
         inwardVehicleNo: '-',
         inwardDriverName: '-',
         memoNo: item.memoNo || parentOut?.memoNo || '-',
@@ -649,6 +653,14 @@ export const AllEntries = () => {
     { label: 'TO PAY', key: 'toPayAmount', type: 'currency' },
     { label: 'T.B.B', key: 'tbbAmount', type: 'currency' },
     { label: 'PAID', key: 'paidAmount', type: 'currency' },
+    {
+      label: 'CROSSING',
+      key: 'crossingFreight',
+      type: 'currency',
+      render: (row) => (
+        <span>{Number(row.crossingFreight) > 0 ? formatCurrency(row.crossingFreight) : '-'}</span>
+      ),
+    },
     {
       label: 'Actions',
       key: 'actions',
@@ -900,10 +912,20 @@ export const AllEntries = () => {
         </span>
       ),
     },
+    {
+      label: 'To',
+      key: 'toStation',
+      render: (row) => (
+        <span className="max-w-[60px] truncate block" title={row.toStation}>
+          {row.toStation || '-'}
+        </span>
+      ),
+    },
     { label: 'PKG', key: 'totalQty' },
     { label: 'TO PAY', key: 'totalToPay', type: 'currency' },
     { label: 'T.B.B', key: 'totalTbb', type: 'currency' },
     { label: 'PAID', key: 'totalPaid', type: 'currency' },
+    { label: 'CROSSING', key: 'totalCrossingFreight', type: 'currency' },
     {
       label: 'Actions',
       key: 'actions',
@@ -1177,6 +1199,16 @@ export const AllEntries = () => {
                       {viewingRecord.from || viewingRecord.fromStation || viewingRecord.outwardFromStation || '-'}
                     </span>
                   </div>
+                  {viewCategory === 'stock_out_header' && (
+                    <div>
+                      <span className="text-slate-400 font-bold uppercase block text-[10px]">
+                        Destination Station
+                      </span>
+                      <span className="font-bold text-slate-800">
+                        {viewingRecord.toStation || '-'}
+                      </span>
+                    </div>
+                  )}
                   <div>
                     <span className="text-slate-400 font-bold uppercase block text-[10px]">
                       {viewCategory === 'inward_header' ? 'Inward Vehicle No.' : 'Vehicle No.'}
@@ -1218,7 +1250,8 @@ export const AllEntries = () => {
                       {formatCurrency(
                         (Number(viewingRecord.totalToPay) || 0) +
                           (Number(viewingRecord.totalTbb) || 0) +
-                          (Number(viewingRecord.totalPaid) || 0)
+                          (Number(viewingRecord.totalPaid) || 0) +
+                          (Number(viewingRecord.totalCrossingFreight) || 0)
                       )}
                     </span>
                   </div>
@@ -1236,6 +1269,7 @@ export const AllEntries = () => {
                           (item) =>
                             item.outwardId === viewingRecord.id || item.outwardNo === viewingRecord.outwardNo
                         );
+                  const hasModalCrossing = modalChildItems.some((i) => Number(i.crossingFreight) > 0);
 
                   return (
                     <div className="space-y-2">
@@ -1279,10 +1313,13 @@ export const AllEntries = () => {
                                   <span className="font-black text-slate-800">{lr.pkg}</span>
                                 </div>
                               </div>
-                              <div className="grid grid-cols-3 gap-1 text-[10px] text-slate-500 pt-1.5 border-t border-slate-200">
+                              <div className="grid grid-cols-2 sm:grid-cols-4 gap-1 text-[10px] text-slate-500 pt-1.5 border-t border-slate-200">
                                 <div>To Pay: <span className="font-bold text-slate-800">{formatCurrency(lr.toPayAmount)}</span></div>
                                 <div>TBB: <span className="font-bold text-slate-800">{formatCurrency(lr.tbbAmount)}</span></div>
                                 <div>Paid: <span className="font-bold text-slate-800">{formatCurrency(lr.paidAmount)}</span></div>
+                                {hasModalCrossing && (
+                                  <div>Crossing: <span className="font-bold text-purple-700">{formatCurrency(lr.crossingFreight)}</span></div>
+                                )}
                               </div>
                             </div>
                           ))
@@ -1302,13 +1339,14 @@ export const AllEntries = () => {
                               <th className="p-2">To Pay</th>
                               <th className="p-2">TBB</th>
                               <th className="p-2">Paid</th>
+                              {hasModalCrossing && <th className="p-2">Crossing</th>}
                               <th className="p-2">Status</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-slate-100">
                             {modalChildItems.length === 0 ? (
                               <tr>
-                                <td colSpan={9} className="py-8 px-4 text-center text-slate-400 font-medium text-xs">
+                                <td colSpan={hasModalCrossing ? 10 : 9} className="py-8 px-4 text-center text-slate-400 font-medium text-xs">
                                   No LR items found. Click the Edit (pencil) button on this row in the table to add or update LR items.
                                 </td>
                               </tr>
@@ -1323,6 +1361,9 @@ export const AllEntries = () => {
                                   <td className="p-2">{formatCurrency(lr.toPayAmount)}</td>
                                   <td className="p-2">{formatCurrency(lr.tbbAmount)}</td>
                                   <td className="p-2">{formatCurrency(lr.paidAmount)}</td>
+                                  {hasModalCrossing && (
+                                    <td className="p-2 font-bold text-purple-700">{formatCurrency(lr.crossingFreight)}</td>
+                                  )}
                                   <td className="p-2">
                                     <StatusBadge status={lr.status} />
                                   </td>

@@ -34,6 +34,7 @@ export const Reports = () => {
         { label: 'To Pay', value: formatCurrency(row.toPayAmount) },
         { label: 'T.B.B', value: formatCurrency(row.tbbAmount) },
         { label: 'Paid', value: formatCurrency(row.paidAmount) },
+        ...(Number(row.crossingFreight) > 0 ? [{ label: 'Crossing Fr.', value: formatCurrency(row.crossingFreight) }] : []),
       ],
     });
   };
@@ -74,6 +75,14 @@ export const Reports = () => {
     { label: 'To Pay', key: 'toPayAmount', type: 'currency' },
     { label: 'T.B.B', key: 'tbbAmount', type: 'currency' },
     { label: 'Paid', key: 'paidAmount', type: 'currency' },
+    {
+      label: 'Crossing',
+      key: 'crossingFreight',
+      type: 'currency',
+      render: (row) => (
+        <span>{Number(row.crossingFreight) > 0 ? formatCurrency(row.crossingFreight) : '-'}</span>
+      ),
+    },
     { label: 'Status', key: 'status', type: 'status', width: 'min-w-[96px]' },
     {
       label: 'Actions',
@@ -319,6 +328,12 @@ export const Reports = () => {
                 <span className="text-slate-400 font-bold uppercase block text-[10px]">Paid</span>
                 <span className="font-bold text-emerald-700">{formatCurrency(viewingRecord.paidAmount)}</span>
               </div>
+              {Number(viewingRecord.crossingFreight) > 0 && (
+                <div>
+                  <span className="text-slate-400 font-bold uppercase block text-[10px]">Crossing Freight</span>
+                  <span className="font-bold text-purple-700">{formatCurrency(viewingRecord.crossingFreight)}</span>
+                </div>
+              )}
             </div>
 
             <div className="flex justify-end space-x-2 pt-3 border-t border-slate-200">

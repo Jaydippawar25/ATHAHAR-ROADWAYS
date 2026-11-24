@@ -242,11 +242,18 @@ export const printRecordDetails = ({ title, fields = [], items = [], showDeliver
   const hasDelPerson =
     showDeliveryPerson ||
     (items && items.some((i) => i.deliveryPersonName && i.deliveryPersonName !== '-'));
+  const hasCrossing = items && items.some((i) => Number(i.crossingFreight) > 0);
+  const hasInvoiceNo = items && items.some((i) => i.invoiceNo && i.invoiceNo !== '-');
 
   const totalPkg = (items || []).reduce((sum, i) => sum + (Number(i.pkg) || 0), 0);
   const totalToPay = (items || []).reduce((sum, i) => sum + (Number(i.toPayAmount) || 0), 0);
   const totalTbb = (items || []).reduce((sum, i) => sum + (Number(i.tbbAmount) || 0), 0);
   const totalPaid = (items || []).reduce((sum, i) => sum + (Number(i.paidAmount) || 0), 0);
+  const totalCrossing = (items || []).reduce((sum, i) => sum + (Number(i.crossingFreight) || 0), 0);
+
+  let colSpanCount = 4;
+  if (hasInvoiceNo) colSpanCount += 1;
+  if (hasDelPerson) colSpanCount += 1;
 
   const itemsHtml =
     items && items.length > 0
@@ -258,7 +265,7 @@ export const printRecordDetails = ({ title, fields = [], items = [], showDeliver
             <th style="width: 40px; text-align: center;">SR</th>
             <th>LR No.</th>
             <th>Date</th>
-            <th>Inv No.</th>
+            ${hasInvoiceNo ? '<th>Inv No.</th>' : ''}
             <th>Consigner</th>
             <th>Consignee</th>
             <th>CT To</th>
@@ -267,6 +274,7 @@ export const printRecordDetails = ({ title, fields = [], items = [], showDeliver
             <th style="text-align: right;">To Pay</th>
             <th style="text-align: right;">T.B.B</th>
             <th style="text-align: right;">Paid</th>
+            ${hasCrossing ? '<th style="text-align: right;">Crossing Fr.</th>' : ''}
           </tr>
         </thead>
         <tbody>
@@ -277,7 +285,7 @@ export const printRecordDetails = ({ title, fields = [], items = [], showDeliver
               <td style="text-align: center;" class="bold">${lr.srNo ?? idx + 1}</td>
               <td class="bold">${lr.lrNo || '-'}</td>
               <td>${formatDate(lr.inwardDate || lr.date)}</td>
-              <td>${lr.invoiceNo || '-'}</td>
+              ${hasInvoiceNo ? `<td>${lr.invoiceNo || '-'}</td>` : ''}
               <td>${lr.consignorName || '-'}</td>
               <td>${lr.consigneeName || '-'}</td>
               <td class="bold">${lr.ctTo || '-'}</td>
@@ -286,17 +294,19 @@ export const printRecordDetails = ({ title, fields = [], items = [], showDeliver
               <td style="text-align: right;">${formatCurrency(lr.toPayAmount)}</td>
               <td style="text-align: right;">${formatCurrency(lr.tbbAmount)}</td>
               <td style="text-align: right;">${formatCurrency(lr.paidAmount)}</td>
+              ${hasCrossing ? `<td style="text-align: right;">${formatCurrency(lr.crossingFreight)}</td>` : ''}
             </tr>`
             )
             .join('')}
         </tbody>
         <tfoot>
           <tr class="totals-row">
-            <td colspan="${hasDelPerson ? 8 : 7}" style="text-align: right;">TOTAL:</td>
+            <td colspan="${colSpanCount + 2}" style="text-align: right;">TOTAL:</td>
             <td style="text-align: center;">${totalPkg}</td>
             <td style="text-align: right;">${formatCurrency(totalToPay)}</td>
             <td style="text-align: right;">${formatCurrency(totalTbb)}</td>
             <td style="text-align: right;">${formatCurrency(totalPaid)}</td>
+            ${hasCrossing ? `<td style="text-align: right;">${formatCurrency(totalCrossing)}</td>` : ''}
           </tr>
         </tfoot>
       </table>`

@@ -189,6 +189,8 @@ export const Dashboard = () => {
           ...item,
           transporterName: item.transporterName || parentOut?.transporterName || '-',
           fromStation: item.from || parentOut?.from || '-',
+          toStation: item.toStation || parentOut?.toStation || item.ctTo || '-',
+          crossingFreight: Number(item.crossingFreight) || 0,
           inwardVehicleNo: '-',
           inwardDriverName: '-',
           memoNo: item.memoNo || parentOut?.memoNo || '-',
@@ -427,10 +429,12 @@ export const Dashboard = () => {
       const totalToPay = items.length > 0 ? items.reduce((acc, curr) => acc + (Number(curr.toPayAmount) || 0), 0) : (Number(out.totalToPay) || 0);
       const totalTbb = items.length > 0 ? items.reduce((acc, curr) => acc + (Number(curr.tbbAmount) || 0), 0) : (Number(out.totalTbb) || 0);
       const totalPaid = items.length > 0 ? items.reduce((acc, curr) => acc + (Number(curr.paidAmount) || 0), 0) : (Number(out.totalPaid) || 0);
-      const totalFreight = totalToPay + totalTbb + totalPaid;
+      const totalCrossingFreight = items.length > 0 ? items.reduce((acc, curr) => acc + (Number(curr.crossingFreight) || 0), 0) : (Number(out.totalCrossingFreight) || 0);
+      const totalFreight = totalToPay + totalTbb + totalPaid + totalCrossingFreight;
       const isStockOut = Boolean(out.isCrossOutward || String(out.outwardNo || '').toUpperCase().startsWith('STOCK-OUT'));
       const outwardTransporter = out.transporterName || out.outwardTransporterName || items.find(i => i.outwardTransporterName)?.outwardTransporterName || items.find(i => i.transporterName)?.transporterName || '-';
       const outwardStation = out.from || out.station || out.fromStation || out.outwardFromStation || items.find(i => i.outwardFromStation)?.outwardFromStation || items.find(i => i.from)?.from || '-';
+      const outwardToStation = out.toStation || items.find(i => i.toStation)?.toStation || items.find(i => i.ctTo)?.ctTo || '';
       const outwardDelPerson = out.deliveryPersonName || items.find(i => i.deliveryPersonName)?.deliveryPersonName || '-';
       const outwardDriver = out.driverName || out.outwardDriverName || items.find(i => i.driverName)?.driverName || '-';
       const outwardVeh = out.vehicleNo || out.outwardVehicleNo || items.find(i => i.vehicleNo)?.vehicleNo || '-';
@@ -441,6 +445,7 @@ export const Dashboard = () => {
         from: outwardStation,
         station: outwardStation,
         fromStation: outwardStation,
+        toStation: outwardToStation,
         vehicleNo: outwardVeh,
         driverName: outwardDriver,
         deliveryPersonName: outwardDelPerson,
@@ -454,6 +459,7 @@ export const Dashboard = () => {
         totalToPay,
         totalTbb,
         totalPaid,
+        totalCrossingFreight,
         totalFreight,
         itemLrs: items.map((i) => String(i.lrNo || '').toLowerCase()),
       };
