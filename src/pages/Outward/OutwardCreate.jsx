@@ -220,11 +220,11 @@ export const OutwardCreate = () => {
       setHeaderData({
         outwardNo: edit.outwardNo || '',
         date: edit.date || edit.outwardDate || getTodayDateString(),
-        transporterName: edit.transporterName || masters.transporters[0]?.name || '',
-        fromStation: edit.from || edit.fromStation || masters.stations[0]?.name || '',
-        vehicleNo: edit.vehicleNo || masters.vehicles[0]?.vehicleNo || '',
-        deliveryPersonName: edit.deliveryPersonName || masters.deliveryPersons?.[0]?.name || '',
-        driverName: edit.driverName || masters.drivers[0]?.name || '',
+        transporterName: edit.transporterName || '',
+        fromStation: edit.fromStation || edit.from || '',
+        vehicleNo: edit.vehicleNo || edit.outwardVehicleNo || '',
+        deliveryPersonName: edit.deliveryPersonName || '',
+        driverName: edit.driverName || edit.outwardDriverName || '',
       });
 
       const items = (edit.items || []).map((item, idx) => ({
@@ -479,28 +479,51 @@ export const OutwardCreate = () => {
       return;
     }
 
+    const outwardTransporter = headerData.transporterName || '';
+    const outwardVehicle = headerData.vehicleNo || '';
+    const outwardDriver = headerData.driverName || '';
+    const outwardDelPerson = headerData.deliveryPersonName || '';
+    const outwardFrom = headerData.fromStation || 'SANGLI';
+
     const finalItems = selectedItems.map((item, idx) => ({
       ...item,
       srNo: idx + 1,
       inwardItemId: item.inwardItemId || item.id,
-      inwardVehicleNo: item.inwardVehicleNo || item.vehicleNo || '',
-      inwardDriverName: item.inwardDriverName || item.driverName || '',
+      inwardVehicleNo: item.inwardVehicleNo || (item.vehicleNo !== outwardVehicle ? item.vehicleNo : '') || '',
+      inwardDriverName: item.inwardDriverName || (item.driverName !== outwardDriver ? item.driverName : '') || '',
       inwardOwnerName: item.inwardOwnerName || item.ownerName || '',
-      vehicleNo: headerData.vehicleNo || '',
-      driverName: headerData.driverName || '',
-      outwardVehicleNo: headerData.vehicleNo || '',
-      outwardDriverName: headerData.driverName || '',
+      inwardTransporterName: item.inwardTransporterName || (item.transporterName !== outwardTransporter ? item.transporterName : '') || '',
+      inwardFromStation: item.inwardFromStation || item.from || '',
+      transporterName: outwardTransporter,
+      outwardTransporterName: outwardTransporter,
+      from: outwardFrom,
+      fromStation: outwardFrom,
+      outwardFromStation: outwardFrom,
+      vehicleNo: outwardVehicle,
+      driverName: outwardDriver,
+      outwardVehicleNo: outwardVehicle,
+      outwardDriverName: outwardDriver,
+      deliveryPersonName: item.deliveryPersonName || outwardDelPerson || '',
+      ownerName: '',
+      memoNo: '',
       pkg: Number(item.pkg) || 1,
       toPayAmount: Number(item.toPayAmount) || 0,
       tbbAmount: Number(item.tbbAmount) || 0,
       paidAmount: Number(item.paidAmount) || 0,
-      deliveryPersonName: item.deliveryPersonName || headerData.deliveryPersonName || '',
     }));
 
     const submitHeader = {
       ...headerData,
       outwardNo: headerData.outwardNo,
       date: headerData.date,
+      transporterName: outwardTransporter,
+      from: outwardFrom,
+      fromStation: outwardFrom,
+      vehicleNo: outwardVehicle,
+      driverName: outwardDriver,
+      deliveryPersonName: outwardDelPerson,
+      ownerName: '',
+      memoNo: '',
       itemsCount: finalItems.length,
     };
 

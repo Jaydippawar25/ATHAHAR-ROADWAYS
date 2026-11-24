@@ -122,12 +122,21 @@ export const Dashboard = () => {
         (inw) => inw.id === item.inwardId || inw.inwardNo === item.inwardNo
       );
       const itemKey = item.id ? String(item.id) : `inw-item-${item.inwardNo || 'inw'}-${item.lrNo}-${index}`;
+      const inwTrans = item.inwardTransporterName || item.transporterName || parentInw?.transporterName || '-';
+      const inwStation = item.inwardFromStation || item.from || item.fromStation || parentInw?.from || parentInw?.fromStation || '-';
+      const inwVeh = item.inwardVehicleNo || item.vehicleNo || parentInw?.vehicleNo || '-';
+      const inwDrv = item.inwardDriverName || item.driverName || parentInw?.driverName || '-';
+      const inwOwner = item.inwardOwnerName || item.ownerName || parentInw?.ownerName || '-';
+
       allLREntriesMap.set(itemKey, {
         ...item,
-        transporterName: item.transporterName || parentInw?.transporterName || '-',
-        fromStation: item.from || item.fromStation || parentInw?.from || parentInw?.fromStation || '-',
-        inwardVehicleNo: item.vehicleNo || parentInw?.vehicleNo || '-',
-        inwardDriverName: item.driverName || parentInw?.driverName || '-',
+        transporterName: inwTrans,
+        inwardTransporterName: inwTrans,
+        fromStation: inwStation,
+        inwardFromStation: inwStation,
+        inwardVehicleNo: inwVeh,
+        inwardDriverName: inwDrv,
+        inwardOwnerName: inwOwner,
         memoNo: item.memoNo || parentInw?.memoNo || '-',
         inwardDate: item.date || item.inwardDate || parentInw?.date || '-',
         inwardNo: item.inwardNo || parentInw?.inwardNo || '-',
@@ -235,38 +244,57 @@ export const Dashboard = () => {
 
         if (inwKey) {
           const existing = allLREntriesMap.get(inwKey);
-          const outVeh = parentOut?.vehicleNo || item.outwardVehicleNo || item.vehicleNo || existing.outwardVehicleNo || '-';
-          const outDrv = parentOut?.driverName || item.outwardDriverName || item.driverName || existing.outwardDriverName || '-';
           const inwVeh = existing.inwardVehicleNo && existing.inwardVehicleNo !== '-' ? existing.inwardVehicleNo : (existing.vehicleNo || '-');
           const inwDrv = existing.inwardDriverName && existing.inwardDriverName !== '-' ? existing.inwardDriverName : (existing.driverName || '-');
+          const inwOwner = existing.inwardOwnerName && existing.inwardOwnerName !== '-' ? existing.inwardOwnerName : (existing.ownerName || '-');
+          const inwTrans = existing.inwardTransporterName || existing.transporterName || '-';
+
+          const outVeh = parentOut?.vehicleNo || item.outwardVehicleNo || item.vehicleNo || existing.outwardVehicleNo || '-';
+          const outDrv = parentOut?.driverName || item.outwardDriverName || item.driverName || existing.outwardDriverName || '-';
+          const outTrans = parentOut?.transporterName || item.outwardTransporterName || item.transporterName || inwTrans;
+          const outDelPerson = parentOut?.deliveryPersonName || item.deliveryPersonName || existing.deliveryPersonName || '-';
+          const outFrom = parentOut?.from || parentOut?.fromStation || item.outwardFromStation || item.from || existing.from || '-';
 
           allLREntriesMap.set(inwKey, {
             ...existing,
             ...item,
+            transporterName: outTrans,
+            outwardTransporterName: parentOut?.transporterName || item.outwardTransporterName || item.transporterName || '-',
+            inwardTransporterName: inwTrans,
             inwardDate: existing.inwardDate || item.inwardDate || item.date || '-',
             inwardNo: existing.inwardNo && existing.inwardNo !== '-' ? existing.inwardNo : (item.inwardNo || '-'),
             inwardVehicleNo: inwVeh,
             inwardDriverName: inwDrv,
+            inwardOwnerName: inwOwner,
             outwardDate: item.outwardDate || item.date || parentOut?.date || existing.outwardDate || '-',
             outwardNo: item.outwardNo || parentOut?.outwardNo || existing.outwardNo || '-',
             outwardVehicleNo: outVeh,
             outwardDriverName: outDrv,
             vehicleNo: outVeh !== '-' ? outVeh : inwVeh,
             driverName: outDrv !== '-' ? outDrv : inwDrv,
-            ownerName: existing.ownerName || parentOut?.ownerName || item.ownerName || '-',
-            deliveryPersonName: item.deliveryPersonName || parentOut?.deliveryPersonName || existing.deliveryPersonName || '-',
+            ownerName: inwOwner,
+            deliveryPersonName: outDelPerson,
+            from: outFrom,
+            fromStation: outFrom,
             status: 'DELIVERED',
             recordCategory: 'outward_item',
           });
         } else {
           const outVeh = parentOut?.vehicleNo || item.outwardVehicleNo || item.vehicleNo || '-';
           const outDrv = parentOut?.driverName || item.outwardDriverName || item.driverName || '-';
+          const outTrans = parentOut?.transporterName || item.outwardTransporterName || item.transporterName || '-';
+          const outDelPerson = parentOut?.deliveryPersonName || item.deliveryPersonName || '-';
+          const outFrom = parentOut?.from || parentOut?.fromStation || item.outwardFromStation || item.from || '-';
+
           allLREntriesMap.set(`outward-${item.id || index}`, {
             ...item,
-            transporterName: item.transporterName || parentOut?.transporterName || '-',
-            fromStation: item.from || parentOut?.from || '-',
+            transporterName: outTrans,
+            outwardTransporterName: outTrans,
+            fromStation: outFrom,
+            from: outFrom,
             inwardVehicleNo: '-',
             inwardDriverName: '-',
+            inwardOwnerName: '-',
             memoNo: item.memoNo || parentOut?.memoNo || '-',
             inwardDate: '-',
             inwardNo: '-',
@@ -276,8 +304,8 @@ export const Dashboard = () => {
             outwardDriverName: outDrv,
             vehicleNo: outVeh,
             driverName: outDrv,
-            ownerName: parentOut?.ownerName || item.ownerName || '-',
-            deliveryPersonName: item.deliveryPersonName || parentOut?.deliveryPersonName || '-',
+            ownerName: '-',
+            deliveryPersonName: outDelPerson,
             status: 'DELIVERED',
             recordCategory: 'outward_item',
           });
@@ -401,9 +429,23 @@ export const Dashboard = () => {
       const totalPaid = items.length > 0 ? items.reduce((acc, curr) => acc + (Number(curr.paidAmount) || 0), 0) : (Number(out.totalPaid) || 0);
       const totalFreight = totalToPay + totalTbb + totalPaid;
       const isStockOut = Boolean(out.isCrossOutward || String(out.outwardNo || '').toUpperCase().startsWith('STOCK-OUT'));
+      const outwardTransporter = out.transporterName || out.outwardTransporterName || items.find(i => i.outwardTransporterName)?.outwardTransporterName || items.find(i => i.transporterName)?.transporterName || '-';
+      const outwardStation = out.from || out.station || out.fromStation || out.outwardFromStation || items.find(i => i.outwardFromStation)?.outwardFromStation || items.find(i => i.from)?.from || '-';
+      const outwardDelPerson = out.deliveryPersonName || items.find(i => i.deliveryPersonName)?.deliveryPersonName || '-';
+      const outwardDriver = out.driverName || out.outwardDriverName || items.find(i => i.driverName)?.driverName || '-';
+      const outwardVeh = out.vehicleNo || out.outwardVehicleNo || items.find(i => i.vehicleNo)?.vehicleNo || '-';
 
       return {
         ...out,
+        transporterName: outwardTransporter,
+        from: outwardStation,
+        station: outwardStation,
+        fromStation: outwardStation,
+        vehicleNo: outwardVeh,
+        driverName: outwardDriver,
+        deliveryPersonName: outwardDelPerson,
+        ownerName: isStockOut ? (out.ownerName || '') : '',
+        memoNo: isStockOut ? (out.memoNo || '') : '',
         isStockOut,
         itemsCount: items.length,
         consignorName: consignors || out.consignorName || '-',
@@ -678,9 +720,10 @@ export const Dashboard = () => {
         { label: 'Inward Date', value: item.inwardDate && item.inwardDate !== '-' ? formatDate(item.inwardDate) : '-' },
         { label: 'Inward No.', value: item.inwardNo || '-' },
         { label: 'Memo No.', value: item.memoNo || '-' },
-        { label: 'Transporter', value: item.transporterName || '-' },
-        { label: 'Inward Vehicle', value: item.inwardVehicleNo || item.vehicleNo || '-' },
-        { label: 'Inward Driver', value: item.inwardDriverName || item.driverName || '-' },
+        { label: 'Transporter', value: item.inwardTransporterName || item.transporterName || '-' },
+        { label: 'Inward Vehicle', value: item.inwardVehicleNo && item.inwardVehicleNo !== '-' ? item.inwardVehicleNo : (item.vehicleNo || '-') },
+        { label: 'Inward Driver', value: item.inwardDriverName && item.inwardDriverName !== '-' ? item.inwardDriverName : (item.driverName || '-') },
+        ...(item.ownerName && item.ownerName !== '-' ? [{ label: 'Vehicle Owner', value: item.ownerName }] : []),
         { label: 'Destination', value: item.ctTo || '-' },
         { label: 'Consignor', value: item.consignorName || '-' },
         { label: 'Consignee', value: item.consigneeName || '-' },
@@ -688,7 +731,9 @@ export const Dashboard = () => {
         { label: 'Invoice No.', value: item.invoiceNo || '-' },
         { label: 'Outward No.', value: item.outwardNo && item.outwardNo !== '-' ? item.outwardNo : 'Not Dispatched Yet' },
         { label: 'Outward Date', value: item.outwardDate && item.outwardDate !== '-' ? formatDate(item.outwardDate) : '-' },
+        { label: 'Outward Transporter', value: item.outwardTransporterName || (item.recordCategory === 'outward_item' ? item.transporterName : '-') },
         { label: 'Delivery Vehicle', value: item.outwardVehicleNo && item.outwardVehicleNo !== '-' ? item.outwardVehicleNo : '-' },
+        { label: 'Delivery Driver', value: item.outwardDriverName && item.outwardDriverName !== '-' ? item.outwardDriverName : '-' },
         { label: 'Delivery Person', value: item.deliveryPersonName && item.deliveryPersonName !== '-' ? item.deliveryPersonName : '-' },
         { label: 'To Pay Freight', value: formatCurrency(toPay) },
         { label: 'T.B.B. Freight', value: formatCurrency(tbb) },
@@ -738,12 +783,14 @@ export const Dashboard = () => {
         { label: isStockOut ? 'Stock-Out No.' : 'Outward No.', value: out.outwardNo },
         { label: 'Date', value: formatDate(out.date) },
         { label: 'Transporter', value: out.transporterName || '-' },
+        { label: 'Origin Station', value: out.from || out.station || '-' },
         { label: 'Vehicle No.', value: out.vehicleNo || '-' },
-        { label: 'Driver / Agent', value: out.deliveryPersonName || out.driverName || '-' },
-        { label: 'Destination Station', value: out.from || out.station || '-' },
+        { label: 'Driver Name', value: out.driverName || '-' },
+        { label: 'Delivery Person', value: out.deliveryPersonName || '-' },
         ...(isStockOut ? [{ label: 'Memo No.', value: out.memoNo || '-' }] : []),
         { label: 'Total Packages', value: `${out.totalQty || 0} Pkg` },
       ],
+      showDeliveryPerson: true,
       items: outwardItems.filter((i) => i.outwardId === out.id || i.outwardNo === out.outwardNo),
     });
   };
@@ -1327,8 +1374,9 @@ export const Dashboard = () => {
                             <tr>
                               <th className="py-3 px-4">Outward No.</th>
                               <th className="py-3 px-4">Date</th>
+                              <th className="py-3 px-4">Transporter</th>
                               <th className="py-3 px-4">Vehicle No. &amp; Driver / Agent</th>
-                              <th className="py-3 px-4">Destination Station</th>
+                              <th className="py-3 px-4">Origin Station</th>
                               <th className="py-3 px-4 text-center">Type</th>
                               <th className="py-3 px-4 text-center">PKG</th>
                               <th className="py-3 px-4 text-right">Freight (₹)</th>
@@ -1352,10 +1400,13 @@ export const Dashboard = () => {
                                 <td className="py-3 px-4 font-bold text-slate-800">
                                   {formatDate(out.date)}
                                 </td>
+                                <td className="py-3 px-4 font-bold text-slate-800 truncate max-w-[130px]">
+                                  {out.transporterName || '-'}
+                                </td>
                                 <td className="py-3 px-4">
                                   <div className="font-mono font-bold text-slate-900">{out.vehicleNo || '-'}</div>
-                                  <div className="text-[10px] text-slate-400 truncate max-w-[150px]">
-                                    {out.deliveryPersonName || out.driverName || out.ownerName || '-'}
+                                  <div className="text-[10px] text-slate-500 truncate max-w-[150px]">
+                                    {out.driverName ? `Dr: ${out.driverName}` : ''} {out.deliveryPersonName ? `• Del: ${out.deliveryPersonName}` : ''}
                                   </div>
                                 </td>
                                 <td className="py-3 px-4 font-bold text-slate-700">
@@ -1444,8 +1495,12 @@ export const Dashboard = () => {
                               </span>
                             </div>
                             <div className="flex items-center justify-between text-[11px] text-slate-600">
-                              <span>Destination: <strong className="text-slate-800">{out.from || out.station || '-'}</strong></span>
-                              <span>Agent: <strong className="text-slate-800">{out.deliveryPersonName || out.driverName || '-'}</strong></span>
+                              <span>Origin Station: <strong className="text-slate-800">{out.from || out.station || '-'}</strong></span>
+                              <span>Transporter: <strong className="text-slate-800">{out.transporterName || '-'}</strong></span>
+                            </div>
+                            <div className="flex items-center justify-between text-[11px] text-slate-600">
+                              <span>Driver: <strong className="text-slate-800">{out.driverName || '-'}</strong></span>
+                              <span>Del. Person: <strong className="text-slate-800">{out.deliveryPersonName || '-'}</strong></span>
                             </div>
                             <div className="flex items-center justify-between pt-1 border-t border-slate-100 text-xs">
                               <div className="flex items-center space-x-2">
@@ -2466,7 +2521,7 @@ export const Dashboard = () => {
                     </div>
                     <div className="col-span-2">
                       <span className="text-[10px] text-slate-400 font-bold block uppercase">Transporter Agency</span>
-                      <span className="font-bold text-slate-800 truncate block">{item.transporterName || '-'}</span>
+                      <span className="font-bold text-slate-800 truncate block">{item.inwardTransporterName || item.transporterName || '-'}</span>
                     </div>
                     {item.ownerName && item.ownerName !== '-' && (
                       <div className="col-span-2">
@@ -2497,12 +2552,28 @@ export const Dashboard = () => {
                       </span>
                     </div>
                     <div>
-                      <span className="text-[10px] text-slate-400 font-bold block uppercase">Delivery Vehicle</span>
-                      <span className="font-mono font-bold text-slate-900">{item.outwardVehicleNo && item.outwardVehicleNo !== '-' ? item.outwardVehicleNo : '-'}</span>
+                      <span className="text-[10px] text-slate-400 font-bold block uppercase">Outward Transporter</span>
+                      <span className="font-bold text-slate-800 truncate block">
+                        {item.outwardTransporterName || (item.recordCategory === 'outward_item' ? item.transporterName : '-')}
+                      </span>
                     </div>
                     <div>
-                      <span className="text-[10px] text-slate-400 font-bold block uppercase">Delivery Driver / Agent</span>
-                      <span className="font-bold text-slate-800 truncate block">{item.deliveryPersonName && item.deliveryPersonName !== '-' ? item.deliveryPersonName : (item.outwardDriverName || '-')}</span>
+                      <span className="text-[10px] text-slate-400 font-bold block uppercase">Origin Station</span>
+                      <span className="font-bold text-slate-800 truncate block">
+                        {item.outwardFromStation || (item.recordCategory === 'outward_item' ? (item.fromStation || item.from) : '-')}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-slate-400 font-bold block uppercase">Delivery Vehicle</span>
+                      <span className="font-mono font-bold text-slate-900">{item.outwardVehicleNo && item.outwardVehicleNo !== '-' ? item.outwardVehicleNo : (item.recordCategory === 'outward_item' ? item.vehicleNo : '-')}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-slate-400 font-bold block uppercase">Delivery Driver</span>
+                      <span className="font-bold text-slate-800 truncate block">{item.outwardDriverName && item.outwardDriverName !== '-' ? item.outwardDriverName : (item.recordCategory === 'outward_item' ? item.driverName : '-')}</span>
+                    </div>
+                    <div className="col-span-2">
+                      <span className="text-[10px] text-slate-400 font-bold block uppercase">Delivery Person</span>
+                      <span className="font-bold text-slate-800 truncate block">{item.deliveryPersonName || '-'}</span>
                     </div>
                   </div>
                 </div>
@@ -2644,35 +2715,46 @@ export const Dashboard = () => {
                     </span>
                   </div>
                   <div>
-                    <span className="text-slate-400 font-bold uppercase block text-[10px]">Date</span>
+                    <span className="text-slate-400 font-bold uppercase block text-[10px]">
+                      {isInward ? 'Arrival Date' : 'Dispatch Date'}
+                    </span>
                     <span className="font-bold text-slate-800">{formatDate(receipt.date)}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 font-bold uppercase block text-[10px]">Transporter Name</span>
+                    <span className="font-bold text-slate-800 truncate block">{receipt.transporterName || receipt.outwardTransporterName || '-'}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 font-bold uppercase block text-[10px]">
+                      {isInward ? 'Origin Station' : 'Origin Station'}
+                    </span>
+                    <span className="font-bold text-slate-800">{receipt.from || receipt.station || receipt.fromStation || '-'}</span>
                   </div>
                   <div>
                     <span className="text-slate-400 font-bold uppercase block text-[10px]">Vehicle No.</span>
                     <span className="font-black text-sky-700 font-mono">{receipt.vehicleNo || '-'}</span>
                   </div>
                   <div>
-                    <span className="text-slate-400 font-bold uppercase block text-[10px]">
-                      {isInward ? 'Vehicle Owner' : 'Driver / Agent'}
-                    </span>
-                    <span className="font-bold text-slate-800 truncate block">
-                      {isInward ? receipt.ownerName || receipt.driverName || '-' : receipt.deliveryPersonName || receipt.driverName || receipt.ownerName || '-'}
-                    </span>
+                    <span className="text-slate-400 font-bold uppercase block text-[10px]">Driver Name</span>
+                    <span className="font-bold text-slate-800 truncate block">{receipt.driverName || '-'}</span>
                   </div>
-                  <div>
-                    <span className="text-slate-400 font-bold uppercase block text-[10px]">
-                      {isInward ? 'From Station' : 'Destination / Route'}
-                    </span>
-                    <span className="font-bold text-slate-800">{receipt.from || receipt.station || '-'}</span>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 font-bold uppercase block text-[10px]">Transporter</span>
-                    <span className="font-bold text-slate-800 truncate block">{receipt.transporterName || '-'}</span>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 font-bold uppercase block text-[10px]">Memo No.</span>
-                    <span className="font-bold text-slate-800 font-mono">{receipt.memoNo || '-'}</span>
-                  </div>
+                  {isInward ? (
+                    <div>
+                      <span className="text-slate-400 font-bold uppercase block text-[10px]">Vehicle Owner</span>
+                      <span className="font-bold text-slate-800 truncate block">{receipt.ownerName || '-'}</span>
+                    </div>
+                  ) : (
+                    <div>
+                      <span className="text-slate-400 font-bold uppercase block text-[10px]">Delivery Person</span>
+                      <span className="font-bold text-slate-800 truncate block">{receipt.deliveryPersonName || '-'}</span>
+                    </div>
+                  )}
+                  {isInward && (
+                    <div>
+                      <span className="text-slate-400 font-bold uppercase block text-[10px]">Memo No.</span>
+                      <span className="font-bold text-slate-800 font-mono">{receipt.memoNo || '-'}</span>
+                    </div>
+                  )}
                   <div>
                     <span className="text-slate-400 font-bold uppercase block text-[10px]">Total Freight</span>
                     <span className="font-black text-emerald-700 text-sm">{formatCurrency(totalFreight)}</span>

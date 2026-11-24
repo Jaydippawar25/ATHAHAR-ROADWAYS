@@ -16,15 +16,25 @@ export const getAllOutwards = () => {
     const key = String(item.outwardNo || item.id || '').trim().toLowerCase();
     if (!key) continue;
 
+    // Standard outward receipts do not use vehicle owner or memo no; clean those fields out
+    const isCross = item.isCrossOutward || String(item.outwardNo || '').toUpperCase().startsWith('STOCK-OUT');
+    const cleanedItem = isCross
+      ? item
+      : {
+          ...item,
+          ownerName: '',
+          memoNo: '',
+        };
+
     if (!seenMap.has(key)) {
-      seenMap.set(key, item);
+      seenMap.set(key, cleanedItem);
     } else {
       hasDuplicates = true;
       const existing = seenMap.get(key);
       const existingTime = new Date(existing.updatedAt || existing.createdAt || 0).getTime();
       const currTime = new Date(item.updatedAt || item.createdAt || 0).getTime();
       if (currTime >= existingTime) {
-        seenMap.set(key, { ...existing, ...item });
+        seenMap.set(key, { ...existing, ...cleanedItem });
       }
     }
   }
@@ -59,10 +69,12 @@ export const getAllOutwards = () => {
           (o) => String(o.outwardNo || '').trim().toLowerCase() === key
         );
         const vehicleNo =
+          matchedOutItem?.outwardVehicleNo ||
           matchedOutItem?.vehicleNo ||
           Array.from(new Set(group.map((i) => i.outwardVehicleNo).filter(Boolean)))[0] ||
           '';
         const driverName =
+          matchedOutItem?.outwardDriverName ||
           matchedOutItem?.driverName ||
           Array.from(new Set(group.map((i) => i.outwardDriverName).filter(Boolean)))[0] ||
           '';
@@ -71,9 +83,15 @@ export const getAllOutwards = () => {
           Array.from(new Set(group.map((i) => i.deliveryPersonName).filter(Boolean))).join(', ') ||
           '';
         const transporterName =
+          matchedOutItem?.outwardTransporterName ||
           matchedOutItem?.transporterName ||
-          Array.from(new Set(group.map((i) => i.transporterName).filter(Boolean)))[0] ||
+          Array.from(new Set(group.map((i) => i.outwardTransporterName).filter(Boolean)))[0] ||
           '';
+        const fromStation =
+          matchedOutItem?.from ||
+          matchedOutItem?.fromStation ||
+          Array.from(new Set(group.map((i) => i.outwardFromStation).filter(Boolean)))[0] ||
+          'SANGLI';
         const date = first.outwardDate || matchedOutItem?.outwardDate || first.date || new Date().toISOString().slice(0, 10);
         const outwardId = first.outwardId || matchedOutItem?.outwardId || `out-${Date.now()}`;
 
@@ -84,10 +102,11 @@ export const getAllOutwards = () => {
           transporterName,
           vehicleNo,
           driverName,
-          ownerName: matchedOutItem?.ownerName || '',
+          ownerName: '',
           deliveryPersonName,
-          from: first.from || 'SANGLI',
-          memoNo: first.memoNo || '',
+          from: fromStation,
+          fromStation,
+          memoNo: '',
           consignorName,
           consigneeName,
           isCrossOutward: false,
@@ -105,10 +124,95 @@ export const getAllOutwards = () => {
   }
 
   const deduplicated = Array.from(seenMap.values());
-  if (hasDuplicates && deduplicated.length !== rawList.length) {
-    setStoredItem(STORAGE_KEYS.OUTWARDS, deduplicated);
+
+  // Reconcile and standardize outward fields across all existing/previous outward headers
+  const existingOutItems = getStoredItem(STORAGE_KEYS.OUTWARD_ITEMS, []);
+  for (const [key, item] of seenMap.entries()) {
+    const isCross = item.isCrossOutward || String(item.outwardNo || '').toUpperCase().startsWith('STOCK-OUT');
+    if (isCross) continue;
+
+    const matchedOutItems = (existingOutItems || []).filter(
+      (o) => String(o.outwardNo || '').trim().toLowerCase() === key || o.outwardId === item.id
+    );
+    const matchedInwItems = (inwardItems || []).filter(
+      (i) => String(i.outwardNo || '').trim().toLowerCase() === key
+    );
+
+    const resolvedTransporter =
+      item.outwardTransporterName ||
+      item.transporterName ||
+      matchedOutItems.find((i) => i.outwardTransporterName)?.outwardTransporterName ||
+      matchedInwItems.find((i) => i.outwardTransporterName)?.outwardTransporterName ||
+      matchedOutItems.find((i) => i.transporterName)?.transporterName ||
+      '';
+
+    const resolvedFrom =
+      item.outwardFromStation ||
+      item.from ||
+      item.fromStation ||
+      matchedOutItems.find((i) => i.outwardFromStation)?.outwardFromStation ||
+      matchedInwItems.find((i) => i.outwardFromStation)?.outwardFromStation ||
+      matchedOutItems.find((i) => i.from || i.fromStation)?.from ||
+      'SANGLI';
+
+    const resolvedVehicle =
+      item.outwardVehicleNo ||
+      item.vehicleNo ||
+      matchedOutItems.find((i) => i.outwardVehicleNo)?.outwardVehicleNo ||
+      matchedInwItems.find((i) => i.outwardVehicleNo)?.outwardVehicleNo ||
+      matchedOutItems.find((i) => i.vehicleNo)?.vehicleNo ||
+      '';
+
+    const resolvedDriver =
+      item.outwardDriverName ||
+      item.driverName ||
+      matchedOutItems.find((i) => i.outwardDriverName)?.outwardDriverName ||
+      matchedInwItems.find((i) => i.outwardDriverName)?.outwardDriverName ||
+      matchedOutItems.find((i) => i.driverName)?.driverName ||
+      '';
+
+    const resolvedDelPerson =
+      item.deliveryPersonName ||
+      matchedOutItems.find((i) => i.deliveryPersonName && i.deliveryPersonName !== '-')?.deliveryPersonName ||
+      matchedInwItems.find((i) => i.deliveryPersonName && i.deliveryPersonName !== '-')?.deliveryPersonName ||
+      '';
+
+    const updated = {
+      ...item,
+      transporterName: resolvedTransporter,
+      outwardTransporterName: resolvedTransporter,
+      from: resolvedFrom,
+      fromStation: resolvedFrom,
+      outwardFromStation: resolvedFrom,
+      vehicleNo: resolvedVehicle,
+      outwardVehicleNo: resolvedVehicle,
+      driverName: resolvedDriver,
+      outwardDriverName: resolvedDriver,
+      deliveryPersonName: resolvedDelPerson,
+      ownerName: '',
+      memoNo: '',
+    };
+
+    if (
+      item.transporterName !== updated.transporterName ||
+      item.from !== updated.from ||
+      item.fromStation !== updated.fromStation ||
+      item.vehicleNo !== updated.vehicleNo ||
+      item.driverName !== updated.driverName ||
+      item.deliveryPersonName !== updated.deliveryPersonName ||
+      item.ownerName !== '' ||
+      item.memoNo !== ''
+    ) {
+      hasDuplicates = true;
+      seenMap.set(key, updated);
+    }
   }
-  return deduplicated;
+
+  const finalizedList = Array.from(seenMap.values());
+  if (hasDuplicates) {
+    setStoredItem(STORAGE_KEYS.OUTWARDS, finalizedList);
+  }
+  return finalizedList;
 };
 
 export const getNextOutwardNo = (outwardsList) => {
@@ -192,16 +296,37 @@ export const getAllOutwardItems = () => {
     );
     const resolvedVehicleNo = parentOut?.vehicleNo || item.outwardVehicleNo || item.vehicleNo || '';
     const resolvedDriverName = parentOut?.driverName || item.outwardDriverName || item.driverName || '';
+    const resolvedTransporter = parentOut?.transporterName || item.outwardTransporterName || item.transporterName || '';
+    const resolvedDelPerson = parentOut?.deliveryPersonName || item.deliveryPersonName || '-';
+    const resolvedFrom = parentOut?.from || parentOut?.fromStation || item.outwardFromStation || item.from || 'SANGLI';
 
     const normalizedItem = {
       ...item,
+      transporterName: resolvedTransporter,
+      outwardTransporterName: resolvedTransporter,
       vehicleNo: resolvedVehicleNo,
       driverName: resolvedDriverName,
       outwardVehicleNo: resolvedVehicleNo,
       outwardDriverName: resolvedDriverName,
+      deliveryPersonName: resolvedDelPerson,
+      from: resolvedFrom,
+      fromStation: resolvedFrom,
+      ownerName: '',
+      memoNo: '',
     };
 
     if (!seenMap.has(uniqueKey)) {
+      if (
+        item.transporterName !== normalizedItem.transporterName ||
+        item.vehicleNo !== normalizedItem.vehicleNo ||
+        item.driverName !== normalizedItem.driverName ||
+        item.deliveryPersonName !== normalizedItem.deliveryPersonName ||
+        item.from !== normalizedItem.from ||
+        item.ownerName !== '' ||
+        item.memoNo !== ''
+      ) {
+        hasDuplicates = true;
+      }
       seenMap.set(uniqueKey, normalizedItem);
     } else {
       hasDuplicates = true;
@@ -219,13 +344,16 @@ export const getAllOutwardItems = () => {
       seenMap.set(uniqueKey, {
         ...richerItem,
         inwardItemId: item.inwardItemId || existing.inwardItemId || null,
+        transporterName: resolvedTransporter || existing.transporterName || '',
+        outwardTransporterName: resolvedTransporter || existing.outwardTransporterName || '',
         vehicleNo: resolvedVehicleNo || existing.vehicleNo || '',
         driverName: resolvedDriverName || existing.driverName || '',
         outwardVehicleNo: resolvedVehicleNo || existing.outwardVehicleNo || '',
         outwardDriverName: resolvedDriverName || existing.outwardDriverName || '',
-        ownerName: item.ownerName || existing.ownerName || '',
-        deliveryPersonName: item.deliveryPersonName || existing.deliveryPersonName || '-',
-        memoNo: item.memoNo || existing.memoNo || '',
+        deliveryPersonName: resolvedDelPerson !== '-' ? resolvedDelPerson : (existing.deliveryPersonName || '-'),
+        from: resolvedFrom || existing.from || 'SANGLI',
+        ownerName: '',
+        memoNo: '',
         status: STATUS.DELIVERED,
       });
     }
@@ -251,15 +379,21 @@ export const getAllOutwardItems = () => {
         outwardId: inwItem.outwardId || parentOut?.id || `out-${outNo}`,
         outwardNo: outNo,
         outwardDate: inwItem.outwardDate || parentOut?.date || inwItem.date || '2026-11-06',
+        transporterName: parentOut?.transporterName || inwItem.outwardTransporterName || '',
+        outwardTransporterName: parentOut?.transporterName || inwItem.outwardTransporterName || '',
         vehicleNo: parentOut?.vehicleNo || inwItem.outwardVehicleNo || '',
         driverName: parentOut?.driverName || inwItem.outwardDriverName || '',
         outwardVehicleNo: parentOut?.vehicleNo || inwItem.outwardVehicleNo || '',
         outwardDriverName: parentOut?.driverName || inwItem.outwardDriverName || '',
-        inwardVehicleNo: inwItem.vehicleNo || inwItem.inwardVehicleNo || '',
-        inwardDriverName: inwItem.driverName || inwItem.inwardDriverName || '',
-        ownerName: parentOut?.ownerName || '',
-        from: parentOut?.from || inwItem.from || 'SANGLI',
-        memoNo: parentOut?.memoNo || inwItem.memoNo || '',
+        inwardVehicleNo: inwItem.inwardVehicleNo || inwItem.vehicleNo || '',
+        inwardDriverName: inwItem.inwardDriverName || inwItem.driverName || '',
+        inwardOwnerName: inwItem.inwardOwnerName || inwItem.ownerName || '',
+        inwardTransporterName: inwItem.inwardTransporterName || inwItem.transporterName || '',
+        inwardFromStation: inwItem.inwardFromStation || inwItem.from || '',
+        ownerName: '',
+        from: parentOut?.from || inwItem.outwardFromStation || 'SANGLI',
+        fromStation: parentOut?.from || inwItem.outwardFromStation || 'SANGLI',
+        memoNo: '',
         isCrossOutward: false,
         inwardItemId: inwItem.id,
         lrNo: String(inwItem.lrNo ?? '').trim(),
@@ -283,7 +417,7 @@ export const getAllOutwardItems = () => {
   }
 
   const deduplicated = Array.from(seenMap.values());
-  if (hasDuplicates && deduplicated.length !== rawList.length) {
+  if (hasDuplicates) {
     setStoredItem(STORAGE_KEYS.OUTWARD_ITEMS, deduplicated);
   }
   return deduplicated;
@@ -332,19 +466,26 @@ export const createOutward = (headerData, selectedPendingItems, currentUser = 'O
   const consignorName = Array.from(new Set(selectedPendingItems.map((i) => i.consignorName).filter(Boolean))).join(', ');
   const consigneeName = Array.from(new Set(selectedPendingItems.map((i) => i.consigneeName).filter(Boolean))).join(', ');
 
+  const outwardTransporter = headerData.transporterName || '';
+  const outwardVehicle = headerData.vehicleNo || '';
+  const outwardDriver = headerData.driverName || '';
+  const outwardDelPerson = headerData.deliveryPersonName || '';
+  const outwardFrom = headerData.from || headerData.fromStation || 'SANGLI';
+
   const newOutwardHeader = {
     id: outwardId,
     outwardNo:
       headerData.outwardNo ||
       (isCrossOutward ? getNextCrossOutwardNo(outwards) : getNextOutwardNo(outwards)),
     date: headerData.date,
-    transporterName: headerData.transporterName || '',
-    vehicleNo: headerData.vehicleNo,
-    driverName: headerData.driverName,
-    ownerName: headerData.ownerName || '',
-    deliveryPersonName: headerData.deliveryPersonName || '',
-    from: headerData.from || headerData.fromStation || 'SANGLI',
-    memoNo: headerData.memoNo,
+    transporterName: outwardTransporter,
+    vehicleNo: outwardVehicle,
+    driverName: outwardDriver,
+    ownerName: '',
+    deliveryPersonName: outwardDelPerson,
+    from: outwardFrom,
+    fromStation: outwardFrom,
+    memoNo: '',
     consignorName,
     consigneeName,
     isCrossOutward,
@@ -356,38 +497,53 @@ export const createOutward = (headerData, selectedPendingItems, currentUser = 'O
     createdBy: currentUser,
   };
 
-  const newOutwardItemsList = selectedPendingItems.map((item, index) => ({
-    id: `out-item-${Date.now()}-${index}`,
-    outwardId,
-    outwardNo: newOutwardHeader.outwardNo,
-    outwardDate: headerData.date,
-    vehicleNo: newOutwardHeader.vehicleNo || '',
-    driverName: newOutwardHeader.driverName || '',
-    outwardVehicleNo: newOutwardHeader.vehicleNo || '',
-    outwardDriverName: newOutwardHeader.driverName || '',
-    inwardVehicleNo: item.vehicleNo || item.inwardVehicleNo || '',
-    inwardDriverName: item.driverName || item.inwardDriverName || '',
-    inwardOwnerName: item.ownerName || item.inwardOwnerName || '',
-    ownerName: newOutwardHeader.ownerName || '',
-    from: newOutwardHeader.from,
-    memoNo: newOutwardHeader.memoNo,
-    isCrossOutward,
-    inwardItemId: isCrossOutward ? null : item.id,
-    lrNo: String(item.lrNo ?? '').trim(),
-    inwardDate: isCrossOutward ? '-' : (item.date || item.inwardDate || headerData.date),
-    pkg: Number(item.pkg) || 0,
-    invoiceNo: item.invoiceNo || '',
-    ctTo: item.ctTo || '',
-    deliveryPersonName: headerData.deliveryPersonName || item.deliveryPersonName || '-',
-    consignorName: item.consignorName || '',
-    consigneeName: item.consigneeName || '',
-    toPayAmount: Number(item.toPayAmount) || 0,
-    tbbAmount: Number(item.tbbAmount) || 0,
-    paidAmount: Number(item.paidAmount) || 0,
-    status: isCrossOutward ? (STATUS.DISPATCHED || 'DISPATCHED') : STATUS.DELIVERED,
-    deliveredAt: new Date().toISOString(),
-    deliveredBy: currentUser,
-  }));
+  const newOutwardItemsList = selectedPendingItems.map((item, index) => {
+    // Preserve original inward details cleanly
+    const origInwardVeh = item.inwardVehicleNo || (item.vehicleNo !== outwardVehicle ? item.vehicleNo : '') || '';
+    const origInwardDrv = item.inwardDriverName || (item.driverName !== outwardDriver ? item.driverName : '') || '';
+    const origInwardOwn = item.inwardOwnerName || item.ownerName || '';
+    const origInwardTrans = item.inwardTransporterName || (item.transporterName !== outwardTransporter ? item.transporterName : '') || '';
+    const origInwardFrom = item.inwardFromStation || item.from || '';
+
+    return {
+      id: `out-item-${Date.now()}-${index}`,
+      outwardId,
+      outwardNo: newOutwardHeader.outwardNo,
+      outwardDate: headerData.date,
+      transporterName: outwardTransporter,
+      outwardTransporterName: outwardTransporter,
+      vehicleNo: outwardVehicle,
+      driverName: outwardDriver,
+      outwardVehicleNo: outwardVehicle,
+      outwardDriverName: outwardDriver,
+      deliveryPersonName: outwardDelPerson || item.deliveryPersonName || '-',
+      from: outwardFrom,
+      fromStation: outwardFrom,
+      outwardFromStation: outwardFrom,
+      inwardVehicleNo: origInwardVeh,
+      inwardDriverName: origInwardDrv,
+      inwardOwnerName: origInwardOwn,
+      inwardTransporterName: origInwardTrans,
+      inwardFromStation: origInwardFrom,
+      ownerName: '',
+      memoNo: '',
+      isCrossOutward,
+      inwardItemId: isCrossOutward ? null : item.id,
+      lrNo: String(item.lrNo ?? '').trim(),
+      inwardDate: isCrossOutward ? '-' : (item.date || item.inwardDate || headerData.date),
+      pkg: Number(item.pkg) || 0,
+      invoiceNo: item.invoiceNo || '',
+      ctTo: item.ctTo || '',
+      consignorName: item.consignorName || '',
+      consigneeName: item.consigneeName || '',
+      toPayAmount: Number(item.toPayAmount) || 0,
+      tbbAmount: Number(item.tbbAmount) || 0,
+      paidAmount: Number(item.paidAmount) || 0,
+      status: isCrossOutward ? (STATUS.DISPATCHED || 'DISPATCHED') : STATUS.DELIVERED,
+      deliveredAt: new Date().toISOString(),
+      deliveredBy: currentUser,
+    };
+  });
 
   // Update status and edited amounts in inwardItems collection ONLY for standard Godown Outward
   // Cross Stock Out is completely standalone manual dispatch with NO connection to Pending Stock or Inward
@@ -404,8 +560,8 @@ export const createOutward = (headerData, selectedPendingItems, currentUser = 'O
         const pLR = String(p.lrNo ?? '').trim().toLowerCase();
         if (pLR !== lrKey) return false;
 
-        const pTrans = String(p.transporterName || '').trim().toLowerCase();
-        const itemTrans = String(item.transporterName || '').trim().toLowerCase();
+        const pTrans = String(p.inwardTransporterName || p.transporterName || '').trim().toLowerCase();
+        const itemTrans = String(item.inwardTransporterName || item.transporterName || '').trim().toLowerCase();
         if (pTrans && itemTrans && pTrans !== itemTrans) return false;
 
         return true;
@@ -424,7 +580,7 @@ export const createOutward = (headerData, selectedPendingItems, currentUser = 'O
           consignorName: matchedPending.consignorName ?? item.consignorName,
           consigneeName: matchedPending.consigneeName ?? item.consigneeName,
           deliveryPersonName:
-            headerData.deliveryPersonName ||
+            outwardDelPerson ||
             matchedPending.deliveryPersonName ||
             item.deliveryPersonName ||
             '-',
@@ -434,8 +590,16 @@ export const createOutward = (headerData, selectedPendingItems, currentUser = 'O
           outwardId,
           outwardNo: newOutwardHeader.outwardNo,
           outwardDate: headerData.date,
-          outwardVehicleNo: newOutwardHeader.vehicleNo || '',
-          outwardDriverName: newOutwardHeader.driverName || '',
+          outwardVehicleNo: outwardVehicle,
+          outwardDriverName: outwardDriver,
+          outwardTransporterName: outwardTransporter,
+          outwardFromStation: outwardFrom,
+          // Preserve original inward identity
+          inwardVehicleNo: item.inwardVehicleNo || item.vehicleNo || '',
+          inwardDriverName: item.inwardDriverName || item.driverName || '',
+          inwardOwnerName: item.inwardOwnerName || item.ownerName || '',
+          inwardTransporterName: item.inwardTransporterName || item.transporterName || '',
+          inwardFromStation: item.inwardFromStation || item.from || '',
         };
       }
       return item;
@@ -827,18 +991,25 @@ export const updateFullOutward = (outwardId, headerData, selectedPendingItems, c
   const consignorName = Array.from(new Set(selectedPendingItems.map((i) => i.consignorName).filter(Boolean))).join(', ');
   const consigneeName = Array.from(new Set(selectedPendingItems.map((i) => i.consigneeName).filter(Boolean))).join(', ');
 
+  const outwardTransporter = headerData.transporterName || existingHeader?.transporterName || '';
+  const outwardVehicle = headerData.vehicleNo || existingHeader?.vehicleNo || '';
+  const outwardDriver = headerData.driverName || existingHeader?.driverName || '';
+  const outwardDelPerson = headerData.deliveryPersonName || existingHeader?.deliveryPersonName || '';
+  const outwardFrom = headerData.from || headerData.fromStation || existingHeader?.from || existingHeader?.fromStation || 'SANGLI';
+
   const updatedHeaderFields = {
     ...(existingHeader || {}),
     id: resolvedOutwardId,
     outwardNo: finalOutwardNo,
     date: headerData.date,
-    transporterName: headerData.transporterName || existingHeader?.transporterName || '',
-    vehicleNo: headerData.vehicleNo,
-    driverName: headerData.driverName,
-    ownerName: headerData.ownerName ?? existingHeader?.ownerName ?? '',
-    deliveryPersonName: headerData.deliveryPersonName || '',
-    from: headerData.from || headerData.fromStation || 'SANGLI',
-    memoNo: headerData.memoNo || '',
+    transporterName: outwardTransporter,
+    vehicleNo: outwardVehicle,
+    driverName: outwardDriver,
+    ownerName: '',
+    deliveryPersonName: outwardDelPerson,
+    from: outwardFrom,
+    fromStation: outwardFrom,
+    memoNo: '',
     consignorName,
     consigneeName,
     isCrossOutward,
@@ -870,22 +1041,35 @@ export const updateFullOutward = (outwardId, headerData, selectedPendingItems, c
           String(old.lrNo ?? '').trim().toLowerCase() === String(item.lrNo ?? '').trim().toLowerCase()
       ) || (oldOutwardItems.length === selectedPendingItems.length ? oldOutwardItems[index] : null);
 
+    const origInwardVeh = item.inwardVehicleNo || matchedOld?.inwardVehicleNo || (item.vehicleNo !== outwardVehicle ? item.vehicleNo : '') || '';
+    const origInwardDrv = item.inwardDriverName || matchedOld?.inwardDriverName || (item.driverName !== outwardDriver ? item.driverName : '') || '';
+    const origInwardOwn = item.inwardOwnerName || matchedOld?.inwardOwnerName || item.ownerName || '';
+    const origInwardTrans = item.inwardTransporterName || matchedOld?.inwardTransporterName || (item.transporterName !== outwardTransporter ? item.transporterName : '') || '';
+    const origInwardFrom = item.inwardFromStation || matchedOld?.inwardFromStation || item.from || '';
+
     return {
       ...(matchedOld || {}),
       id: matchedOld?.id || `out-item-${Date.now()}-${index}`,
       outwardId: resolvedOutwardId,
       outwardNo: updatedHeaderFields.outwardNo,
       outwardDate: headerData.date,
-      vehicleNo: updatedHeaderFields.vehicleNo || '',
-      driverName: updatedHeaderFields.driverName || '',
-      outwardVehicleNo: updatedHeaderFields.vehicleNo || '',
-      outwardDriverName: updatedHeaderFields.driverName || '',
-      inwardVehicleNo: item.vehicleNo || item.inwardVehicleNo || matchedOld?.inwardVehicleNo || '',
-      inwardDriverName: item.driverName || item.inwardDriverName || matchedOld?.inwardDriverName || '',
-      inwardOwnerName: item.ownerName || item.inwardOwnerName || matchedOld?.inwardOwnerName || '',
-      ownerName: updatedHeaderFields.ownerName || '',
-      from: updatedHeaderFields.from,
-      memoNo: updatedHeaderFields.memoNo,
+      transporterName: outwardTransporter,
+      outwardTransporterName: outwardTransporter,
+      vehicleNo: outwardVehicle,
+      driverName: outwardDriver,
+      outwardVehicleNo: outwardVehicle,
+      outwardDriverName: outwardDriver,
+      deliveryPersonName: outwardDelPerson || item.deliveryPersonName || matchedOld?.deliveryPersonName || '-',
+      from: outwardFrom,
+      fromStation: outwardFrom,
+      outwardFromStation: outwardFrom,
+      inwardVehicleNo: origInwardVeh,
+      inwardDriverName: origInwardDrv,
+      inwardOwnerName: origInwardOwn,
+      inwardTransporterName: origInwardTrans,
+      inwardFromStation: origInwardFrom,
+      ownerName: '',
+      memoNo: '',
       isCrossOutward,
       inwardItemId: isCrossOutward ? null : (item.inwardItemId || matchedOld?.inwardItemId || item.id),
       lrNo: String(item.lrNo ?? '').trim(),
@@ -894,7 +1078,7 @@ export const updateFullOutward = (outwardId, headerData, selectedPendingItems, c
       invoiceNo: item.invoiceNo ?? matchedOld?.invoiceNo ?? '',
       ctTo: item.ctTo ?? matchedOld?.ctTo ?? '',
       deliveryPersonName:
-        headerData.deliveryPersonName ||
+        outwardDelPerson ||
         item.deliveryPersonName ||
         matchedOld?.deliveryPersonName ||
         '-',
@@ -940,9 +1124,17 @@ export const updateFullOutward = (outwardId, headerData, selectedPendingItems, c
           outwardId: resolvedOutwardId,
           outwardNo: updatedHeaderFields.outwardNo,
           outwardDate: headerData.date,
-          outwardVehicleNo: updatedHeaderFields.vehicleNo || '',
-          outwardDriverName: updatedHeaderFields.driverName || '',
-          deliveryPersonName: matchedOut.deliveryPersonName,
+          outwardVehicleNo: outwardVehicle,
+          outwardDriverName: outwardDriver,
+          outwardTransporterName: outwardTransporter,
+          outwardFromStation: outwardFrom,
+          deliveryPersonName: outwardDelPerson || matchedOut.deliveryPersonName || item.deliveryPersonName || '-',
+          // Explicitly preserve original inward identity
+          inwardVehicleNo: item.inwardVehicleNo || item.vehicleNo || '',
+          inwardDriverName: item.inwardDriverName || item.driverName || '',
+          inwardOwnerName: item.inwardOwnerName || item.ownerName || '',
+          inwardTransporterName: item.inwardTransporterName || item.transporterName || '',
+          inwardFromStation: item.inwardFromStation || item.from || '',
         };
       }
       return item;
