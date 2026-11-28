@@ -1,10 +1,15 @@
 import { getStoredItem, setStoredItem, setStoredItemLocalOnly, STORAGE_KEYS, seedInitialData } from './mockStorage';
 import { STATUS } from '../utils/constants';
+import { compareDescendingDocNo } from '../utils/numberUtils';
 
 seedInitialData();
 
 export const getAllInwards = () => {
-  return getStoredItem(STORAGE_KEYS.INWARDS);
+  const raw = getStoredItem(STORAGE_KEYS.INWARDS);
+  if (!Array.isArray(raw)) return [];
+  return [...raw].sort((a, b) =>
+    compareDescendingDocNo(a.inwardNo, b.inwardNo, a.date, b.date, a.id, b.id)
+  );
 };
 
 export const getNextInwardNo = (inwardsList) => {
@@ -132,7 +137,9 @@ export const getPendingStockItems = () => {
     }
   }
 
-  const pendingList = Array.from(seenMap.values());
+  const pendingList = Array.from(seenMap.values()).sort((a, b) =>
+    compareDescendingDocNo(a.inwardNo, b.inwardNo, a.date || a.inwardDate, b.date || b.inwardDate, a.id, b.id)
+  );
   cachedPendingStock = pendingList;
   lastInwardItemsForPendingRef = items;
   return pendingList;
@@ -395,7 +402,10 @@ export const createInward = (headerData, lrItems, currentUser = 'Operator', allo
     createdAt: new Date().toISOString(),
   }));
 
-  inwards.unshift(newInwardHeader);
+  inwards.push(newInwardHeader);
+  inwards.sort((a, b) =>
+    compareDescendingDocNo(a.inwardNo, b.inwardNo, a.date, b.date, a.id, b.id)
+  );
   const updatedInwardItems = [...newItems, ...inwardItems];
 
   clearInwardCaches();
@@ -457,6 +467,8 @@ export const updateInwardHeader = (inwardId, updatedFields) => {
 
   inwards = inwards.map((inv) =>
     inv.id === inwardId ? { ...inv, ...updatedFields } : inv
+  ).sort((a, b) =>
+    compareDescendingDocNo(a.inwardNo, b.inwardNo, a.date, b.date, a.id, b.id)
   );
 
   // Propagate updated header fields down to child items
@@ -684,12 +696,15 @@ export const updateFullInward = (inwardId, headerData, lrItems, currentUser = 'O
       inv.id === resolvedInwardId ? { ...inv, ...updatedHeaderFields } : inv
     );
   } else {
-    inwards.unshift({
+    inwards.push({
       ...updatedHeaderFields,
       createdAt: new Date().toISOString(),
       createdBy: currentUser,
     });
   }
+  inwards.sort((a, b) =>
+    compareDescendingDocNo(a.inwardNo, b.inwardNo, a.date, b.date, a.id, b.id)
+  );
 
   // Track old LR numbers to sync with outwardItems even if LR No was renamed
   const oldLrByItemId = new Map();

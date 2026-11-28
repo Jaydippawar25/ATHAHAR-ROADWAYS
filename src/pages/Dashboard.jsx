@@ -40,7 +40,7 @@ import {
   Shuffle,
 } from 'lucide-react';
 import { formatDate } from '../utils/dateUtils';
-import { formatCurrency } from '../utils/numberUtils';
+import { formatCurrency, compareDescendingDocNo, parseNumericCode } from '../utils/numberUtils';
 import { printRecordDetails, exportToExcel } from '../services/exportService';
 import { Modal } from '../components/common/Modal';
 import { StatusBadge } from '../components/common/StatusBadge';
@@ -316,7 +316,13 @@ export const Dashboard = () => {
       }
     });
 
-    return Array.from(allLREntriesMap.values());
+    return Array.from(allLREntriesMap.values()).sort((a, b) => {
+      const docA = a.inwardNo && a.inwardNo !== '-' ? a.inwardNo : (a.outwardNo && a.outwardNo !== '-' ? a.outwardNo : '');
+      const docB = b.inwardNo && b.inwardNo !== '-' ? b.inwardNo : (b.outwardNo && b.outwardNo !== '-' ? b.outwardNo : '');
+      const docCmp = compareDescendingDocNo(docA, docB, a.inwardDate || a.date, b.inwardDate || b.date, a.id, b.id);
+      if (docCmp !== 0) return docCmp;
+      return parseNumericCode(b.lrNo) - parseNumericCode(a.lrNo);
+    });
   }, [inwardItems, inwards, outwardItems, outwards]);
 
   // Auto-switch search tab based on search query prefix
@@ -356,7 +362,7 @@ export const Dashboard = () => {
         totalFreight,
         itemLrs: items.map((i) => String(i.lrNo || '').toLowerCase()),
       };
-    });
+    }).sort((a, b) => compareDescendingDocNo(a.inwardNo, b.inwardNo, a.date, b.date, a.id, b.id));
   }, [inwards, inwardItems]);
 
   // Matched Inward Receipts for Master Search
@@ -464,7 +470,7 @@ export const Dashboard = () => {
         totalFreight,
         itemLrs: items.map((i) => String(i.lrNo || '').toLowerCase()),
       };
-    });
+    }).sort((a, b) => compareDescendingDocNo(a.outwardNo, b.outwardNo, a.date, b.date, a.id, b.id));
   }, [outwards, outwardItems]);
 
   // Matched Outward & Stock-Out Receipts for Master Search

@@ -6,7 +6,7 @@ import { DataTable } from '../../components/common/DataTable';
 import { Modal } from '../../components/common/Modal';
 import { StatusBadge } from '../../components/common/StatusBadge';
 import { formatDate } from '../../utils/dateUtils';
-import { formatCurrency } from '../../utils/numberUtils';
+import { formatCurrency, compareDescendingDocNo } from '../../utils/numberUtils';
 import { exportToExcel, exportToPDF, printRecordDetails } from '../../services/exportService';
 
 export const PendingStock = () => {
@@ -34,7 +34,7 @@ export const PendingStock = () => {
         ...item,
         transporterName: parentInw?.transporterName || item.transporterName || '-',
       };
-    });
+    }).sort((a, b) => compareDescendingDocNo(a.inwardNo, b.inwardNo, a.date || a.inwardDate, b.date || b.inwardDate, a.id, b.id));
   }, [pendingStock, inwards]);
 
   // Modal states for view, edit & delete

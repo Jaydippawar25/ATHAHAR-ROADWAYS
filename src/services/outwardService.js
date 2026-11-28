@@ -1,5 +1,6 @@
 import { getStoredItem, setStoredItem, STORAGE_KEYS, seedInitialData } from './mockStorage';
 import { STATUS } from '../utils/constants';
+import { compareDescendingDocNo } from '../utils/numberUtils';
 
 seedInitialData();
 
@@ -262,6 +263,10 @@ export const getAllOutwards = () => {
   }
 
   const finalizedList = Array.from(seenMap.values());
+  // Strictly enforce natural numeric descending order (e.g. OUT-199 > OUT-179 > OUT-03, STOCK-OUT-24 > STOCK-OUT-01)
+  finalizedList.sort((a, b) =>
+    compareDescendingDocNo(a.outwardNo, b.outwardNo, a.date, b.date, a.id, b.id)
+  );
   if (hasDuplicates) {
     setStoredItem(STORAGE_KEYS.OUTWARDS, finalizedList);
   }
@@ -712,7 +717,10 @@ export const createOutward = (headerData, selectedPendingItems, currentUser = 'O
     setStoredItem(STORAGE_KEYS.INWARDS, inwards);
   }
 
-  outwards.unshift(newOutwardHeader);
+  outwards.push(newOutwardHeader);
+  outwards.sort((a, b) =>
+    compareDescendingDocNo(a.outwardNo, b.outwardNo, a.date, b.date, a.id, b.id)
+  );
   const updatedOutwardItems = [...newOutwardItemsList, ...outwardItems];
 
   clearOutwardCaches();
@@ -857,6 +865,8 @@ export const updateOutwardHeader = (outwardId, updatedFields) => {
     out.id === targetId || (targetNoLower && String(out.outwardNo || '').trim().toLowerCase() === targetNoLower)
       ? { ...out, ...updatedFields }
       : out
+  ).sort((a, b) =>
+    compareDescendingDocNo(a.outwardNo, b.outwardNo, a.date, b.date, a.id, b.id)
   );
 
   outwardItems = outwardItems.map((item) => {
@@ -1122,7 +1132,9 @@ export const updateFullOutward = (outwardId, headerData, selectedPendingItems, c
     return true;
   });
 
-  outwards = [updatedHeaderFields, ...cleanRemainingOutwards];
+  outwards = [updatedHeaderFields, ...cleanRemainingOutwards].sort((a, b) =>
+    compareDescendingDocNo(a.outwardNo, b.outwardNo, a.date, b.date, a.id, b.id)
+  );
 
   const newOutwardItemsList = selectedPendingItems.map((item, index) => {
     const matchedOld =

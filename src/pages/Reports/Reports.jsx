@@ -6,7 +6,7 @@ import { Modal } from '../../components/common/Modal';
 import { StatusBadge } from '../../components/common/StatusBadge';
 import { exportToExcel, exportToPDF, printRecordDetails } from '../../services/exportService';
 import { formatDate } from '../../utils/dateUtils';
-import { formatCurrency } from '../../utils/numberUtils';
+import { formatCurrency, compareDescendingDocNo, parseNumericCode } from '../../utils/numberUtils';
 
 export const Reports = () => {
   const { inwards, inwardItems, pendingStock, outwardItems } = useApp();
@@ -126,6 +126,12 @@ export const Reports = () => {
       ...item,
       memoNo: item.memoNo || matchingInwItem?.memoNo || parentInw?.memoNo || '-',
     };
+  }).sort((a, b) => {
+    const docA = a.inwardNo && a.inwardNo !== '-' ? a.inwardNo : (a.outwardNo && a.outwardNo !== '-' ? a.outwardNo : '');
+    const docB = b.inwardNo && b.inwardNo !== '-' ? b.inwardNo : (b.outwardNo && b.outwardNo !== '-' ? b.outwardNo : '');
+    const cmp = compareDescendingDocNo(docA, docB, a.inwardDate || a.date, b.inwardDate || b.date, a.id, b.id);
+    if (cmp !== 0) return cmp;
+    return parseNumericCode(b.lrNo) - parseNumericCode(a.lrNo);
   });
 
   const totalRecords = currentData.length;

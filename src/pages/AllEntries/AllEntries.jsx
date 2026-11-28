@@ -20,7 +20,7 @@ import { Modal } from '../../components/common/Modal';
 import { StatusBadge } from '../../components/common/StatusBadge';
 import { exportToExcel, exportToPDF, printRecordDetails } from '../../services/exportService';
 import { formatDate } from '../../utils/dateUtils';
-import { formatCurrency } from '../../utils/numberUtils';
+import { formatCurrency, compareDescendingDocNo, parseNumericCode } from '../../utils/numberUtils';
 
 export const AllEntries = () => {
   const location = useLocation();
@@ -323,7 +323,7 @@ export const AllEntries = () => {
         totalTbb: items.length > 0 ? items.reduce((acc, curr) => acc + (Number(curr.tbbAmount) || 0), 0) : inw.totalTbb,
         totalPaid: items.length > 0 ? items.reduce((acc, curr) => acc + (Number(curr.paidAmount) || 0), 0) : inw.totalPaid,
       };
-    });
+    }).sort((a, b) => compareDescendingDocNo(a.inwardNo, b.inwardNo, a.date, b.date, a.id, b.id));
   }, [inwards, itemsByInward]);
 
   // Fast grouped map of outward items for instant O(1) enrichment without array scan freezes
@@ -431,8 +431,10 @@ export const AllEntries = () => {
     };
 
     return {
-      enrichedOutwards: deduplicateOutwardHeaders(allEnriched.filter((out) => !isStockOutRecord(out))),
-      enrichedStockOuts: deduplicateOutwardHeaders(allEnriched.filter((out) => isStockOutRecord(out))),
+      enrichedOutwards: deduplicateOutwardHeaders(allEnriched.filter((out) => !isStockOutRecord(out)))
+        .sort((a, b) => compareDescendingDocNo(a.outwardNo, b.outwardNo, a.date, b.date, a.id, b.id)),
+      enrichedStockOuts: deduplicateOutwardHeaders(allEnriched.filter((out) => isStockOutRecord(out)))
+        .sort((a, b) => compareDescendingDocNo(a.outwardNo, b.outwardNo, a.date, b.date, a.id, b.id)),
     };
   }, [outwards, itemsByOutward]);
 
@@ -632,7 +634,13 @@ export const AllEntries = () => {
       }
     });
 
-    return Array.from(allLREntriesMap.values());
+    return Array.from(allLREntriesMap.values()).sort((a, b) => {
+      const docA = a.inwardNo && a.inwardNo !== '-' ? a.inwardNo : (a.outwardNo && a.outwardNo !== '-' ? a.outwardNo : '');
+      const docB = b.inwardNo && b.inwardNo !== '-' ? b.inwardNo : (b.outwardNo && b.outwardNo !== '-' ? b.outwardNo : '');
+      const docCmp = compareDescendingDocNo(docA, docB, a.inwardDate || a.date, b.inwardDate || b.date, a.id, b.id);
+      if (docCmp !== 0) return docCmp;
+      return parseNumericCode(b.lrNo) - parseNumericCode(a.lrNo);
+    });
   }, [inwards, inwardItems, outwards, outwardItems]);
 
   // Statistics
