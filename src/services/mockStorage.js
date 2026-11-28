@@ -16,6 +16,13 @@ export const STORAGE_KEYS = {
 // Internal flag to prevent echo loops when remote updates arrive
 let isApplyingRemoteUpdate = false;
 
+// High-speed In-Memory Cache to eliminate synchronous localStorage disk I/O and JSON parse freezes
+const memoryCache = new Map();
+// Tracking client write tokens to ignore self-echoes from Firestore onSnapshot
+const lastLocalWriteIds = new Map();
+// Debounce timers per collection to prevent network and thread saturation
+const syncDebounceTimers = new Map();
+
 /**
  * Canonical Domain Deduplication:
  * Guarantees that no duplicate records can ever be written or kept in localStorage or Firestore.
@@ -98,23 +105,29 @@ export const getCanonicalKeyForCollection = (key, item) => {
 };
 
 /**
- * Read item from localStorage with fallback default
+ * Read item from memory cache or localStorage with fallback default
  */
 export const getStoredItem = (key, defaultVal = []) => {
+  if (memoryCache.has(key)) {
+    return memoryCache.get(key);
+  }
   try {
     const item = localStorage.getItem(key);
-    return item ? JSON.parse(item) : defaultVal;
+    const parsed = item ? JSON.parse(item) : defaultVal;
+    memoryCache.set(key, parsed);
+    return parsed;
   } catch (e) {
     return defaultVal;
   }
 };
 
 /**
- * Write item to localStorage ONLY without pushing to Firestore.
+ * Write item to memory cache AND localStorage without pushing to Firestore.
  * Used during cloud hydration and remote onSnapshot updates.
  */
 export const setStoredItemLocalOnly = (key, val) => {
   const cleanVal = Array.isArray(val) ? deduplicateCollection(key, val) : val;
+  memoryCache.set(key, cleanVal);
   try {
     localStorage.setItem(key, JSON.stringify(cleanVal));
   } catch (e) {
@@ -123,21 +136,29 @@ export const setStoredItemLocalOnly = (key, val) => {
 };
 
 /**
- * Write item to localStorage AND trigger sync to Cloud Firestore
+ * Write item to memory cache, localStorage AND trigger debounced sync to Cloud Firestore
  */
 export const setStoredItem = (key, val) => {
   const cleanVal = Array.isArray(val) ? deduplicateCollection(key, val) : val;
+  memoryCache.set(key, cleanVal);
   try {
     localStorage.setItem(key, JSON.stringify(cleanVal));
   } catch (e) {
     console.error(`Local storage write error for ${key}:`, e);
   }
 
-  // Only trigger Firestore sync if not actively applying a remote Firestore snapshot
+  // Debounce Firestore sync so rapid typing/row addition doesn't fire concurrent chunk storms
   if (!isApplyingRemoteUpdate) {
-    syncToFirestore(key, cleanVal).catch((err) =>
-      console.warn(`[Firestore Sync Warning] Unable to sync "${key}":`, err?.message || err)
-    );
+    if (syncDebounceTimers.has(key)) {
+      clearTimeout(syncDebounceTimers.get(key));
+    }
+    const timer = setTimeout(() => {
+      syncDebounceTimers.delete(key);
+      syncToFirestore(key, cleanVal).catch((err) =>
+        console.warn(`[Firestore Sync Warning] Unable to sync "${key}":`, err?.message || err)
+      );
+    }, 250);
+    syncDebounceTimers.set(key, timer);
   }
 };
 
@@ -153,6 +174,9 @@ export const syncToFirestore = async (key, val) => {
   }
 
   try {
+    const writeId = `w_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+    lastLocalWriteIds.set(key, writeId);
+
     const isLargeArray = Array.isArray(val) && val.length > CHUNK_SIZE;
 
     if (isLargeArray) {
@@ -172,13 +196,14 @@ export const syncToFirestore = async (key, val) => {
       }
       await Promise.all(chunkPromises);
 
-      // Primary doc holds metadata pointing to chunks
+      // Primary doc holds metadata pointing to chunks + client writeId
       const docRef = doc(db, 'app_data', key);
       await setDoc(docRef, {
         chunked: true,
         chunkCount,
         totalCount: val.length,
         updatedAt: new Date().toISOString(),
+        writeId,
       });
     } else {
       // Small arrays or objects fit comfortably in primary doc
@@ -189,31 +214,36 @@ export const syncToFirestore = async (key, val) => {
           chunked: false,
           data: val,
           updatedAt: new Date().toISOString(),
+          writeId,
         },
         { merge: true }
       );
     }
 
-    // 2. Granular document-level write for recent items only (avoiding heavy 1000+ sequential network calls)
+    // 2. Granular document-level write for recent items only (asynchronous batch without thread blocking)
     if (Array.isArray(val)) {
       const recentItems = val.slice(0, 30);
+      const batchWrites = [];
       for (let index = 0; index < recentItems.length; index++) {
         const item = recentItems[index];
         if (item && (item.id || item.lrNo)) {
           const itemDocId = String(item.id || item.lrNo || index);
-          setDoc(
-            doc(db, key, itemDocId),
-            { ...item, updatedAt: new Date().toISOString() },
-            { merge: true }
-          ).catch(() => {});
+          batchWrites.push(
+            setDoc(
+              doc(db, key, itemDocId),
+              { ...item, updatedAt: new Date().toISOString() },
+              { merge: true }
+            ).catch(() => {})
+          );
         }
       }
+      Promise.all(batchWrites).catch(() => {});
     } else if (typeof val === 'object' && val !== null) {
-      await setDoc(
+      setDoc(
         doc(db, key, 'current'),
         { ...val, updatedAt: new Date().toISOString() },
         { merge: true }
-      );
+      ).catch(() => {});
     }
   } catch (err) {
     console.warn(`[Firestore Sync Error] Collection "${key}":`, err?.message || err);
@@ -423,7 +453,8 @@ export const safeInitializeData = async () => {
 export const clearAllDatabaseData = async () => {
   isApplyingRemoteUpdate = true;
   try {
-    // 1. Clear local storage keys
+    // 1. Clear local storage keys & memory cache
+    memoryCache.clear();
     Object.values(STORAGE_KEYS).forEach((k) => {
       try {
         localStorage.removeItem(k);
@@ -513,12 +544,19 @@ export const subscribeToFirestore = (onKeyChange) => {
           // Ignore local pending writes to avoid race conditions or clobbering optimistic UI state
           if (snap.metadata.hasPendingWrites) return;
 
-          let remoteData = snap.data()?.data;
-          if (snap.data()?.chunked && snap.data()?.chunkCount) {
+          const snapData = snap.data();
+          // Echo Cancellation: If this snapshot matches our own writeId, ignore it!
+          // We already have this data locally; re-fetching chunks would cause an unneeded 12-chunk download and freeze.
+          if (snapData?.writeId && lastLocalWriteIds.get(key) === snapData.writeId) {
+            return;
+          }
+
+          let remoteData = snapData?.data;
+          if (snapData?.chunked && snapData?.chunkCount) {
             // Reassemble chunks
             try {
               const chunkPromises = [];
-              for (let i = 0; i < snap.data().chunkCount; i++) {
+              for (let i = 0; i < snapData.chunkCount; i++) {
                 chunkPromises.push(getDoc(doc(db, 'app_data', `${key}_chunk_${i}`)));
               }
               const chunkSnaps = await Promise.all(chunkPromises);
@@ -538,12 +576,12 @@ export const subscribeToFirestore = (onKeyChange) => {
           if (remoteData === undefined || remoteData === null) return;
 
           // Compare with current local storage to avoid redundant re-renders
-          const localStr = localStorage.getItem(key);
+          const localData = getStoredItem(key, null);
+          const localStr = JSON.stringify(localData);
           const remoteStr = JSON.stringify(remoteData);
 
           if (localStr !== remoteStr) {
             // If local storage currently has items not yet in incoming remote, do not blindly overwrite!
-            const localData = getStoredItem(key, null);
             if (Array.isArray(localData) && Array.isArray(remoteData)) {
               const cloudKeys = new Set(remoteData.map((i) => getCanonicalKeyForCollection(key, i)).filter(Boolean));
               const cloudIds = new Set(remoteData.map((i) => i && i.id).filter(Boolean));
@@ -557,9 +595,8 @@ export const subscribeToFirestore = (onKeyChange) => {
               });
 
               if (localOnlyItems.length > 0) {
-                // Keep local items intact
+                // Keep local items intact, but NEVER trigger recursive syncToFirestore here
                 remoteData = deduplicateCollection(key, [...localOnlyItems, ...remoteData]);
-                syncToFirestore(key, remoteData).catch(console.warn);
               } else {
                 remoteData = deduplicateCollection(key, remoteData);
               }

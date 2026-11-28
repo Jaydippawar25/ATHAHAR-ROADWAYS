@@ -115,6 +115,9 @@ export const Dashboard = () => {
   // Unified Master List of ALL LR Entries across Inward, Godown Pending Stock, Outward & Cross Stock-Out
   const combinedLREntries = useMemo(() => {
     const allLREntriesMap = new Map();
+    // High-speed indices to eliminate 5-million-iteration nested loops
+    const inwardKeysByLR = new Map();
+    const inwardKeysById = new Map();
 
     // 1. Inward Items
     (inwardItems || []).forEach((item, index) => {
@@ -148,6 +151,13 @@ export const Dashboard = () => {
         status: item.status || 'PENDING',
         recordCategory: 'inward_item',
       });
+
+      if (item.id) inwardKeysById.set(String(item.id), itemKey);
+      const cleanLR = String(item.lrNo ?? '').trim().toLowerCase();
+      if (cleanLR) {
+        if (!inwardKeysByLR.has(cleanLR)) inwardKeysByLR.set(cleanLR, []);
+        inwardKeysByLR.get(cleanLR).push(itemKey);
+      }
     });
 
     // 2. Outward Items (both standard godown dispatches and cross stock-out)
@@ -207,42 +217,33 @@ export const Dashboard = () => {
         });
       } else {
         // Standard Outward delivered from Godown pending stock
-        // STRICT MATCHING: An outward item only matches an inward item if:
-        // 1. item.inwardItemId explicitly matches val.id (relational link)
-        // 2. OR val already records this exact outward dispatch (outwardNo + lrNo)
-        // 3. OR val is already marked DELIVERED with matching transporter/LR (with NO outwardNo conflict)
-        // NEVER match a PENDING inward item! A pending inward item is still in godown, so it must stay as a distinct pending row!
-        const inwKey = Array.from(allLREntriesMap.keys()).find((k) => {
-          const val = allLREntriesMap.get(k);
-          if (val.recordCategory !== 'inward_item') return false;
+        // Instant O(1) indexed lookup instead of 5-million nested scan
+        let inwKey = null;
+        if (item.inwardItemId && inwardKeysById.has(String(item.inwardItemId))) {
+          inwKey = inwardKeysById.get(String(item.inwardItemId));
+        } else {
+          const cleanLR = String(item.lrNo ?? '').trim().toLowerCase();
+          const candidateKeys = inwardKeysByLR.get(cleanLR) || [];
+          for (const k of candidateKeys) {
+            const val = allLREntriesMap.get(k);
+            if (!val || val.recordCategory !== 'inward_item') continue;
 
-          const lrMatch = String(val.lrNo ?? '').trim().toLowerCase() === String(item.lrNo ?? '').trim().toLowerCase();
-          const outMatch = val.outwardNo && item.outwardNo &&
-            String(val.outwardNo).trim().toLowerCase() === String(item.outwardNo).trim().toLowerCase();
-          const inwIdMatch = item.inwardItemId && (val.id === item.inwardItemId || k === item.inwardItemId);
+            const outMatch = val.outwardNo && item.outwardNo &&
+              String(val.outwardNo).trim().toLowerCase() === String(item.outwardNo).trim().toLowerCase();
+            if (outMatch) { inwKey = k; break; }
 
-          // 1. Explicit ID link
-          if (inwIdMatch) return true;
+            const hasDifferentOutwardNo = val.outwardNo && item.outwardNo &&
+              val.outwardNo !== '-' && item.outwardNo !== '-' &&
+              String(val.outwardNo).trim().toLowerCase() !== String(item.outwardNo).trim().toLowerCase();
+            if (hasDifferentOutwardNo) continue;
 
-          // 2. Both belong to the SAME outward dispatch and share the same LR
-          if (outMatch && lrMatch) return true;
-
-          // 3. If inward item already belongs to a DIFFERENT outward dispatch, they NEVER match!
-          const hasDifferentOutwardNo = val.outwardNo && item.outwardNo &&
-            val.outwardNo !== '-' && item.outwardNo !== '-' &&
-            String(val.outwardNo).trim().toLowerCase() !== String(item.outwardNo).trim().toLowerCase();
-          if (hasDifferentOutwardNo) return false;
-
-          // 4. If inward item is already marked DELIVERED without an assigned outwardNo, and matches LR + transporter
-          if (val.status === 'DELIVERED' && (!val.outwardNo || val.outwardNo === '-') && lrMatch) {
-            const transMatch = !item.transporterName || !val.transporterName ||
-              String(item.transporterName).trim().toLowerCase() === String(val.transporterName).trim().toLowerCase();
-            if (transMatch) return true;
+            if (val.status === 'DELIVERED' && (!val.outwardNo || val.outwardNo === '-')) {
+              const transMatch = !item.transporterName || !val.transporterName ||
+                String(item.transporterName).trim().toLowerCase() === String(val.transporterName).trim().toLowerCase();
+              if (transMatch) { inwKey = k; break; }
+            }
           }
-
-          // If the inward item is PENDING or from another dispatch, NEVER match it to an outward item!
-          return false;
-        });
+        }
 
         if (inwKey) {
           const existing = allLREntriesMap.get(inwKey);

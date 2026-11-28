@@ -29,9 +29,16 @@ export const getNextInwardNo = (inwardsList) => {
   return `INW-${String(nextNum).padStart(2, '0')}`;
 };
 
+let cachedInwardItems = null;
+let lastRawInwardItemsRef = null;
+
 export const getAllInwardItems = () => {
   const rawList = getStoredItem(STORAGE_KEYS.INWARD_ITEMS, []);
   if (!Array.isArray(rawList)) return [];
+
+  if (cachedInwardItems && rawList === lastRawInwardItemsRef) {
+    return cachedInwardItems;
+  }
 
   const seenMap = new Map();
   let hasDuplicates = false;
@@ -78,11 +85,20 @@ export const getAllInwardItems = () => {
   if (hasDuplicates && deduplicated.length !== rawList.length) {
     setStoredItemLocalOnly(STORAGE_KEYS.INWARD_ITEMS, deduplicated);
   }
+  cachedInwardItems = deduplicated;
+  lastRawInwardItemsRef = deduplicated;
   return deduplicated;
 };
 
+let cachedPendingStock = null;
+let lastInwardItemsForPendingRef = null;
+
 export const getPendingStockItems = () => {
   const items = getAllInwardItems();
+  if (cachedPendingStock && items === lastInwardItemsForPendingRef) {
+    return cachedPendingStock;
+  }
+
   const seenMap = new Map();
 
   for (const item of items) {
@@ -106,7 +122,10 @@ export const getPendingStockItems = () => {
     }
   }
 
-  return Array.from(seenMap.values());
+  const pendingList = Array.from(seenMap.values());
+  cachedPendingStock = pendingList;
+  lastInwardItemsForPendingRef = items;
+  return pendingList;
 };
 
 /**

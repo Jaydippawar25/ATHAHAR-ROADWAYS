@@ -16,6 +16,7 @@ export const InwardCreate = () => {
   const {
     masters,
     inwards,
+    pendingStock,
     handleCreateInward,
     handleUpdateFullInward,
     handleAddMaster,
@@ -25,6 +26,22 @@ export const InwardCreate = () => {
 
   const editInwardData = location.state?.editInward || null;
   const editingInwardId = editInwardData?.id || null;
+
+  // Real-Time Draft Protection Key
+  const DRAFT_KEY = 'athahar_inward_auto_draft';
+  const [draftPrompt, setDraftPrompt] = useState(null);
+
+  // In-memory index of pending stock for instant O(1) duplicate checks (no disk/JSON parse freeze)
+  const pendingByLR = React.useMemo(() => {
+    const map = new Map();
+    (pendingStock || []).forEach((item) => {
+      const lr = String(item.lrNo ?? '').trim().toLowerCase();
+      if (!lr) return;
+      if (!map.has(lr)) map.set(lr, []);
+      map.get(lr).push(item);
+    });
+    return map;
+  }, [pendingStock]);
 
   // HEADER DETAILS (Transporter, Vehicle, Driver, Memo, From Station, Owner)
   const [headerData, setHeaderData] = useState({
@@ -153,6 +170,37 @@ export const InwardCreate = () => {
       });
     }
   }, [inwards, editingInwardId, editInwardData]);
+
+  // Check for unsaved draft on mount to recover from page crashes or freezes
+  useEffect(() => {
+    if (editingInwardId || editInwardData) return;
+    try {
+      const savedDraft = localStorage.getItem(DRAFT_KEY);
+      if (savedDraft) {
+        const parsed = JSON.parse(savedDraft);
+        if (parsed && Array.isArray(parsed.stagedItems) && parsed.stagedItems.length > 0) {
+          setDraftPrompt(parsed);
+        }
+      }
+    } catch (e) {}
+  }, [editingInwardId, editInwardData]);
+
+  // Real-time auto-save whenever stagedItems or headerData changes
+  useEffect(() => {
+    if (editingInwardId || editInwardData) return;
+    if (stagedItems.length > 0 || headerData.memoNo || headerData.vehicleNo) {
+      try {
+        localStorage.setItem(
+          DRAFT_KEY,
+          JSON.stringify({
+            headerData,
+            stagedItems,
+            savedAt: new Date().toISOString(),
+          })
+        );
+      } catch (e) {}
+    }
+  }, [stagedItems, headerData, editingInwardId, editInwardData]);
 
   const handleKeyDown = (e, index) => {
     if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
@@ -405,15 +453,41 @@ export const InwardCreate = () => {
   };
 
   // Check if current LR being typed already exists in Godown Pending Stock for this transporter
+  // High-speed in-memory check without synchronous localStorage disk reads or JSON stringification
   const currentPendingDuplicate = React.useMemo(() => {
-    const clean = String(itemForm?.lrNo ?? '').trim();
-    if (!clean) return null;
-    return getDuplicatePendingLRDetails(
-      clean,
-      headerData.transporterName,
-      editingInwardId || editInwardData?.id || editInwardData?.inwardNo
-    );
-  }, [itemForm?.lrNo, headerData.transporterName, editingInwardId, editInwardData]);
+    const clean = String(itemForm?.lrNo ?? '').trim().toLowerCase();
+    if (!clean || !pendingByLR.has(clean)) return null;
+
+    const candidates = pendingByLR.get(clean) || [];
+    const excludeId = editingInwardId || editInwardData?.id || editInwardData?.inwardNo;
+    const targetTrans = String(headerData.transporterName || '').trim().toLowerCase();
+
+    const matched = candidates.find((item) => {
+      if (excludeId && (item.inwardId === excludeId || item.id === excludeId)) return false;
+      if (targetTrans) {
+        const itemTrans = String(item.transporterName || '').trim().toLowerCase();
+        if (itemTrans && itemTrans !== targetTrans) return false;
+      }
+      return true;
+    });
+
+    if (!matched) return null;
+    return {
+      id: matched.id,
+      lrNo: matched.lrNo,
+      inwardNo: matched.inwardNo || '-',
+      date: matched.inwardDate || matched.date || '-',
+      transporterName: matched.transporterName || headerData.transporterName || '-',
+      vehicleNo: matched.vehicleNo || '-',
+      pkg: matched.pkg || 0,
+      consignorName: matched.consignorName || '-',
+      consigneeName: matched.consigneeName || '-',
+      ctTo: matched.ctTo || '-',
+      toPayAmount: Number(matched.toPayAmount) || 0,
+      tbbAmount: Number(matched.tbbAmount) || 0,
+      paidAmount: Number(matched.paidAmount) || 0,
+    };
+  }, [itemForm?.lrNo, pendingByLR, headerData.transporterName, editingInwardId, editInwardData]);
 
   // Aggregate Totals across staged items (plus active form if filled)
   const currentLrNo = String(itemForm?.lrNo ?? '').trim();
@@ -562,6 +636,12 @@ export const InwardCreate = () => {
         setSuccess(`Inward Receipt #${headerData.inwardNo} saved successfully!`);
       }
 
+      // Clear draft upon successful database save
+      try {
+        localStorage.removeItem(DRAFT_KEY);
+        setDraftPrompt(null);
+      } catch (e) {}
+
       if (shouldPrint) {
         printRecordDetails({
           title: `Inward Receipt Details #${headerData.inwardNo}`,
@@ -637,6 +717,46 @@ export const InwardCreate = () => {
           </div>
         </div>
       </div>
+
+      {draftPrompt && (
+        <div className="p-4 bg-amber-50 border-2 border-amber-400 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-md animate-in fade-in">
+          <div className="flex items-center space-x-3 text-amber-900">
+            <AlertTriangle className="w-6 h-6 text-amber-600 flex-shrink-0" />
+            <div>
+              <p className="font-bold text-sm">
+                Unsaved Draft Found for Inward ({draftPrompt.stagedItems?.length} LR items saved at{' '}
+                {new Date(draftPrompt.savedAt).toLocaleTimeString()})
+              </p>
+              <p className="text-xs text-amber-700">
+                Recover your previously typed entries before the browser closed or refreshed.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center space-x-2 w-full sm:w-auto">
+            <button
+              type="button"
+              onClick={() => {
+                if (draftPrompt.headerData) setHeaderData(draftPrompt.headerData);
+                if (draftPrompt.stagedItems) setStagedItems(draftPrompt.stagedItems);
+                setDraftPrompt(null);
+              }}
+              className="px-4 py-2 bg-amber-600 hover:bg-amber-700 active:bg-amber-800 text-white rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer"
+            >
+              Restore Draft ({draftPrompt.stagedItems?.length} Items)
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                localStorage.removeItem(DRAFT_KEY);
+                setDraftPrompt(null);
+              }}
+              className="px-3 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl text-xs font-semibold transition-all cursor-pointer"
+            >
+              Discard
+            </button>
+          </div>
+        </div>
+      )}
 
       {error && (
         <div className="p-3.5 bg-rose-50 border border-rose-200 text-rose-700 rounded-2xl text-xs font-semibold flex items-center space-x-2 shadow-2xs">
