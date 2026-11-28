@@ -3,9 +3,56 @@ import { STATUS } from '../utils/constants';
 
 seedInitialData();
 
+let cachedOutwards = null;
+let lastRawOutwardsRef = null;
+let lastInwardItemsRef = null;
+let lastExistingOutItemsRef = null;
+
 export const getAllOutwards = () => {
   const rawList = getStoredItem(STORAGE_KEYS.OUTWARDS, []);
   if (!Array.isArray(rawList)) return [];
+
+  const inwardItems = getStoredItem(STORAGE_KEYS.INWARD_ITEMS, []);
+  const existingOutItems = getStoredItem(STORAGE_KEYS.OUTWARD_ITEMS, []);
+
+  if (
+    cachedOutwards &&
+    rawList === lastRawOutwardsRef &&
+    inwardItems === lastInwardItemsRef &&
+    existingOutItems === lastExistingOutItemsRef
+  ) {
+    return cachedOutwards;
+  }
+
+  // Pre-index existingOutItems and inwardItems for O(1) lightning lookups
+  const outItemsByOutwardNo = new Map();
+  const outItemsByOutwardId = new Map();
+  if (Array.isArray(existingOutItems)) {
+    for (const o of existingOutItems) {
+      if (!o) continue;
+      const k = String(o.outwardNo || '').trim().toLowerCase();
+      if (k) {
+        if (!outItemsByOutwardNo.has(k)) outItemsByOutwardNo.set(k, []);
+        outItemsByOutwardNo.get(k).push(o);
+      }
+      if (o.outwardId) {
+        if (!outItemsByOutwardId.has(o.outwardId)) outItemsByOutwardId.set(o.outwardId, []);
+        outItemsByOutwardId.get(o.outwardId).push(o);
+      }
+    }
+  }
+
+  const inwItemsByOutwardNo = new Map();
+  if (Array.isArray(inwardItems)) {
+    for (const i of inwardItems) {
+      if (!i) continue;
+      const k = String(i.outwardNo || '').trim().toLowerCase();
+      if (k) {
+        if (!inwItemsByOutwardNo.has(k)) inwItemsByOutwardNo.set(k, []);
+        inwItemsByOutwardNo.get(k).push(i);
+      }
+    }
+  }
 
   // Deduplicate by normalized outwardNo to eliminate any duplicate entries in storage
   const seenMap = new Map();
@@ -40,7 +87,6 @@ export const getAllOutwards = () => {
   }
 
   // Self-healing: Check inwardItems for any delivered items whose outward header is missing from outwards
-  const inwardItems = getStoredItem(STORAGE_KEYS.INWARD_ITEMS, []);
   if (Array.isArray(inwardItems)) {
     const missingByNo = new Map();
     for (const inwItem of inwardItems) {
@@ -54,7 +100,6 @@ export const getAllOutwards = () => {
     }
 
     if (missingByNo.size > 0) {
-      const existingOutItems = getStoredItem(STORAGE_KEYS.OUTWARD_ITEMS, []);
       for (const [key, group] of missingByNo.entries()) {
         const first = group[0];
         const outNo = first.outwardNo;
@@ -65,9 +110,7 @@ export const getAllOutwards = () => {
         const consignorName = Array.from(new Set(group.map((i) => i.consignorName).filter(Boolean))).join(', ');
         const consigneeName = Array.from(new Set(group.map((i) => i.consigneeName).filter(Boolean))).join(', ');
 
-        const matchedOutItem = existingOutItems.find(
-          (o) => String(o.outwardNo || '').trim().toLowerCase() === key
-        );
+        const matchedOutItem = (outItemsByOutwardNo.get(key) || [])[0];
         const vehicleNo =
           matchedOutItem?.outwardVehicleNo ||
           matchedOutItem?.vehicleNo ||
@@ -123,20 +166,15 @@ export const getAllOutwards = () => {
     }
   }
 
-  const deduplicated = Array.from(seenMap.values());
-
   // Reconcile and standardize outward fields across all existing/previous outward headers
-  const existingOutItems = getStoredItem(STORAGE_KEYS.OUTWARD_ITEMS, []);
   for (const [key, item] of seenMap.entries()) {
     const isCross = item.isCrossOutward || String(item.outwardNo || '').toUpperCase().startsWith('STOCK-OUT');
     if (isCross) continue;
 
-    const matchedOutItems = (existingOutItems || []).filter(
-      (o) => String(o.outwardNo || '').trim().toLowerCase() === key || o.outwardId === item.id
-    );
-    const matchedInwItems = (inwardItems || []).filter(
-      (i) => String(i.outwardNo || '').trim().toLowerCase() === key
-    );
+    const matchedOutByNo = outItemsByOutwardNo.get(key) || [];
+    const matchedOutById = item.id ? (outItemsByOutwardId.get(item.id) || []) : [];
+    const matchedOutItems = matchedOutById.length > 0 ? matchedOutById : matchedOutByNo;
+    const matchedInwItems = inwItemsByOutwardNo.get(key) || [];
 
     const resolvedTransporter =
       item.outwardTransporterName ||
@@ -212,6 +250,10 @@ export const getAllOutwards = () => {
   if (hasDuplicates) {
     setStoredItem(STORAGE_KEYS.OUTWARDS, finalizedList);
   }
+  cachedOutwards = finalizedList;
+  lastRawOutwardsRef = rawList;
+  lastInwardItemsRef = inwardItems;
+  lastExistingOutItemsRef = existingOutItems;
   return finalizedList;
 };
 
@@ -269,10 +311,37 @@ export const getNextCrossOutwardNo = (outwardsList) => {
   return `STOCK-OUT-${String(nextNum).padStart(2, '0')}`;
 };
 
+let cachedOutwardItems = null;
+let lastRawOutwardItemsRef = null;
+let lastOutwardsRefForItems = null;
+let lastInwardItemsRefForItems = null;
+
 export const getAllOutwardItems = () => {
   const rawList = getStoredItem(STORAGE_KEYS.OUTWARD_ITEMS, []);
   if (!Array.isArray(rawList)) return [];
   const outwards = getStoredItem(STORAGE_KEYS.OUTWARDS, []);
+  const inwardItems = getStoredItem(STORAGE_KEYS.INWARD_ITEMS, []);
+
+  if (
+    cachedOutwardItems &&
+    rawList === lastRawOutwardItemsRef &&
+    outwards === lastOutwardsRefForItems &&
+    inwardItems === lastInwardItemsRefForItems
+  ) {
+    return cachedOutwardItems;
+  }
+
+  // Pre-index outwards for O(1) header lookup
+  const outwardMapByNo = new Map();
+  const outwardMapById = new Map();
+  if (Array.isArray(outwards)) {
+    for (const o of outwards) {
+      if (!o) continue;
+      if (o.id) outwardMapById.set(String(o.id), o);
+      const no = String(o.outwardNo || '').trim().toLowerCase();
+      if (no) outwardMapByNo.set(no, o);
+    }
+  }
 
   // Deduplicate items by canonical domain key: outwardNo + lrNo (or id fallback)
   const seenMap = new Map();
@@ -291,9 +360,7 @@ export const getAllOutwardItems = () => {
 
     if (!uniqueKey) continue;
 
-    const parentOut = outwards.find(
-      (o) => String(o.outwardNo || '').trim().toLowerCase() === outKey || o.id === item.outwardId
-    );
+    const parentOut = (item.outwardId && outwardMapById.get(String(item.outwardId))) || outwardMapByNo.get(outKey);
     const resolvedVehicleNo = parentOut?.vehicleNo || item.outwardVehicleNo || item.vehicleNo || '';
     const resolvedDriverName = parentOut?.driverName || item.outwardDriverName || item.driverName || '';
     const resolvedTransporter = parentOut?.transporterName || item.outwardTransporterName || item.transporterName || '';
@@ -360,7 +427,6 @@ export const getAllOutwardItems = () => {
   }
 
   // Self-healing: Check inwardItems for any delivered items whose outwardItem entry is missing
-  const inwardItems = getStoredItem(STORAGE_KEYS.INWARD_ITEMS, []);
   if (Array.isArray(inwardItems)) {
     for (const inwItem of inwardItems) {
       const outNo = String(inwItem.outwardNo || '').trim();
@@ -370,9 +436,7 @@ export const getAllOutwardItems = () => {
 
       if (seenMap.has(uniqueKey)) continue;
 
-      const parentOut = outwards.find(
-        (o) => String(o.outwardNo || '').trim().toLowerCase() === outNo.toLowerCase() || o.id === inwItem.outwardId
-      );
+      const parentOut = (inwItem.outwardId && outwardMapById.get(String(inwItem.outwardId))) || outwardMapByNo.get(outNo.toLowerCase());
 
       const reconstructedItem = {
         id: `out-item-${inwItem.id || Date.now()}`,
@@ -420,6 +484,10 @@ export const getAllOutwardItems = () => {
   if (hasDuplicates) {
     setStoredItem(STORAGE_KEYS.OUTWARD_ITEMS, deduplicated);
   }
+  cachedOutwardItems = deduplicated;
+  lastRawOutwardItemsRef = rawList;
+  lastOutwardsRefForItems = outwards;
+  lastInwardItemsRefForItems = inwardItems;
   return deduplicated;
 };
 

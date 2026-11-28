@@ -5,6 +5,8 @@
  * Prevents any data loss from browser freezes, tab reloads, power loss, or accidental navigation.
  */
 
+import { saveIDBDraft, clearIDBDraft, saveIDBVaultSnapshot } from './idbStorage';
+
 const DRAFT_KEYS = {
   inward: 'athahar_inward_auto_draft',
   cross_outward: 'athahar_cross_outward_auto_draft',
@@ -64,15 +66,20 @@ export const saveActiveDraft = (type, headerData, items) => {
   };
 
   try {
-    // 1. Save active draft
+    // 1. Save active draft to localStorage
     localStorage.setItem(key, JSON.stringify(draftPayload));
 
-    // 2. Mirror into Vault history if it has items
+    // 2. Dual-save to enterprise IndexedDB for limitless persistence
+    saveIDBDraft(type, draftPayload).catch(() => {});
+
+    // 3. Mirror into Vault history if it has items
     if (stagedItems.length > 0) {
       pushToVault(type, draftPayload);
     }
   } catch (e) {
     console.warn(`[DraftVault] Error writing active draft "${type}":`, e);
+    // If localStorage failed (e.g. quota limit), ensure IndexedDB has it!
+    saveIDBDraft(type, draftPayload).catch(() => {});
   }
 };
 
@@ -85,6 +92,7 @@ export const clearActiveDraft = (type) => {
   try {
     localStorage.removeItem(key);
   } catch (e) {}
+  clearIDBDraft(type).catch(() => {});
 };
 
 /**

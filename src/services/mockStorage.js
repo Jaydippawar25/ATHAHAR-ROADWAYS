@@ -1,6 +1,7 @@
 import { INITIAL_MASTERS } from '../utils/constants';
 import { db } from '../firebase/firebase';
 import { doc, getDoc, setDoc, deleteDoc, onSnapshot, collection, getDocs } from 'firebase/firestore';
+import { backupCollectionToIDB, getCollectionFromIDB } from './idbStorage';
 
 export const STORAGE_KEYS = {
   MASTERS: 'athahar_masters',
@@ -131,6 +132,8 @@ export const setStoredItemLocalOnly = (key, val) => {
   } catch (e) {
     console.error(`Local storage write error for ${key}:`, e);
   }
+  // Dual-tier asynchronous persistence to IndexedDB (unlimited GB-scale storage, immune to 5MB localStorage limits)
+  backupCollectionToIDB(key, cleanVal).catch(() => {});
 };
 
 /**
@@ -144,6 +147,9 @@ export const setStoredItem = (key, val) => {
   } catch (e) {
     console.error(`Local storage write error for ${key}:`, e);
   }
+
+  // Dual-tier asynchronous persistence to IndexedDB (unlimited GB-scale storage, immune to 5MB localStorage limits)
+  backupCollectionToIDB(key, cleanVal).catch(() => {});
 
   // Debounce Firestore sync so rapid typing/row addition doesn't fire concurrent chunk storms
   if (!isApplyingRemoteUpdate) {
@@ -414,7 +420,7 @@ export const safeInitializeData = async () => {
       return { success: true, source: 'firestore' };
     }
 
-    // Cloud does NOT have data yet. Check if local storage has data to upload.
+    // Cloud does NOT have data yet. Check if local storage or IndexedDB has data to upload.
     const localInwards = localStorage.getItem(STORAGE_KEYS.INWARDS);
     const localMasters = localStorage.getItem(STORAGE_KEYS.MASTERS);
 
@@ -422,6 +428,20 @@ export const safeInitializeData = async () => {
       // Push existing local data to Firestore
       await syncAllToFirestore();
       return { success: true, source: 'localStorage' };
+    }
+
+    // Check IndexedDB Enterprise Storage backup
+    const idbInwards = await getCollectionFromIDB(STORAGE_KEYS.INWARDS);
+    if (Array.isArray(idbInwards) && idbInwards.length > 0) {
+      console.log(`[Storage Init] Restoring ${idbInwards.length} Inwards from IndexedDB backup.`);
+      for (const key of Object.values(STORAGE_KEYS)) {
+        const idbData = await getCollectionFromIDB(key);
+        if (idbData !== null && idbData !== undefined) {
+          setStoredItemLocalOnly(key, idbData);
+        }
+      }
+      await syncAllToFirestore();
+      return { success: true, source: 'indexedDB' };
     }
 
     // Both Cloud and Local are empty -> Clean fresh initialization
