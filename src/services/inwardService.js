@@ -31,6 +31,19 @@ export const getNextInwardNo = (inwardsList) => {
 
 let cachedInwardItems = null;
 let lastRawInwardItemsRef = null;
+let cachedPendingStock = null;
+let lastInwardItemsForPendingRef = null;
+let cachedPendingMap = null;
+let lastPendingItemsRef = null;
+
+export const clearInwardCaches = () => {
+  cachedInwardItems = null;
+  lastRawInwardItemsRef = null;
+  cachedPendingStock = null;
+  lastInwardItemsForPendingRef = null;
+  cachedPendingMap = null;
+  lastPendingItemsRef = null;
+};
 
 export const getAllInwardItems = () => {
   const rawList = getStoredItem(STORAGE_KEYS.INWARD_ITEMS, []);
@@ -90,9 +103,6 @@ export const getAllInwardItems = () => {
   return deduplicated;
 };
 
-let cachedPendingStock = null;
-let lastInwardItemsForPendingRef = null;
-
 export const getPendingStockItems = () => {
   const items = getAllInwardItems();
   if (cachedPendingStock && items === lastInwardItemsForPendingRef) {
@@ -144,9 +154,6 @@ export const resolveItemTransporter = (item, inwardsList = null) => {
 };
 
 // High-performance in-memory index for Pending Stock to turn 30-million-iteration scans into instant O(1) lookups
-let cachedPendingMap = null;
-let lastPendingItemsRef = null;
-
 export const getPendingStockIndex = () => {
   const items = getPendingStockItems();
   if (cachedPendingMap && items === lastPendingItemsRef) {
@@ -391,6 +398,7 @@ export const createInward = (headerData, lrItems, currentUser = 'Operator', allo
   inwards.unshift(newInwardHeader);
   const updatedInwardItems = [...newItems, ...inwardItems];
 
+  clearInwardCaches();
   setStoredItem(STORAGE_KEYS.INWARDS, inwards);
   setStoredItem(STORAGE_KEYS.INWARD_ITEMS, updatedInwardItems);
 
@@ -404,6 +412,8 @@ export const deleteInward = (inwardId) => {
   inwards = inwards.filter((inv) => inv.id !== inwardId);
   inwardItems = inwardItems.filter((item) => item.inwardId !== inwardId);
 
+  clearInwardCaches();
+  clearInwardCaches();
   setStoredItem(STORAGE_KEYS.INWARDS, inwards);
   setStoredItem(STORAGE_KEYS.INWARD_ITEMS, inwardItems);
   return true;
@@ -469,6 +479,7 @@ export const updateInwardHeader = (inwardId, updatedFields) => {
     return item;
   });
 
+  clearInwardCaches();
   setStoredItem(STORAGE_KEYS.INWARDS, inwards);
   setStoredItem(STORAGE_KEYS.INWARD_ITEMS, inwardItems);
   return true;
@@ -801,6 +812,7 @@ export const updateFullInward = (inwardId, headerData, lrItems, currentUser = 'O
     }
   }
 
+  clearInwardCaches();
   setStoredItem(STORAGE_KEYS.INWARDS, inwards);
   setStoredItem(STORAGE_KEYS.INWARD_ITEMS, updatedInwardItems);
 

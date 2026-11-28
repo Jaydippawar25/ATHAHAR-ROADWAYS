@@ -21,6 +21,8 @@ let isApplyingRemoteUpdate = false;
 const memoryCache = new Map();
 // Tracking client write tokens to ignore self-echoes from Firestore onSnapshot
 const lastLocalWriteIds = new Map();
+// Tracking client write timestamps to prevent stale snapshot overwrites
+const lastLocalWriteTimes = new Map();
 // Debounce timers per collection to prevent network and thread saturation
 const syncDebounceTimers = new Map();
 
@@ -125,6 +127,7 @@ export const getStoredItem = (key, defaultVal = []) => {
  * Used during cloud hydration and remote onSnapshot updates.
  */
 export const setStoredItemLocalOnly = (key, val) => {
+  lastLocalWriteTimes.set(key, Date.now());
   const cleanVal = Array.isArray(val) ? deduplicateCollection(key, val) : val;
   memoryCache.set(key, cleanVal);
   try {
@@ -140,6 +143,7 @@ export const setStoredItemLocalOnly = (key, val) => {
  * Write item to memory cache, localStorage AND trigger debounced sync to Cloud Firestore
  */
 export const setStoredItem = (key, val) => {
+  lastLocalWriteTimes.set(key, Date.now());
   const cleanVal = Array.isArray(val) ? deduplicateCollection(key, val) : val;
   memoryCache.set(key, cleanVal);
   try {
@@ -566,6 +570,15 @@ export const subscribeToFirestore = (onKeyChange) => {
           // Echo Cancellation: If this snapshot matches our own writeId, ignore it!
           // We already have this data locally; re-fetching chunks would cause an unneeded 12-chunk download and freeze.
           if (snapData?.writeId && lastLocalWriteIds.get(key) === snapData.writeId) {
+            return;
+          }
+
+          // Guard: If a local write occurred within the last 10 seconds or is currently pending debounce,
+          // do not let a stale remote snapshot overwrite newly saved records!
+          const lastWriteTime = lastLocalWriteTimes.get(key) || 0;
+          const isRecentlyWrittenLocally = Date.now() - lastWriteTime < 10000;
+          const hasPendingDebounce = syncDebounceTimers.has(key);
+          if ((isRecentlyWrittenLocally || hasPendingDebounce) && (!snapData?.writeId || snapData.writeId !== lastLocalWriteIds.get(key))) {
             return;
           }
 

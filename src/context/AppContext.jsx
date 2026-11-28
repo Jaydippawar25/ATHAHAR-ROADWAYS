@@ -17,6 +17,7 @@ import {
   updateInwardHeader,
   updateInwardItem,
   updateFullInward,
+  clearInwardCaches,
 } from '../services/inwardService';
 import {
   getAllOutwards,
@@ -27,6 +28,7 @@ import {
   updateOutwardHeader,
   updateOutwardItem,
   updateFullOutward,
+  clearOutwardCaches,
 } from '../services/outwardService';
 import {
   getAllVouchers,
@@ -75,6 +77,7 @@ export const AppProvider = ({ children }) => {
 
   // Targeted Auto-Invalidation Functions (Eliminate blanket re-reading of unrelated modules)
   const invalidateInwardData = () => {
+    clearInwardCaches();
     setInwards(getAllInwards());
     setInwardItems(getAllInwardItems());
     setPendingStock(getPendingStockItems());
@@ -82,6 +85,7 @@ export const AppProvider = ({ children }) => {
   };
 
   const invalidateOutwardData = () => {
+    clearOutwardCaches();
     setOutwards(getAllOutwards());
     setOutwardItems(getAllOutwardItems());
     setInwardItems(getAllInwardItems());
@@ -105,6 +109,8 @@ export const AppProvider = ({ children }) => {
   };
 
   const refreshData = () => {
+    clearInwardCaches();
+    clearOutwardCaches();
     setMasters(getMasters());
     setInwards(getAllInwards());
     setInwardItems(getAllInwardItems());

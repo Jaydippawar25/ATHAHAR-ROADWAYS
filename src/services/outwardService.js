@@ -7,6 +7,21 @@ let cachedOutwards = null;
 let lastRawOutwardsRef = null;
 let lastInwardItemsRef = null;
 let lastExistingOutItemsRef = null;
+let cachedOutwardItems = null;
+let lastRawOutwardItemsRef = null;
+let lastOutwardsRefForItems = null;
+let lastInwardItemsRefForItems = null;
+
+export const clearOutwardCaches = () => {
+  cachedOutwards = null;
+  lastRawOutwardsRef = null;
+  lastInwardItemsRef = null;
+  lastExistingOutItemsRef = null;
+  cachedOutwardItems = null;
+  lastRawOutwardItemsRef = null;
+  lastOutwardsRefForItems = null;
+  lastInwardItemsRefForItems = null;
+};
 
 export const getAllOutwards = () => {
   const rawList = getStoredItem(STORAGE_KEYS.OUTWARDS, []);
@@ -310,11 +325,6 @@ export const getNextCrossOutwardNo = (outwardsList) => {
   const nextNum = serialNums.length > 0 ? Math.max(...serialNums) + 1 : 1;
   return `STOCK-OUT-${String(nextNum).padStart(2, '0')}`;
 };
-
-let cachedOutwardItems = null;
-let lastRawOutwardItemsRef = null;
-let lastOutwardsRefForItems = null;
-let lastInwardItemsRefForItems = null;
 
 export const getAllOutwardItems = () => {
   const rawList = getStoredItem(STORAGE_KEYS.OUTWARD_ITEMS, []);
@@ -705,6 +715,7 @@ export const createOutward = (headerData, selectedPendingItems, currentUser = 'O
   outwards.unshift(newOutwardHeader);
   const updatedOutwardItems = [...newOutwardItemsList, ...outwardItems];
 
+  clearOutwardCaches();
   setStoredItem(STORAGE_KEYS.OUTWARDS, outwards);
   setStoredItem(STORAGE_KEYS.OUTWARD_ITEMS, updatedOutwardItems);
 
@@ -767,6 +778,7 @@ export const deleteOutward = (outwardId) => {
     return true;
   });
 
+  clearOutwardCaches();
   setStoredItem(STORAGE_KEYS.OUTWARDS, outwards);
   setStoredItem(STORAGE_KEYS.OUTWARD_ITEMS, outwardItems);
   return true;
@@ -887,6 +899,7 @@ export const updateOutwardHeader = (outwardId, updatedFields) => {
     setStoredItem(STORAGE_KEYS.INWARD_ITEMS, inwardItems);
   }
 
+  clearOutwardCaches();
   setStoredItem(STORAGE_KEYS.OUTWARDS, outwards);
   setStoredItem(STORAGE_KEYS.OUTWARD_ITEMS, outwardItems);
   return true;
