@@ -567,7 +567,11 @@ export const CrossOutwardCreate = () => {
         }
       }, 300);
     } catch (err) {
-      setError(err.message || 'Failed to save Cross Stock-Out transaction.');
+      console.error('Error saving Cross Stock-Out:', err);
+      const msg = err.message || 'Failed to save Cross Stock-Out transaction.';
+      setError(msg);
+      alert('⚠️ Save Failed: ' + msg);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 

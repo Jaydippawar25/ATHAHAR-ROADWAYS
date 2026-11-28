@@ -288,279 +288,242 @@ export const AllEntries = () => {
     setDeleteCategory(null);
   };
 
+  // Fast grouped map of inward items for instant O(1) enrichment without array scan freezes
+  const itemsByInward = React.useMemo(() => {
+    const map = new Map();
+    for (const item of inwardItems || []) {
+      if (!item) continue;
+      const k1 = item.inwardId ? String(item.inwardId) : null;
+      const k2 = item.inwardNo ? String(item.inwardNo) : null;
+      if (k1) {
+        if (!map.has(k1)) map.set(k1, []);
+        map.get(k1).push(item);
+      }
+      if (k2 && k2 !== k1) {
+        if (!map.has(k2)) map.set(k2, []);
+        map.get(k2).push(item);
+      }
+    }
+    return map;
+  }, [inwardItems]);
+
   // Enrich inwards with consignor and consignee names and live totals derived from items
-  const enrichedInwards = inwards.map((inw) => {
-    const items = inwardItems.filter((item) => item.inwardId === inw.id || item.inwardNo === inw.inwardNo);
-    const consignors = Array.from(new Set(items.map((i) => i.consignorName).filter(Boolean))).join(', ');
-    const consignees = Array.from(new Set(items.map((i) => i.consigneeName).filter(Boolean))).join(', ');
-    return {
-      ...inw,
-      consignorName: consignors || inw.consignorName || '-',
-      consigneeName: consignees || inw.consigneeName || '-',
-      totalQty: items.length > 0 ? items.reduce((acc, curr) => acc + (Number(curr.pkg) || 0), 0) : inw.totalQty,
-      totalToPay: items.length > 0 ? items.reduce((acc, curr) => acc + (Number(curr.toPayAmount) || 0), 0) : inw.totalToPay,
-      totalTbb: items.length > 0 ? items.reduce((acc, curr) => acc + (Number(curr.tbbAmount) || 0), 0) : inw.totalTbb,
-      totalPaid: items.length > 0 ? items.reduce((acc, curr) => acc + (Number(curr.paidAmount) || 0), 0) : inw.totalPaid,
-    };
-  });
+  const enrichedInwards = React.useMemo(() => {
+    return (inwards || []).map((inw) => {
+      const items = (inw.id && itemsByInward.get(String(inw.id))) ||
+                    (inw.inwardNo && itemsByInward.get(String(inw.inwardNo))) || [];
+      const consignors = Array.from(new Set(items.map((i) => i.consignorName).filter(Boolean))).join(', ');
+      const consignees = Array.from(new Set(items.map((i) => i.consigneeName).filter(Boolean))).join(', ');
+      return {
+        ...inw,
+        consignorName: consignors || inw.consignorName || '-',
+        consigneeName: consignees || inw.consigneeName || '-',
+        totalQty: items.length > 0 ? items.reduce((acc, curr) => acc + (Number(curr.pkg) || 0), 0) : inw.totalQty,
+        totalToPay: items.length > 0 ? items.reduce((acc, curr) => acc + (Number(curr.toPayAmount) || 0), 0) : inw.totalToPay,
+        totalTbb: items.length > 0 ? items.reduce((acc, curr) => acc + (Number(curr.tbbAmount) || 0), 0) : inw.totalTbb,
+        totalPaid: items.length > 0 ? items.reduce((acc, curr) => acc + (Number(curr.paidAmount) || 0), 0) : inw.totalPaid,
+      };
+    });
+  }, [inwards, itemsByInward]);
+
+  // Fast grouped map of outward items for instant O(1) enrichment without array scan freezes
+  const itemsByOutward = React.useMemo(() => {
+    const map = new Map();
+    for (const item of outwardItems || []) {
+      if (!item) continue;
+      const k1 = item.outwardId ? String(item.outwardId) : null;
+      const k2 = item.outwardNo ? String(item.outwardNo) : null;
+      if (k1) {
+        if (!map.has(k1)) map.set(k1, []);
+        map.get(k1).push(item);
+      }
+      if (k2 && k2 !== k1) {
+        if (!map.has(k2)) map.set(k2, []);
+        map.get(k2).push(item);
+      }
+    }
+    return map;
+  }, [outwardItems]);
 
   // Enrich outwards with consignor and consignee names and live totals derived from items
-  const allEnrichedOutwards = outwards.map((out) => {
-    const items = outwardItems.filter((item) => item.outwardId === out.id || item.outwardNo === out.outwardNo);
-    const consignors = Array.from(new Set(items.map((i) => i.consignorName).filter(Boolean))).join(', ');
-    const consignees = Array.from(new Set(items.map((i) => i.consigneeName).filter(Boolean))).join(', ');
-    const resolvedTransporter =
-      out.transporterName ||
-      out.outwardTransporterName ||
-      items.find((i) => i.outwardTransporterName)?.outwardTransporterName ||
-      items.find((i) => i.transporterName)?.transporterName ||
-      '-';
-    const resolvedVehicle =
-      out.vehicleNo ||
-      out.outwardVehicleNo ||
-      items.find((i) => i.outwardVehicleNo)?.outwardVehicleNo ||
-      items.find((i) => i.vehicleNo)?.vehicleNo ||
-      '-';
-    const resolvedDriver =
-      out.driverName ||
-      out.outwardDriverName ||
-      items.find((i) => i.outwardDriverName)?.outwardDriverName ||
-      items.find((i) => i.driverName)?.driverName ||
-      '-';
-    const resolvedDelPerson =
-      out.deliveryPersonName ||
-      items.find((i) => i.deliveryPersonName && i.deliveryPersonName !== '-')?.deliveryPersonName ||
-      '-';
-    const resolvedFrom =
-      out.from ||
-      out.fromStation ||
-      out.outwardFromStation ||
-      items.find((i) => i.outwardFromStation)?.outwardFromStation ||
-      items.find((i) => i.from || i.fromStation)?.from ||
-      '-';
+  const { enrichedOutwards, enrichedStockOuts } = React.useMemo(() => {
+    const allEnriched = (outwards || []).map((out) => {
+      const items = (out.id && itemsByOutward.get(String(out.id))) ||
+                    (out.outwardNo && itemsByOutward.get(String(out.outwardNo))) || [];
+      const consignors = Array.from(new Set(items.map((i) => i.consignorName).filter(Boolean))).join(', ');
+      const consignees = Array.from(new Set(items.map((i) => i.consigneeName).filter(Boolean))).join(', ');
+      const resolvedTransporter =
+        out.transporterName ||
+        out.outwardTransporterName ||
+        items.find((i) => i.outwardTransporterName)?.outwardTransporterName ||
+        items.find((i) => i.transporterName)?.transporterName ||
+        '-';
+      const resolvedVehicle =
+        out.vehicleNo ||
+        out.outwardVehicleNo ||
+        items.find((i) => i.outwardVehicleNo)?.outwardVehicleNo ||
+        items.find((i) => i.vehicleNo)?.vehicleNo ||
+        '-';
+      const resolvedDriver =
+        out.driverName ||
+        out.outwardDriverName ||
+        items.find((i) => i.outwardDriverName)?.outwardDriverName ||
+        items.find((i) => i.driverName)?.driverName ||
+        '-';
+      const resolvedDelPerson =
+        out.deliveryPersonName ||
+        items.find((i) => i.deliveryPersonName && i.deliveryPersonName !== '-')?.deliveryPersonName ||
+        '-';
+      const resolvedFrom =
+        out.from ||
+        out.fromStation ||
+        out.outwardFromStation ||
+        items.find((i) => i.outwardFromStation)?.outwardFromStation ||
+        items.find((i) => i.from || i.fromStation)?.from ||
+        '-';
 
-    const isCross = out.isCrossOutward || String(out.outwardNo || '').toUpperCase().startsWith('STOCK-OUT');
+      const isCross = out.isCrossOutward || String(out.outwardNo || '').toUpperCase().startsWith('STOCK-OUT');
 
-    return {
-      ...out,
-      transporterName: resolvedTransporter,
-      outwardTransporterName: resolvedTransporter,
-      vehicleNo: resolvedVehicle,
-      outwardVehicleNo: resolvedVehicle,
-      driverName: resolvedDriver,
-      outwardDriverName: resolvedDriver,
-      deliveryPersonName: resolvedDelPerson,
-      from: resolvedFrom,
-      fromStation: resolvedFrom,
-      outwardFromStation: resolvedFrom,
-      toStation: out.toStation || items.find((i) => i.toStation)?.toStation || items.find((i) => i.ctTo)?.ctTo || '',
-      ownerName: isCross ? (out.ownerName || '') : '',
-      memoNo: isCross ? (out.memoNo || '') : '',
-      consignorName: consignors || out.consignorName || '-',
-      consigneeName: consignees || out.consigneeName || '-',
-      totalQty: items.length > 0 ? items.reduce((acc, curr) => acc + (Number(curr.pkg) || 0), 0) : out.totalQty,
-      totalToPay: items.length > 0 ? items.reduce((acc, curr) => acc + (Number(curr.toPayAmount) || 0), 0) : out.totalToPay,
-      totalTbb: items.length > 0 ? items.reduce((acc, curr) => acc + (Number(curr.tbbAmount) || 0), 0) : out.totalTbb,
-      totalPaid: items.length > 0 ? items.reduce((acc, curr) => acc + (Number(curr.paidAmount) || 0), 0) : out.totalPaid,
-      totalCrossingFreight: items.length > 0 ? items.reduce((acc, curr) => acc + (Number(curr.crossingFreight) || 0), 0) : (Number(out.totalCrossingFreight) || 0),
-    };
-  });
-
-  const isStockOutRecord = (out) =>
-    Boolean(out.isCrossOutward || String(out.outwardNo || '').toUpperCase().startsWith('STOCK-OUT'));
-
-  const deduplicateOutwardHeaders = (list) => {
-    const map = new Map();
-    for (const item of list) {
-      const key = String(item.outwardNo || item.id || '').trim().toLowerCase();
-      if (!map.has(key)) {
-        map.set(key, item);
-      } else {
-        const existing = map.get(key);
-        const existingTime = new Date(existing.updatedAt || existing.createdAt || 0).getTime();
-        const currTime = new Date(item.updatedAt || item.createdAt || 0).getTime();
-        if (currTime >= existingTime) {
-          map.set(key, { ...existing, ...item });
-        }
-      }
-    }
-    return Array.from(map.values());
-  };
-
-  const enrichedOutwards = deduplicateOutwardHeaders(allEnrichedOutwards.filter((out) => !isStockOutRecord(out)));
-  const enrichedStockOuts = deduplicateOutwardHeaders(allEnrichedOutwards.filter((out) => isStockOutRecord(out)));
-
-  // Combine inward and outward items into a unified master list of all LR entries
-  const allLREntriesMap = new Map();
-  // High-speed indices to eliminate 5-million-iteration nested loops
-  const inwardKeysByLR = new Map();
-  const inwardKeysById = new Map();
-
-  // First add all Inward items
-  inwardItems.forEach((item, index) => {
-    const parentInw = inwards.find((inw) => inw.id === item.inwardId || inw.inwardNo === item.inwardNo);
-    const itemKey = item.id ? String(item.id) : `inw-item-${item.inwardNo || 'inw'}-${item.lrNo}-${index}`;
-    allLREntriesMap.set(itemKey, {
-      ...item,
-      inwardVehicleNo: item.vehicleNo || parentInw?.vehicleNo || '-',
-      inwardDriverName: item.driverName || parentInw?.driverName || '-',
-      inwardOwnerName: item.ownerName || parentInw?.ownerName || '-',
-      outwardVehicleNo: '-',
-      outwardDriverName: '-',
-      memoNo: item.memoNo || parentInw?.memoNo || '-',
-      inwardDate: item.date || item.inwardDate || parentInw?.date || '-',
-      outwardDate: '-',
-      outwardNo: '-',
-      deliveryPersonName: '-',
-      recordCategory: 'inward_item',
+      return {
+        ...out,
+        transporterName: resolvedTransporter,
+        outwardTransporterName: resolvedTransporter,
+        vehicleNo: resolvedVehicle,
+        outwardVehicleNo: resolvedVehicle,
+        driverName: resolvedDriver,
+        outwardDriverName: resolvedDriver,
+        deliveryPersonName: resolvedDelPerson,
+        from: resolvedFrom,
+        fromStation: resolvedFrom,
+        outwardFromStation: resolvedFrom,
+        toStation: out.toStation || items.find((i) => i.toStation)?.toStation || items.find((i) => i.ctTo)?.ctTo || '',
+        ownerName: isCross ? (out.ownerName || '') : '',
+        memoNo: isCross ? (out.memoNo || '') : '',
+        consignorName: consignors || out.consignorName || '-',
+        consigneeName: consignees || out.consigneeName || '-',
+        totalQty: items.length > 0 ? items.reduce((acc, curr) => acc + (Number(curr.pkg) || 0), 0) : out.totalQty,
+        totalToPay: items.length > 0 ? items.reduce((acc, curr) => acc + (Number(curr.toPayAmount) || 0), 0) : out.totalToPay,
+        totalTbb: items.length > 0 ? items.reduce((acc, curr) => acc + (Number(curr.tbbAmount) || 0), 0) : out.totalTbb,
+        totalPaid: items.length > 0 ? items.reduce((acc, curr) => acc + (Number(curr.paidAmount) || 0), 0) : out.totalPaid,
+        totalCrossingFreight: items.length > 0 ? items.reduce((acc, curr) => acc + (Number(curr.crossingFreight) || 0), 0) : (Number(out.totalCrossingFreight) || 0),
+      };
     });
 
-    if (item.id) inwardKeysById.set(String(item.id), itemKey);
-    const cleanLR = String(item.lrNo ?? '').trim().toLowerCase();
-    if (cleanLR) {
-      if (!inwardKeysByLR.has(cleanLR)) inwardKeysByLR.set(cleanLR, []);
-      inwardKeysByLR.get(cleanLR).push(itemKey);
-    }
-  });
+    const isStockOutRecord = (out) =>
+      Boolean(out.isCrossOutward || String(out.outwardNo || '').toUpperCase().startsWith('STOCK-OUT'));
 
-  // Merge Outward delivered items
-  // Pre-deduplicate outward items by (outwardNo + lrNo) to ensure zero double-counting,
-  // preserving inward linkage if available
-  const outwardByDispatchMap = new Map();
-  for (const item of outwardItems || []) {
-    if (!item) continue;
-    const outKey = String(item.outwardNo || item.outwardId || '').trim().toLowerCase();
-    const lrKey = String(item.lrNo ?? '').trim().toLowerCase();
-    const key = `${outKey}__${lrKey}`;
-
-    if (!outwardByDispatchMap.has(key)) {
-      outwardByDispatchMap.set(key, item);
-    } else {
-      const existing = outwardByDispatchMap.get(key);
-      const existingHasInward = Boolean(existing.inwardItemId || (existing.inwardNo && existing.inwardNo !== '-'));
-      const currentHasInward = Boolean(item.inwardItemId || (item.inwardNo && item.inwardNo !== '-'));
-      if (!existingHasInward && currentHasInward) {
-        outwardByDispatchMap.set(key, { ...existing, ...item });
-      }
-    }
-  }
-  const uniqueOutwardItems = Array.from(outwardByDispatchMap.values());
-
-  uniqueOutwardItems.forEach((item, index) => {
-    const parentOut = outwards.find(
-      (out) => out.id === item.outwardId || out.outwardNo === item.outwardNo
-    );
-    const isStockOut = Boolean(
-      item.isCrossOutward ||
-      parentOut?.isCrossOutward ||
-      String(item.outwardNo || parentOut?.outwardNo || '').toUpperCase().startsWith('STOCK-OUT')
-    );
-
-    const outVeh = parentOut?.vehicleNo || item.outwardVehicleNo || item.vehicleNo || '-';
-    const outDrv = parentOut?.driverName || item.outwardDriverName || item.driverName || '-';
-
-    if (isStockOut) {
-      // Cross Stock Out is a manual direct dispatch with NO connection to Pending Stock or Inward
-      allLREntriesMap.set(`stockout-${item.id || index}`, {
-        ...item,
-        transporterName: item.transporterName || parentOut?.transporterName || '-',
-        fromStation: item.from || parentOut?.from || '-',
-        toStation: item.toStation || parentOut?.toStation || item.ctTo || '-',
-        crossingFreight: Number(item.crossingFreight) || 0,
-        inwardVehicleNo: '-',
-        inwardDriverName: '-',
-        memoNo: item.memoNo || parentOut?.memoNo || '-',
-        inwardDate: '-',
-        inwardNo: '-',
-        outwardDate: item.outwardDate || item.date || parentOut?.date || '-',
-        outwardNo: item.outwardNo || parentOut?.outwardNo || '-',
-        outwardVehicleNo: outVeh,
-        outwardDriverName: outDrv,
-        vehicleNo: outVeh,
-        driverName: outDrv,
-        ownerName: item.ownerName || parentOut?.ownerName || '-',
-        deliveryPersonName: item.deliveryPersonName || parentOut?.deliveryPersonName || '-',
-        status: 'DISPATCHED',
-        recordCategory: 'stock_out_item',
-      });
-    } else {
-      // Standard Outward delivered from Godown pending stock
-      // Instant O(1) indexed lookup instead of 5-million nested scan
-      let inwKey = null;
-      if (item.inwardItemId && inwardKeysById.has(String(item.inwardItemId))) {
-        inwKey = inwardKeysById.get(String(item.inwardItemId));
-      } else {
-        const cleanLR = String(item.lrNo ?? '').trim().toLowerCase();
-        const candidateKeys = inwardKeysByLR.get(cleanLR) || [];
-        for (const k of candidateKeys) {
-          const val = allLREntriesMap.get(k);
-          if (!val || val.recordCategory !== 'inward_item') continue;
-
-          const outMatch = val.outwardNo && item.outwardNo &&
-            String(val.outwardNo).trim().toLowerCase() === String(item.outwardNo).trim().toLowerCase();
-          if (outMatch) { inwKey = k; break; }
-
-          const hasDifferentOutwardNo = val.outwardNo && item.outwardNo &&
-            val.outwardNo !== '-' && item.outwardNo !== '-' &&
-            String(val.outwardNo).trim().toLowerCase() !== String(item.outwardNo).trim().toLowerCase();
-          if (hasDifferentOutwardNo) continue;
-
-          if (val.status === 'DELIVERED' && (!val.outwardNo || val.outwardNo === '-')) {
-            const transMatch = !item.transporterName || !val.transporterName ||
-              String(item.transporterName).trim().toLowerCase() === String(val.transporterName).trim().toLowerCase();
-            if (transMatch) { inwKey = k; break; }
+    const deduplicateOutwardHeaders = (list) => {
+      const map = new Map();
+      for (const item of list) {
+        const key = String(item.outwardNo || item.id || '').trim().toLowerCase();
+        if (!map.has(key)) {
+          map.set(key, item);
+        } else {
+          const existing = map.get(key);
+          const existingTime = new Date(existing.updatedAt || existing.createdAt || 0).getTime();
+          const currTime = new Date(item.updatedAt || item.createdAt || 0).getTime();
+          if (currTime >= existingTime) {
+            map.set(key, { ...existing, ...item });
           }
         }
       }
+      return Array.from(map.values());
+    };
 
-      if (inwKey) {
-        const existing = allLREntriesMap.get(inwKey);
-        const inwVeh = existing.inwardVehicleNo && existing.inwardVehicleNo !== '-' ? existing.inwardVehicleNo : (existing.vehicleNo || '-');
-        const inwDrv = existing.inwardDriverName && existing.inwardDriverName !== '-' ? existing.inwardDriverName : (existing.driverName || '-');
-        const inwOwner = existing.inwardOwnerName && existing.inwardOwnerName !== '-' ? existing.inwardOwnerName : (existing.ownerName || '-');
-        const inwTrans = existing.inwardTransporterName || existing.transporterName || '-';
+    return {
+      enrichedOutwards: deduplicateOutwardHeaders(allEnriched.filter((out) => !isStockOutRecord(out))),
+      enrichedStockOuts: deduplicateOutwardHeaders(allEnriched.filter((out) => isStockOutRecord(out))),
+    };
+  }, [outwards, itemsByOutward]);
 
-        const outTrans = parentOut?.transporterName || item.outwardTransporterName || item.transporterName || inwTrans;
-        const outDelPerson = parentOut?.deliveryPersonName || item.deliveryPersonName || existing.deliveryPersonName || '-';
-        const outFrom = parentOut?.from || parentOut?.fromStation || item.outwardFromStation || item.from || existing.from || '-';
+  // Combine inward and outward items into a unified master list of all LR entries
+  // Memoized with instant O(1) Map lookups to eliminate multi-second calculation freezes
+  const combinedLREntries = React.useMemo(() => {
+    const inwardsById = new Map();
+    for (const inw of inwards || []) {
+      if (inw.id) inwardsById.set(String(inw.id), inw);
+      if (inw.inwardNo) inwardsById.set(String(inw.inwardNo), inw);
+    }
+    const outwardsById = new Map();
+    for (const out of outwards || []) {
+      if (out.id) outwardsById.set(String(out.id), out);
+      if (out.outwardNo) outwardsById.set(String(out.outwardNo), out);
+    }
 
-        allLREntriesMap.set(inwKey, {
-          ...existing,
-          ...item,
-          transporterName: outTrans,
-          outwardTransporterName: parentOut?.transporterName || item.outwardTransporterName || item.transporterName || '-',
-          inwardTransporterName: inwTrans,
-          inwardDate: existing.inwardDate || item.inwardDate || item.date || '-',
-          inwardNo: existing.inwardNo && existing.inwardNo !== '-' ? existing.inwardNo : (item.inwardNo || '-'),
-          inwardVehicleNo: inwVeh,
-          inwardDriverName: inwDrv,
-          inwardOwnerName: inwOwner,
-          outwardDate: item.outwardDate || item.date || parentOut?.date || existing.outwardDate || '-',
-          outwardNo: item.outwardNo || parentOut?.outwardNo || existing.outwardNo || '-',
-          outwardVehicleNo: outVeh,
-          outwardDriverName: outDrv,
-          vehicleNo: outVeh !== '-' ? outVeh : inwVeh,
-          driverName: outDrv !== '-' ? outDrv : inwDrv,
-          ownerName: inwOwner,
-          deliveryPersonName: outDelPerson,
-          from: outFrom,
-          status: 'DELIVERED',
-          recordCategory: 'outward_item',
-        });
+    const allLREntriesMap = new Map();
+    const inwardKeysByLR = new Map();
+    const inwardKeysById = new Map();
+
+    // First add all Inward items
+    (inwardItems || []).forEach((item, index) => {
+      const parentInw = (item.inwardId && inwardsById.get(String(item.inwardId))) ||
+                        (item.inwardNo && inwardsById.get(String(item.inwardNo)));
+      const itemKey = item.id ? String(item.id) : `inw-item-${item.inwardNo || 'inw'}-${item.lrNo}-${index}`;
+      allLREntriesMap.set(itemKey, {
+        ...item,
+        inwardVehicleNo: item.vehicleNo || parentInw?.vehicleNo || '-',
+        inwardDriverName: item.driverName || parentInw?.driverName || '-',
+        inwardOwnerName: item.ownerName || parentInw?.ownerName || '-',
+        outwardVehicleNo: '-',
+        outwardDriverName: '-',
+        memoNo: item.memoNo || parentInw?.memoNo || '-',
+        inwardDate: item.date || item.inwardDate || parentInw?.date || '-',
+        outwardDate: '-',
+        outwardNo: '-',
+        deliveryPersonName: '-',
+        recordCategory: 'inward_item',
+      });
+
+      if (item.id) inwardKeysById.set(String(item.id), itemKey);
+      const cleanLR = String(item.lrNo ?? '').trim().toLowerCase();
+      if (cleanLR) {
+        if (!inwardKeysByLR.has(cleanLR)) inwardKeysByLR.set(cleanLR, []);
+        inwardKeysByLR.get(cleanLR).push(itemKey);
+      }
+    });
+
+    // Merge Outward delivered items
+    const outwardByDispatchMap = new Map();
+    for (const item of outwardItems || []) {
+      if (!item) continue;
+      const outKey = String(item.outwardNo || item.outwardId || '').trim().toLowerCase();
+      const lrKey = String(item.lrNo ?? '').trim().toLowerCase();
+      const key = `${outKey}__${lrKey}`;
+
+      if (!outwardByDispatchMap.has(key)) {
+        outwardByDispatchMap.set(key, item);
       } else {
-        const outTrans = parentOut?.transporterName || item.outwardTransporterName || item.transporterName || '-';
-        const outDelPerson = parentOut?.deliveryPersonName || item.deliveryPersonName || '-';
-        const outFrom = parentOut?.from || parentOut?.fromStation || item.outwardFromStation || item.from || '-';
+        const existing = outwardByDispatchMap.get(key);
+        const existingHasInward = Boolean(existing.inwardItemId || (existing.inwardNo && existing.inwardNo !== '-'));
+        const currentHasInward = Boolean(item.inwardItemId || (item.inwardNo && item.inwardNo !== '-'));
+        if (!existingHasInward && currentHasInward) {
+          outwardByDispatchMap.set(key, { ...existing, ...item });
+        }
+      }
+    }
+    const uniqueOutwardItems = Array.from(outwardByDispatchMap.values());
 
-        allLREntriesMap.set(`out-${item.id || index}`, {
+    uniqueOutwardItems.forEach((item, index) => {
+      const parentOut = (item.outwardId && outwardsById.get(String(item.outwardId))) ||
+                        (item.outwardNo && outwardsById.get(String(item.outwardNo)));
+      const isStockOut = Boolean(
+        item.isCrossOutward ||
+        parentOut?.isCrossOutward ||
+        String(item.outwardNo || parentOut?.outwardNo || '').toUpperCase().startsWith('STOCK-OUT')
+      );
+
+      const outVeh = parentOut?.vehicleNo || item.outwardVehicleNo || item.vehicleNo || '-';
+      const outDrv = parentOut?.driverName || item.outwardDriverName || item.driverName || '-';
+
+      if (isStockOut) {
+        allLREntriesMap.set(`stockout-${item.id || index}`, {
           ...item,
-          transporterName: outTrans,
-          outwardTransporterName: outTrans,
-          fromStation: outFrom,
-          from: outFrom,
+          transporterName: item.transporterName || parentOut?.transporterName || '-',
+          fromStation: item.from || parentOut?.from || '-',
+          toStation: item.toStation || parentOut?.toStation || item.ctTo || '-',
+          crossingFreight: Number(item.crossingFreight) || 0,
           inwardVehicleNo: '-',
           inwardDriverName: '-',
-          inwardOwnerName: '-',
           memoNo: item.memoNo || parentOut?.memoNo || '-',
           inwardDate: '-',
           inwardNo: '-',
@@ -570,21 +533,112 @@ export const AllEntries = () => {
           outwardDriverName: outDrv,
           vehicleNo: outVeh,
           driverName: outDrv,
-          ownerName: '-',
-          deliveryPersonName: outDelPerson,
-          status: 'DELIVERED',
-          recordCategory: 'outward_item',
+          ownerName: item.ownerName || parentOut?.ownerName || '-',
+          deliveryPersonName: item.deliveryPersonName || parentOut?.deliveryPersonName || '-',
+          status: 'DISPATCHED',
+          recordCategory: 'stock_out_item',
         });
-      }
-    }
-  });
+      } else {
+        let inwKey = null;
+        if (item.inwardItemId && inwardKeysById.has(String(item.inwardItemId))) {
+          inwKey = inwardKeysById.get(String(item.inwardItemId));
+        } else {
+          const cleanLR = String(item.lrNo ?? '').trim().toLowerCase();
+          const candidateKeys = inwardKeysByLR.get(cleanLR) || [];
+          for (const k of candidateKeys) {
+            const val = allLREntriesMap.get(k);
+            if (!val || val.recordCategory !== 'inward_item') continue;
 
-  const combinedLREntries = Array.from(allLREntriesMap.values());
+            const outMatch = val.outwardNo && item.outwardNo &&
+              String(val.outwardNo).trim().toLowerCase() === String(item.outwardNo).trim().toLowerCase();
+            if (outMatch) { inwKey = k; break; }
+
+            const hasDifferentOutwardNo = val.outwardNo && item.outwardNo &&
+              val.outwardNo !== '-' && item.outwardNo !== '-' &&
+              String(val.outwardNo).trim().toLowerCase() !== String(item.outwardNo).trim().toLowerCase();
+            if (hasDifferentOutwardNo) continue;
+
+            if (val.status === 'DELIVERED' && (!val.outwardNo || val.outwardNo === '-')) {
+              const transMatch = !item.transporterName || !val.transporterName ||
+                String(item.transporterName).trim().toLowerCase() === String(val.transporterName).trim().toLowerCase();
+              if (transMatch) { inwKey = k; break; }
+            }
+          }
+        }
+
+        if (inwKey) {
+          const existing = allLREntriesMap.get(inwKey);
+          const inwVeh = existing.inwardVehicleNo && existing.inwardVehicleNo !== '-' ? existing.inwardVehicleNo : (existing.vehicleNo || '-');
+          const inwDrv = existing.inwardDriverName && existing.inwardDriverName !== '-' ? existing.inwardDriverName : (existing.driverName || '-');
+          const inwOwner = existing.inwardOwnerName && existing.inwardOwnerName !== '-' ? existing.inwardOwnerName : (existing.ownerName || '-');
+          const inwTrans = existing.inwardTransporterName || existing.transporterName || '-';
+
+          const outTrans = parentOut?.transporterName || item.outwardTransporterName || item.transporterName || inwTrans;
+          const outDelPerson = parentOut?.deliveryPersonName || item.deliveryPersonName || existing.deliveryPersonName || '-';
+          const outFrom = parentOut?.from || parentOut?.fromStation || item.outwardFromStation || item.from || existing.from || '-';
+
+          allLREntriesMap.set(inwKey, {
+            ...existing,
+            ...item,
+            transporterName: outTrans,
+            outwardTransporterName: parentOut?.transporterName || item.outwardTransporterName || item.transporterName || '-',
+            inwardTransporterName: inwTrans,
+            inwardDate: existing.inwardDate || item.inwardDate || item.date || '-',
+            inwardNo: existing.inwardNo && existing.inwardNo !== '-' ? existing.inwardNo : (item.inwardNo || '-'),
+            inwardVehicleNo: inwVeh,
+            inwardDriverName: inwDrv,
+            inwardOwnerName: inwOwner,
+            outwardDate: item.outwardDate || item.date || parentOut?.date || existing.outwardDate || '-',
+            outwardNo: item.outwardNo || parentOut?.outwardNo || existing.outwardNo || '-',
+            outwardVehicleNo: outVeh,
+            outwardDriverName: outDrv,
+            vehicleNo: outVeh !== '-' ? outVeh : inwVeh,
+            driverName: outDrv !== '-' ? outDrv : inwDrv,
+            ownerName: inwOwner,
+            deliveryPersonName: outDelPerson,
+            from: outFrom,
+            status: 'DELIVERED',
+            recordCategory: 'outward_item',
+          });
+        } else {
+          const outTrans = parentOut?.transporterName || item.outwardTransporterName || item.transporterName || '-';
+          const outDelPerson = parentOut?.deliveryPersonName || item.deliveryPersonName || '-';
+          const outFrom = parentOut?.from || parentOut?.fromStation || item.outwardFromStation || item.from || '-';
+
+          allLREntriesMap.set(`out-${item.id || index}`, {
+            ...item,
+            transporterName: outTrans,
+            outwardTransporterName: outTrans,
+            fromStation: outFrom,
+            from: outFrom,
+            inwardVehicleNo: '-',
+            inwardDriverName: '-',
+            inwardOwnerName: '-',
+            memoNo: item.memoNo || parentOut?.memoNo || '-',
+            inwardDate: '-',
+            inwardNo: '-',
+            outwardDate: item.outwardDate || item.date || parentOut?.date || '-',
+            outwardNo: item.outwardNo || parentOut?.outwardNo || '-',
+            outwardVehicleNo: outVeh,
+            outwardDriverName: outDrv,
+            vehicleNo: outVeh,
+            driverName: outDrv,
+            ownerName: '-',
+            deliveryPersonName: outDelPerson,
+            status: 'DELIVERED',
+            recordCategory: 'outward_item',
+          });
+        }
+      }
+    });
+
+    return Array.from(allLREntriesMap.values());
+  }, [inwards, inwardItems, outwards, outwardItems]);
 
   // Statistics
-  const totalInwardPkg = enrichedInwards.reduce((sum, i) => sum + (Number(i.totalQty) || 0), 0);
-  const totalOutwardPkg = enrichedOutwards.reduce((sum, o) => sum + (Number(o.totalQty) || 0), 0);
-  const totalStockOutPkg = enrichedStockOuts.reduce((sum, o) => sum + (Number(o.totalQty) || 0), 0);
+  const totalInwardPkg = React.useMemo(() => enrichedInwards.reduce((sum, i) => sum + (Number(i.totalQty) || 0), 0), [enrichedInwards]);
+  const totalOutwardPkg = React.useMemo(() => enrichedOutwards.reduce((sum, o) => sum + (Number(o.totalQty) || 0), 0), [enrichedOutwards]);
+  const totalStockOutPkg = React.useMemo(() => enrichedStockOuts.reduce((sum, o) => sum + (Number(o.totalQty) || 0), 0), [enrichedStockOuts]);
 
   // Column Definitions
   const combinedLRColumns = [

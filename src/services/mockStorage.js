@@ -37,11 +37,9 @@ export const deduplicateCollection = (key, list) => {
     let uniqueKey = '';
 
     if (key === STORAGE_KEYS.INWARDS) {
-      const inwNo = String(item.inwardNo || '').trim().toLowerCase();
-      uniqueKey = inwNo || String(item.id || '').trim();
+      uniqueKey = item.id ? String(item.id).trim() : (String(item.inwardNo || '').trim().toLowerCase() || JSON.stringify(item));
     } else if (key === STORAGE_KEYS.OUTWARDS) {
-      const outNo = String(item.outwardNo || '').trim().toLowerCase();
-      uniqueKey = outNo || String(item.id || '').trim();
+      uniqueKey = item.id ? String(item.id).trim() : (String(item.outwardNo || '').trim().toLowerCase() || JSON.stringify(item));
     } else if (key === STORAGE_KEYS.INWARD_ITEMS) {
       uniqueKey = item.id
         ? String(item.id).trim()
@@ -89,8 +87,8 @@ export const deduplicateCollection = (key, list) => {
 
 export const getCanonicalKeyForCollection = (key, item) => {
   if (!item) return '';
-  if (key === STORAGE_KEYS.INWARDS) return String(item.inwardNo || item.id || '').trim().toLowerCase();
-  if (key === STORAGE_KEYS.OUTWARDS) return String(item.outwardNo || item.id || '').trim().toLowerCase();
+  if (key === STORAGE_KEYS.INWARDS) return item.id ? String(item.id).trim() : String(item.inwardNo || '').trim().toLowerCase();
+  if (key === STORAGE_KEYS.OUTWARDS) return item.id ? String(item.id).trim() : String(item.outwardNo || '').trim().toLowerCase();
   if (key === STORAGE_KEYS.INWARD_ITEMS) {
     return item.id
       ? String(item.id).trim()
@@ -575,12 +573,28 @@ export const subscribeToFirestore = (onKeyChange) => {
 
           if (remoteData === undefined || remoteData === null) return;
 
-          // Compare with current local storage to avoid redundant re-renders
+          // Compare with current local storage to avoid redundant stringification and freezes
           const localData = getStoredItem(key, null);
-          const localStr = JSON.stringify(localData);
-          const remoteStr = JSON.stringify(remoteData);
 
-          if (localStr !== remoteStr) {
+          // Fast shallow array check: if lengths and boundary item IDs match, skip costly JSON.stringify
+          let isIdentical = false;
+          if (Array.isArray(localData) && Array.isArray(remoteData)) {
+            if (localData.length === remoteData.length) {
+              if (localData.length === 0) {
+                isIdentical = true;
+              } else {
+                const firstLocal = localData[0]?.id || localData[0]?.lrNo;
+                const firstRemote = remoteData[0]?.id || remoteData[0]?.lrNo;
+                const lastLocal = localData[localData.length - 1]?.id || localData[localData.length - 1]?.lrNo;
+                const lastRemote = remoteData[remoteData.length - 1]?.id || remoteData[remoteData.length - 1]?.lrNo;
+                if (firstLocal && firstLocal === firstRemote && lastLocal && lastLocal === lastRemote) {
+                  isIdentical = true;
+                }
+              }
+            }
+          }
+
+          if (!isIdentical) {
             // If local storage currently has items not yet in incoming remote, do not blindly overwrite!
             if (Array.isArray(localData) && Array.isArray(remoteData)) {
               const cloudKeys = new Set(remoteData.map((i) => getCanonicalKeyForCollection(key, i)).filter(Boolean));

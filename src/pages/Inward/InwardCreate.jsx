@@ -441,9 +441,6 @@ export const InwardCreate = () => {
       transporterName: headerData.transporterName || '',
     };
 
-    // Auto-save manually filled inputs to Master page immediately
-    autoRegisterInwardMasters(headerData, [newItem]);
-
     let nextItems;
     if (editingIndex !== null && editingIndex < stagedItems.length) {
       nextItems = [...stagedItems];
@@ -686,7 +683,11 @@ export const InwardCreate = () => {
         }
       }, 500);
     } catch (err) {
-      setError(err.message || 'Failed to save Inward transaction.');
+      console.error('Error saving Inward:', err);
+      const msg = err.message || 'Failed to save Inward transaction.';
+      setError(msg);
+      alert('⚠️ Save Failed: ' + msg);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
