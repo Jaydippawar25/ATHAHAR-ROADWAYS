@@ -261,6 +261,19 @@ export const OutwardCreate = () => {
     }
   }, [outwards, editingOutwardId, editOutwardData]);
 
+  // Prevent accidental page close or refresh when selected dispatch items exist
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (selectedItems.length > 0) {
+        e.preventDefault();
+        e.returnValue = 'You have selected consignments for dispatch. Are you sure you want to leave?';
+        return e.returnValue;
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [selectedItems.length]);
+
   const handleHeaderChange = (e) => {
     const { name, value } = e.target;
     setHeaderData((prev) => ({ ...prev, [name]: value }));

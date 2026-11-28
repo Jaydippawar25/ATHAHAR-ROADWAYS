@@ -4,11 +4,13 @@ import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 import { Modal } from '../../components/common/Modal';
 import { EditableCombobox } from '../../components/common/EditableCombobox';
-import { Save, Printer, AlertCircle, Trash2, Edit2, Layers, CheckCircle } from 'lucide-react';
+import { Save, Printer, AlertCircle, Trash2, Edit2, Layers, CheckCircle, ShieldCheck, RotateCcw } from 'lucide-react';
 import { getTodayDateString, formatDate } from '../../utils/dateUtils';
 import { formatCurrency } from '../../utils/numberUtils';
 import { printRecordDetails } from '../../services/exportService';
 import { getNextCrossOutwardNo } from '../../services/outwardService';
+import { getActiveDraft, saveActiveDraft, clearActiveDraft } from '../../services/draftVaultService';
+import { DraftVaultModal } from '../../components/common/DraftVaultModal';
 
 export const CrossOutwardCreate = () => {
   const navigate = useNavigate();
@@ -187,6 +189,54 @@ export const CrossOutwardCreate = () => {
   // List of added LR rows
   const [lrItems, setLrItems] = useState([]);
   const [editingIndex, setEditingIndex] = useState(null);
+
+  // Manifest Draft & Crash-Protection Vault
+  const [isVaultOpen, setIsVaultOpen] = useState(false);
+  const [restoredBanner, setRestoredBanner] = useState(null);
+
+  // Auto-restore draft from Vault on mount if not in edit mode
+  useEffect(() => {
+    if (editingOutwardId || editOutwardData) return;
+    try {
+      const draft = getActiveDraft('cross_outward');
+      if (draft && draft.stagedItems && draft.stagedItems.length > 0) {
+        if (draft.headerData) {
+          setHeaderData((prev) => ({
+            ...prev,
+            ...draft.headerData,
+            outwardNo: prev.outwardNo || draft.headerData.outwardNo,
+          }));
+        }
+        setLrItems(draft.stagedItems);
+        setRestoredBanner({
+          count: draft.stagedItems.length,
+          savedAt: draft.savedAt,
+          vehicleNo: draft.headerData?.vehicleNo || '',
+        });
+      }
+    } catch (e) {
+      console.warn('Cross Outward draft auto-restore error:', e);
+    }
+  }, [editingOutwardId, editOutwardData]);
+
+  // Real-time continuous auto-save to Draft Vault whenever lrItems or headerData changes
+  useEffect(() => {
+    if (editingOutwardId || editOutwardData) return;
+    saveActiveDraft('cross_outward', headerData, lrItems);
+  }, [lrItems, headerData, editingOutwardId, editOutwardData]);
+
+  // Prevent accidental page close or refresh when unsaved LRs exist
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (lrItems.length > 0) {
+        e.preventDefault();
+        e.returnValue = 'You have uncommitted LRs in this Cross Stock-Out manifest. Are you sure you want to leave?';
+        return e.returnValue;
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [lrItems.length]);
 
   // Notifications
   const [error, setError] = useState('');
@@ -503,6 +553,12 @@ export const CrossOutwardCreate = () => {
         setSuccess(`Cross Stock-Out #${headerData.outwardNo} recorded successfully!`);
       }
 
+      // Clear draft upon successful database save
+      try {
+        clearActiveDraft('cross_outward');
+        setRestoredBanner(null);
+      } catch (e) {}
+
       setTimeout(() => {
         if (location.state?.returnPath) {
           navigate(location.state.returnPath);
@@ -542,6 +598,15 @@ export const CrossOutwardCreate = () => {
           <div className="flex items-center space-x-2.5 self-start sm:self-auto">
             <button
               type="button"
+              onClick={() => setIsVaultOpen(true)}
+              className="px-3.5 py-2.5 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 rounded-xl text-xs font-bold transition-all border border-emerald-400/30 flex items-center space-x-1.5 shadow-xs cursor-pointer"
+              title="Open Manifest Backup Vault & Recovery History"
+            >
+              <ShieldCheck className="w-4 h-4 text-emerald-400" />
+              <span>Manifest Vault</span>
+            </button>
+            <button
+              type="button"
               onClick={() => navigate('/all-entries', { state: { tab: 'stock_out_headers' } })}
               className="px-4 py-2.5 bg-white/10 hover:bg-white/20 active:bg-white/30 text-white rounded-xl text-xs font-bold transition-all border border-white/20 flex items-center space-x-2 shadow-xs cursor-pointer"
             >
@@ -551,6 +616,46 @@ export const CrossOutwardCreate = () => {
           </div>
         </div>
       </div>
+
+      {restoredBanner && (
+        <div className="p-4 bg-emerald-50/90 border-2 border-emerald-400 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-md animate-in fade-in">
+          <div className="flex items-center space-x-3 text-emerald-950">
+            <ShieldCheck className="w-6 h-6 text-emerald-600 flex-shrink-0" />
+            <div>
+              <p className="font-black text-sm text-emerald-900 flex items-center gap-2">
+                Consignment Restored Automatically ({restoredBanner.count} LRs Protected)
+                <span className="text-[10px] font-bold px-2 py-0.5 bg-emerald-200 text-emerald-800 rounded-full">
+                  Saved {restoredBanner.savedAt ? new Date(restoredBanner.savedAt).toLocaleTimeString() : 'Recently'}
+                </span>
+              </p>
+              <p className="text-xs text-emerald-800 mt-0.5">
+                All uncommitted LRs and header fields have been recovered safely into the editor.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center space-x-2 w-full sm:w-auto">
+            <button
+              type="button"
+              onClick={() => setIsVaultOpen(true)}
+              className="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer"
+            >
+              View Vault History
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                clearActiveDraft('cross_outward');
+                setRestoredBanner(null);
+                setLrItems([]);
+              }}
+              className="px-3 py-2 bg-slate-200 hover:bg-rose-100 hover:text-rose-700 text-slate-700 rounded-xl text-xs font-semibold transition-all cursor-pointer"
+              title="Discard this draft and start with an empty manifest"
+            >
+              Discard Draft
+            </button>
+          </div>
+        </div>
+      )}
 
       {error && (
         <div className="p-3.5 bg-rose-50 border border-rose-200 text-rose-700 rounded-2xl text-xs font-semibold flex items-center space-x-2 shadow-2xs">
@@ -798,9 +903,15 @@ export const CrossOutwardCreate = () => {
               </div>
             )}
           </div>
-          <span className="text-[11px] text-slate-500 font-medium">
-            Press <kbd className="px-1.5 py-0.5 bg-slate-100 border border-slate-300 rounded text-[10px] font-bold text-slate-700">Enter</kbd> or <kbd className="px-1.5 py-0.5 bg-slate-100 border border-slate-300 rounded text-[10px] font-bold text-slate-700">Tab</kbd> to jump fields &bull; Auto-saves on last input
-          </span>
+          <div className="flex items-center space-x-2">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span>Vault Protected ({lrItems.length} LRs)</span>
+            </span>
+            <span className="text-[11px] text-slate-500 font-medium hidden sm:inline">
+              Press <kbd className="px-1.5 py-0.5 bg-slate-100 border border-slate-300 rounded text-[10px] font-bold text-slate-700">Enter</kbd> to stage row &bull; &quot;Save &amp; Post to Stock&quot; to publish
+            </span>
+          </div>
         </div>
 
         <form onSubmit={handleAddOrUpdateLR} className="space-y-3.5">
@@ -1391,6 +1502,29 @@ export const CrossOutwardCreate = () => {
           </div>
         </form>
       </Modal>
+
+      {/* DRAFT VAULT & MANIFEST HISTORY MODAL */}
+      <DraftVaultModal
+        isOpen={isVaultOpen}
+        onClose={() => setIsVaultOpen(false)}
+        type="cross_outward"
+        onRestoreDraft={(entry) => {
+          if (entry.headerData) {
+            setHeaderData((prev) => ({
+              ...prev,
+              ...entry.headerData,
+            }));
+          }
+          if (entry.stagedItems) {
+            setLrItems(entry.stagedItems);
+          }
+          setRestoredBanner({
+            count: entry.stagedItems?.length || 0,
+            savedAt: entry.savedAt,
+            vehicleNo: entry.headerData?.vehicleNo || '',
+          });
+        }}
+      />
     </div>
   );
 };

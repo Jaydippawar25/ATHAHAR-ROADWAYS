@@ -4,11 +4,13 @@ import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 import { Modal } from '../../components/common/Modal';
 import { EditableCombobox } from '../../components/common/EditableCombobox';
-import { Save, Printer, AlertCircle, AlertTriangle, Trash2, Edit2, Layers, CheckCircle, Plus } from 'lucide-react';
+import { Save, Printer, AlertCircle, AlertTriangle, Trash2, Edit2, Layers, CheckCircle, Plus, ShieldCheck, RotateCcw } from 'lucide-react';
 import { getTodayDateString, formatDate } from '../../utils/dateUtils';
 import { formatCurrency } from '../../utils/numberUtils';
 import { printRecordDetails } from '../../services/exportService';
 import { getNextInwardNo, getDuplicatePendingLRDetails, findDuplicatePendingLRs } from '../../services/inwardService';
+import { getActiveDraft, saveActiveDraft, clearActiveDraft } from '../../services/draftVaultService';
+import { DraftVaultModal } from '../../components/common/DraftVaultModal';
 
 export const InwardCreate = () => {
   const navigate = useNavigate();
@@ -27,9 +29,9 @@ export const InwardCreate = () => {
   const editInwardData = location.state?.editInward || null;
   const editingInwardId = editInwardData?.id || null;
 
-  // Real-Time Draft Protection Key
-  const DRAFT_KEY = 'athahar_inward_auto_draft';
-  const [draftPrompt, setDraftPrompt] = useState(null);
+  // Manifest Draft & Crash-Protection Vault
+  const [isVaultOpen, setIsVaultOpen] = useState(false);
+  const [restoredBanner, setRestoredBanner] = useState(null);
 
   // In-memory index of pending stock for instant O(1) duplicate checks (no disk/JSON parse freeze)
   const pendingByLR = React.useMemo(() => {
@@ -175,32 +177,46 @@ export const InwardCreate = () => {
   useEffect(() => {
     if (editingInwardId || editInwardData) return;
     try {
-      const savedDraft = localStorage.getItem(DRAFT_KEY);
-      if (savedDraft) {
-        const parsed = JSON.parse(savedDraft);
-        if (parsed && Array.isArray(parsed.stagedItems) && parsed.stagedItems.length > 0) {
-          setDraftPrompt(parsed);
+      const draft = getActiveDraft('inward');
+      if (draft && draft.stagedItems && draft.stagedItems.length > 0) {
+        if (draft.headerData) {
+          setHeaderData((prev) => ({
+            ...prev,
+            ...draft.headerData,
+            inwardNo: prev.inwardNo || draft.headerData.inwardNo,
+          }));
         }
+        setStagedItems(draft.stagedItems);
+        setRestoredBanner({
+          count: draft.stagedItems.length,
+          savedAt: draft.savedAt,
+          memoNo: draft.headerData?.memoNo || '',
+          vehicleNo: draft.headerData?.vehicleNo || '',
+        });
       }
-    } catch (e) {}
+    } catch (e) {
+      console.warn('Draft auto-restore error:', e);
+    }
   }, [editingInwardId, editInwardData]);
 
-  // Real-time auto-save whenever stagedItems or headerData changes
+  // Real-time continuous auto-save to Draft Vault whenever stagedItems or headerData changes
   useEffect(() => {
     if (editingInwardId || editInwardData) return;
-    if (stagedItems.length > 0 || headerData.memoNo || headerData.vehicleNo) {
-      try {
-        localStorage.setItem(
-          DRAFT_KEY,
-          JSON.stringify({
-            headerData,
-            stagedItems,
-            savedAt: new Date().toISOString(),
-          })
-        );
-      } catch (e) {}
-    }
+    saveActiveDraft('inward', headerData, stagedItems);
   }, [stagedItems, headerData, editingInwardId, editInwardData]);
+
+  // Prevent accidental page close or refresh when unsaved LRs exist
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (stagedItems.length > 0) {
+        e.preventDefault();
+        e.returnValue = 'You have uncommitted LRs in this consignment. Are you sure you want to leave?';
+        return e.returnValue;
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [stagedItems.length]);
 
   const handleKeyDown = (e, index) => {
     if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
@@ -638,8 +654,8 @@ export const InwardCreate = () => {
 
       // Clear draft upon successful database save
       try {
-        localStorage.removeItem(DRAFT_KEY);
-        setDraftPrompt(null);
+        clearActiveDraft('inward');
+        setRestoredBanner(null);
       } catch (e) {}
 
       if (shouldPrint) {
@@ -708,6 +724,15 @@ export const InwardCreate = () => {
           <div className="flex items-center space-x-2.5 self-start sm:self-auto">
             <button
               type="button"
+              onClick={() => setIsVaultOpen(true)}
+              className="px-3.5 py-2.5 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 rounded-xl text-xs font-bold transition-all border border-emerald-400/30 flex items-center space-x-1.5 shadow-xs cursor-pointer"
+              title="Open Manifest Backup Vault & Recovery History"
+            >
+              <ShieldCheck className="w-4 h-4 text-emerald-400" />
+              <span>Manifest Vault</span>
+            </button>
+            <button
+              type="button"
               onClick={() => navigate('/all-entries', { state: { tab: 'inward_headers' } })}
               className="px-4 py-2.5 bg-white/10 hover:bg-white/20 active:bg-white/30 text-white rounded-xl text-xs font-bold transition-all border border-white/20 flex items-center space-x-2 shadow-xs cursor-pointer"
             >
@@ -718,41 +743,42 @@ export const InwardCreate = () => {
         </div>
       </div>
 
-      {draftPrompt && (
-        <div className="p-4 bg-amber-50 border-2 border-amber-400 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-md animate-in fade-in">
-          <div className="flex items-center space-x-3 text-amber-900">
-            <AlertTriangle className="w-6 h-6 text-amber-600 flex-shrink-0" />
+      {restoredBanner && (
+        <div className="p-4 bg-emerald-50/90 border-2 border-emerald-400 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-md animate-in fade-in">
+          <div className="flex items-center space-x-3 text-emerald-950">
+            <ShieldCheck className="w-6 h-6 text-emerald-600 flex-shrink-0" />
             <div>
-              <p className="font-bold text-sm">
-                Unsaved Draft Found for Inward ({draftPrompt.stagedItems?.length} LR items saved at{' '}
-                {new Date(draftPrompt.savedAt).toLocaleTimeString()})
+              <p className="font-black text-sm text-emerald-900 flex items-center gap-2">
+                Consignment Restored Automatically ({restoredBanner.count} LRs Protected)
+                <span className="text-[10px] font-bold px-2 py-0.5 bg-emerald-200 text-emerald-800 rounded-full">
+                  Saved {restoredBanner.savedAt ? new Date(restoredBanner.savedAt).toLocaleTimeString() : 'Recently'}
+                </span>
               </p>
-              <p className="text-xs text-amber-700">
-                Recover your previously typed entries before the browser closed or refreshed.
+              <p className="text-xs text-emerald-800 mt-0.5">
+                All uncommitted LRs and header fields have been recovered safely into the editor.
               </p>
             </div>
           </div>
           <div className="flex items-center space-x-2 w-full sm:w-auto">
             <button
               type="button"
-              onClick={() => {
-                if (draftPrompt.headerData) setHeaderData(draftPrompt.headerData);
-                if (draftPrompt.stagedItems) setStagedItems(draftPrompt.stagedItems);
-                setDraftPrompt(null);
-              }}
-              className="px-4 py-2 bg-amber-600 hover:bg-amber-700 active:bg-amber-800 text-white rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer"
+              onClick={() => setIsVaultOpen(true)}
+              className="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer"
             >
-              Restore Draft ({draftPrompt.stagedItems?.length} Items)
+              View Vault History
             </button>
             <button
               type="button"
               onClick={() => {
-                localStorage.removeItem(DRAFT_KEY);
-                setDraftPrompt(null);
+                clearActiveDraft('inward');
+                setRestoredBanner(null);
+                setStagedItems([]);
+                resetForm(0);
               }}
-              className="px-3 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl text-xs font-semibold transition-all cursor-pointer"
+              className="px-3 py-2 bg-slate-200 hover:bg-rose-100 hover:text-rose-700 text-slate-700 rounded-xl text-xs font-semibold transition-all cursor-pointer"
+              title="Discard this draft and start with an empty manifest"
             >
-              Discard
+              Discard Draft
             </button>
           </div>
         </div>
@@ -996,9 +1022,15 @@ export const InwardCreate = () => {
               </div>
             )}
           </div>
-          <span className="text-[11px] text-slate-500 font-medium">
-            Press <kbd className="px-1.5 py-0.5 bg-slate-100 border border-slate-300 rounded text-[10px] font-bold text-slate-700">Enter</kbd> or <kbd className="px-1.5 py-0.5 bg-slate-100 border border-slate-300 rounded text-[10px] font-bold text-slate-700">Tab</kbd> to jump fields &bull; Auto-saves on last input
-          </span>
+          <div className="flex items-center space-x-2">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span>Vault Protected ({stagedItems.length} LRs)</span>
+            </span>
+            <span className="text-[11px] text-slate-500 font-medium hidden sm:inline">
+              Press <kbd className="px-1.5 py-0.5 bg-slate-100 border border-slate-300 rounded text-[10px] font-bold text-slate-700">Enter</kbd> to stage row &bull; &quot;Save &amp; Post to Stock&quot; to publish
+            </span>
+          </div>
         </div>
 
         {/* Row 1: INWARD NO., LR NO., DATE, PKG */}
@@ -1682,6 +1714,30 @@ export const InwardCreate = () => {
           </div>
         </form>
       </Modal>
+
+      {/* DRAFT VAULT & MANIFEST HISTORY MODAL */}
+      <DraftVaultModal
+        isOpen={isVaultOpen}
+        onClose={() => setIsVaultOpen(false)}
+        type="inward"
+        onRestoreDraft={(entry) => {
+          if (entry.headerData) {
+            setHeaderData((prev) => ({
+              ...prev,
+              ...entry.headerData,
+            }));
+          }
+          if (entry.stagedItems) {
+            setStagedItems(entry.stagedItems);
+          }
+          setRestoredBanner({
+            count: entry.stagedItems?.length || 0,
+            savedAt: entry.savedAt,
+            memoNo: entry.headerData?.memoNo || '',
+            vehicleNo: entry.headerData?.vehicleNo || '',
+          });
+        }}
+      />
     </div>
   );
 };
